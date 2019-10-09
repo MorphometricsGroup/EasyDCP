@@ -28,3 +28,34 @@ def read_png(file_path):
     img_np = img_2d[img_2d[:,3] == 255, 0:3] / 255
     
     return img_np
+    
+def build_clf(fore_path, back_path):
+    back_np = read_png(back_path)
+    fore_np = read_png(fore_path)
+    
+    kind_back = np.array([0] * back_np.shape[0]) 
+    kind_fore = np.array([1] * fore_np.shape[0])
+    
+    train_data = np.vstack([back_np, fore_np])
+    train_kind = np.hstack([kind_back, kind_fore])
+    
+    clf = DecisionTreeClassifier(max_depth=20)
+    clf = clf.fit(train_data, train_kind)
+    
+    return clf
+    
+def classifier_apply(pcd, clf):
+    pcd_xyz_np = np.asarray(pcd.points)
+    pcd_color_np = np.asarray(pcd.colors)
+    
+    pred_result = clf.predict(pcd_color_np)
+    
+    pcd_fore = o3d.geometry.PointCloud()
+    pcd_fore.points = o3d.utility.Vector3dVector(pcd_xyz_np[pred_result == 1, :])
+    pcd_fore.colors = o3d.utility.Vector3dVector(pcd_color_np[pred_result == 1, :])
+    
+    pcd_back = o3d.geometry.PointCloud()
+    pcd_back.points = o3d.utility.Vector3dVector(pcd_xyz_np[pred_result != 1, :])
+    pcd_back.colors = o3d.utility.Vector3dVector(pcd_color_np[pred_result != 1, :])
+    
+    return pcd_fore, pcd_back
