@@ -12,6 +12,9 @@ Right click the `install_packages.bat`，and edit the start paths to your Agisof
 
 And then run `install_packages.bat` in Administrator permission, the batch file will automatically install all the packages required for this project.
 
+Add Metashape program folder to Windows PATH
+See https://helpdeskgeek.com/windows-10/add-windows-path-environment-variable/
+
 ## Functions
 
 **Agisoft auto control**
@@ -26,3 +29,9 @@ And then run `install_packages.bat` in Administrator permission, the batch file 
 * [ ] Decision tree classifier for plant pixel classification
 * [ ] Cluster algorithm for individual plant segmentation
 * [ ] Plant width, length, and height calculation
+
+## Using Agisoft auto control
+
+open pipeline1.py
+-change 'path_folders' to the path containing the folders of images
+-change 'blur_threshold' to desired value. Pipeline will disable all images with Agisoft image quality below the blur_threshold.
