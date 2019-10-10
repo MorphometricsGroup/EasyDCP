@@ -201,8 +201,9 @@ for j in range(folder_count): #run the following code for each folder
 
         print(filename_list[j]," Ground alignment finished")
     
-    #detect cross non-coded targets
+    #detect non-coded targets and optimize cameras
     chunk.detectMarkers(type=Metashape.CrossTarget,tolerance=50)
+    chunk.detectMarkers(type=Metashape.CircularTarget,tolerance=50)
     chunk.optimizeCameras()
     
     #depth map, dense cloud
