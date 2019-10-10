@@ -1,35 +1,31 @@
 # script for pipeline from multiple folders of photos
-# modified from: some script from Agisoft forums, probably... i forgot 
+# modified from: scripts on Agisoft forums by Alexey Pasumansky
 # by Alex Feldman - UTokyo Field Phenomics Lab
 
-# updated 2019.6.7
-# compatibility Metashape Pro 1.5.2
-# incompatible with nested folders
+# updated 2019.10.10
+# compatibility Metashape Pro 1.5.3
+#! incompatible with nested folders
 #! files in folders root will break the script
 
-import os, Metashape
-
-#for scalebars
-from PySide2 import QtCore, QtGui
+import os, Metashape, math
 
 print('\n-----------------------\n~~~~start~~~~\n')
 
 ##USER DEFINED VARIABLES
 path_folders = 'F:/ALEX_SSD/20190618_fukano_weed/' #enter full path to folders root (no nested folders!)
-#print('path_folders',path_folders)
+project_filename = ' - 00000 - ALLSTEPS-v23-high'
 blur_threshold = 0.4
-trust_gps = False
+ignore_gps = True
 use_scalebars = True
+align_ground = True
 
 #populate folder list
 folder_list = os.listdir(path_folders) 
 folder_count = len(folder_list)
-
 print('# of folders:',folder_count)
 print('\nfolder_list:')
 for i in range(folder_count):
     print(i,folder_list[i])
-
 photo_list = list()
 filename_list = list()
 
@@ -43,14 +39,12 @@ for i in range(folder_count):
     else:
         folder_count = folder_count - 1
     
-#print(filename_list)
-    
-doc = Metashape.Document()
+doc = Metashape.app.document
 
 for j in range(folder_count): #run the following code for each folder    
 
     chunk = doc.addChunk()
-
+    
     #ensure photo list is empty
     photo_list.clear()
     
@@ -68,11 +62,12 @@ for j in range(folder_count): #run the following code for each folder
     print('path:',filename_list[j])
     
     #clear GPS data
-    if trust_gps == False:
+    if ignore_gps:
         chunk.crs = None
-        chunk.transform.matrix = None
+        #chunk.transform.matrix = None
         for camera_gps in chunk.cameras:
             camera_gps.reference.enabled = False
+    
     
     #estimate image quality and disable below threshold
     chunk.estimateImageQuality() 
@@ -84,9 +79,8 @@ for j in range(folder_count): #run the following code for each folder
             print ('DISABLE %s' %(image))
 
     #detect circular coded targets
-    chunk.detectMarkers(type=Metashape.CircularTarget12bit,tolerance=100)    
-    
-    '''######'''
+    chunk.detectMarkers(type=Metashape.CircularTarget12bit,tolerance=100)
+   
     #import scalebars from .csv
     if use_scalebars:
         path = path_folders+'skip/scalebars.csv'
@@ -138,23 +132,84 @@ for j in range(folder_count): #run the following code for each folder
 
         file.close()
         Metashape.app.update()
-        print("Script finished")
-    '''#######'''
+        print("Scalebars script finished")
     
     #match, align
-    chunk.matchPhotos(accuracy=Metashape.HighAccuracy, generic_preselection=True, reference_preselection=False)
+    chunk.matchPhotos(accuracy=Metashape.HighAccuracy, generic_preselection=True, reference_preselection=False)#High
     chunk.alignCameras()
+    
+    #align ground plane with markers
+    if align_ground:
+        
+        def vect(a, b):
+            """
+            Normalized vector product for two vectors
+            """
+
+            result = Metashape.Vector([a.y*b.z - a.z*b.y, a.z*b.x - a.x*b.z, a.x*b.y - a.y *b.x])
+            return result.normalized()
+
+        def get_marker(label, chunk):
+            """
+            Returns marker instance from chunk based on the label correspondence
+            """
+            
+            for marker in chunk.markers:
+                if label == marker.label:
+                    return marker
+            print("Marker not found! " + label)
+            return False
+
+        region = chunk.region
+        vertical = ["target 9", "target 3"] 
+        horizontal = ["target 9", "target 1"]
+
+        print(get_marker(horizontal[0], chunk).position)
+        print(get_marker(vertical[0], chunk).position)
+               
+        horizontal = ["target 9", "target 16"]
+        vertical = ["target 9", "target 3"]
+
+        horizontal = get_marker(horizontal[0], chunk).position - get_marker(horizontal[1], chunk).position
+        vertical = get_marker(vertical[0], chunk).position - get_marker(vertical[1], chunk).position
+
+        '''normal = vect(horizontal, vertical)
+        vertical = - vertical.normalized()
+        horizontal = vect(vertical, normal)'''
+        normal = vect(horizontal, vertical)
+        horizontal = - horizontal.normalized()
+        vertical = - vect(horizontal, normal)
+
+        R = Metashape.Matrix ([horizontal, vertical, normal]) #horizontal = X, vertical = Y, normal = Z
+
+        print(R.det())
+        region.rot = R.t()
+        chunk.region = region
+        R = chunk.region.rot		#Bounding box rotation matrix
+        C = chunk.region.center		#Bounding box center vector
+
+        if chunk.transform.matrix:
+            T = chunk.transform.matrix
+            s = math.sqrt(T[0,0] ** 2 + T[0,1] ** 2 + T[0,2] ** 2) 		#scaling # T.scale()
+            S = Metashape.Matrix().Diag([s, s, s, 1]) #scale matrix
+        else:
+            S = Metashape.Matrix().Diag([1, 1, 1, 1])
+        T = Metashape.Matrix( [[R[0,0], R[0,1], R[0,2], C[0]], [R[1,0], R[1,1], R[1,2], C[1]], [R[2,0], R[2,1], R[2,2], C[2]], [0, 0, 0, 1]])
+        chunk.transform.matrix = S * T.inv()		#resulting chunk transformation matrix		
+
+        chunk.resetRegion()
+
+        print(filename_list[j]," Ground alignment finished")
     
     #detect cross non-coded targets
     chunk.detectMarkers(type=Metashape.CrossTarget,tolerance=50)
     chunk.optimizeCameras()
     
     #depth map, dense cloud
-    chunk.buildDepthMaps(quality=Metashape.MediumQuality, filter=Metashape.MildFiltering)
+    chunk.buildDepthMaps(quality=Metashape.HighQuality, filter=Metashape.MildFiltering)#Medium
     chunk.buildDenseCloud() 
 
     #save project (required before building DEM)
-    project_filename = ' - 00000 - ALLSTEPS-v15'
     savepath = filename_list[j]+project_filename
     doc.save(path = savepath+'.psx')
     chunk = doc.chunk
