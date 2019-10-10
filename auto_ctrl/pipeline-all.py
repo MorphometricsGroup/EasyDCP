@@ -19,6 +19,7 @@ path_folders = 'F:/ALEX_SSD/20190618_fukano_weed/' #enter full path to folders r
 #print('path_folders',path_folders)
 blur_threshold = 0.4
 trust_gps = False
+use_scalebars = True
 
 #populate folder list
 folder_list = os.listdir(path_folders) 
@@ -87,56 +88,57 @@ for j in range(folder_count): #run the following code for each folder
     
     '''######'''
     #import scalebars from .csv
-    path = path_folders+'skip/scalebars.csv'
-    print ('path: ',path)
-    file = open(path, "rt")
+    if use_scalebars:
+        path = path_folders+'skip/scalebars.csv'
+        print ('path: ',path)
+        file = open(path, "rt")
 
-    eof = False
-    line = file.readline()
+        eof = False
+        line = file.readline()
 
-    while not eof:
-     #split the line and load into variables
-     point1, point2, dist, acc = line.split(",")
+        while not eof:
+         #split the line and load into variables
+         point1, point2, dist, acc = line.split(",")
 
-     #iterate through chunk markers and see if there is a match for point 1
-     if (len(chunk.markers) > 0):
-         for marker in chunk.markers:
-             if (marker.label == point1):
-                 scale1 = marker
-                 #iterate through chunk markers and see if there is a match for point 2
-                 for marker in chunk.markers:
-                     if (marker.label == point2):
-                         scale2 = marker
+         #iterate through chunk markers and see if there is a match for point 1
+         if (len(chunk.markers) > 0):
+             for marker in chunk.markers:
+                 if (marker.label == point1):
+                     scale1 = marker
+                     #iterate through chunk markers and see if there is a match for point 2
+                     for marker in chunk.markers:
+                         if (marker.label == point2):
+                             scale2 = marker
 
-                         #create a new scale bar between points if they exist and set distance
-                         scalebar = chunk.addScalebar(scale1,scale2)
-                         scalebar.reference.distance = float(dist)
-                         nopair = 0
-                     else:
-                         nopair = 1
-             else:
-                 nopair = 0
-             
-         if nopair:
-             print("Missing one or other end of point")
+                             #create a new scale bar between points if they exist and set distance
+                             scalebar = chunk.addScalebar(scale1,scale2)
+                             scalebar.reference.distance = float(dist)
+                             nopair = 0
+                         else:
+                             nopair = 1
+                 else:
+                     nopair = 0
+                 
+             if nopair:
+                 print("Missing one or other end of point")
 
-     else:
-         print("no markers")
+         else:
+             print("no markers")
 
-     print (len(line), line)
-     #reading the next line in input file
-     line = file.readline()
-     print (">",len(line), line)
-     if len(line) == 0:
-         eof = True
-         print (eof)
-     else:
-         print ("x",eof)
-     #break
+         print (len(line), line)
+         #reading the next line in input file
+         line = file.readline()
+         print (">",len(line), line)
+         if len(line) == 0:
+             eof = True
+             print (eof)
+         else:
+             print ("x",eof)
+         #break
 
-    file.close()
-    Metashape.app.update()
-    print("Script finished")
+        file.close()
+        Metashape.app.update()
+        print("Script finished")
     '''#######'''
     
     #match, align
@@ -150,24 +152,27 @@ for j in range(folder_count): #run the following code for each folder
     #depth map, dense cloud
     chunk.buildDepthMaps(quality=Metashape.MediumQuality, filter=Metashape.MildFiltering)
     chunk.buildDenseCloud() 
-    '''
-    chunk.buildDem()
-    chunk.buildOrthomosaic(fill_holes=False) 
-    #save project (as new name - will eat tons of space, change after dev)
-    project_filename = ' - 00000004 - dem+ortho'
-    doc.save(path = filename_list[j]+project_filename+'-v2.psx') #save metashape project
-    #export DEM and orthophoto to TIF at standard resolution
-    chunk.exportDem(path=filename_list[j]+project_filename+'-DEM.tif',dx=0.001, dy=0.001)
-    chunk.exportOrthomosaic(path=filename_list[j]+project_filename+'-orthomosaic.tif',dx=0.001, dy=0.001)
-    chunk.exportPoints(path = filename_list[j]+' - MetashapeDenseCloud.ply') #export dense cloud
+
+    #save project (required before building DEM)
+    project_filename = ' - 00000 - ALLSTEPS-v15'
+    savepath = filename_list[j]+project_filename
+    doc.save(path = savepath+'.psx')
+    chunk = doc.chunk
     
-    '''
-    project_filename = ' - 00000 - ALLSTEPS'#+ str(blur_threshold)
-    doc.save(path = filename_list[j]+project_filename+'-v11.psx')
+    #build DEM and export to TIF at standard resolution 0.001 m/px
+    chunk.buildDem()
+    chunk.exportDem(path=savepath+'-DEM.tif',dx=0.001, dy=0.001)
+    
+    #build Orthomosaic and export to TIF at standard resolution 0.001 m/px
+    chunk.buildOrthomosaic(fill_holes=False) 
+    chunk.exportOrthomosaic(path=savepath+'-orthomosaic.tif',dx=0.001, dy=0.001)   
+    
+    #export dense cloud
+    chunk.exportPoints(path = savepath+' - MetashapeDenseCloud.ply') 
+    
+    doc.save()
     
     #cleanup before next folder
     doc.clear()    
-
-    
-Metashape.app.messageBox('Finished')
-#Metashape.app.quit()
+   
+print('Finished!')
