@@ -3,7 +3,7 @@ TODO
 test with and without optimizeCameras
 create part-2 pipeline where user may move steps they want to do after a manual check
 play with YPR
-
+add titles to steps
 
 Pipeline for 3d reconstruction and orthomosaic to phenotypic data
 =====
@@ -44,7 +44,7 @@ separate images into folders - This could possibly be automated but I did it man
 [A] export DEM to TIF
 [A] export orthomosaic to TIF
 ----analysis---
-import orthomosaic
+import orthomosaic / dem / dense cloud
 run stuff [many steps]
 output CSV containing phenotypic data
 (in progress)
@@ -53,4 +53,5 @@ output CSV containing phenotypic data
 problems, manual steps. 
 -clicking GCPs if too small or large
 -entering scalebar IF NON CODED
-export point cloud properly
+-markers occluded by plants and not put into tie point cloud, preventing ground alignment
+export point cloud properly - scaling issue

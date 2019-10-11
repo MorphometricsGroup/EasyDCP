@@ -6,6 +6,7 @@
 # compatibility Metashape Pro 1.5.3
 #! incompatible with nested folders
 #! files in folders root will break the script
+#! Non-agisoft nested folder in photos folder will break script
 
 import os, Metashape, math
 
@@ -13,7 +14,7 @@ print('\n-----------------------\n~~~~start~~~~\n')
 
 ##USER DEFINED VARIABLES
 path_folders = 'F:/ALEX_SSD/20190618_fukano_weed/' #enter full path to folders root (no nested folders!)
-project_filename = ' - 00000 - ALLSTEPS-v23-high'
+project_filename = ' - 00000 - ALLSTEPS-v27-med'
 blur_threshold = 0.4
 ignore_gps = True
 use_scalebars = True
@@ -30,7 +31,7 @@ photo_list = list()
 filename_list = list()
 
 #fill path list
-print('\nfilling path list...')
+print('\n[3Dphenotyping] filling path list...')
 for i in range(folder_count):
     if folder_list[i] != 'skip':
         path_photos = path_folders+folder_list[i]
@@ -53,9 +54,9 @@ for j in range(folder_count): #run the following code for each folder
         path_photos = path_folders+folder_list[j]
     image_list = os.listdir(path_photos)
     print(str(j)+':','path_photos',path_photos)
-    print('file list:',image_list)
+    #print('file list:',image_list)
     for photo in image_list: #create photo list
-        if photo.rsplit(".",1)[1].lower() in  ["jpg", "jpeg"]:#, "tif", "tiff"]:
+        if photo.rsplit(".",1)[1].lower() in  ["jpg", "jpeg"]:#, "tif", "tiff"]: #! change 1 to -1 and test with folder in photos folder
             photo_list.append("/".join([path_photos, photo]))
     chunk.addPhotos(photo_list)
     print(j)    
@@ -81,6 +82,10 @@ for j in range(folder_count): #run the following code for each folder
     #detect circular coded targets
     chunk.detectMarkers(type=Metashape.CircularTarget12bit,tolerance=100)
    
+    #match, align
+    chunk.matchPhotos(accuracy=Metashape.HighAccuracy, generic_preselection=True, reference_preselection=False)#High
+    chunk.alignCameras()
+
     #import scalebars from .csv
     if use_scalebars:
         path = path_folders+'skip/scalebars.csv'
@@ -133,10 +138,13 @@ for j in range(folder_count): #run the following code for each folder
         file.close()
         Metashape.app.update()
         print("Scalebars script finished")
+
+    #save project (required before building DEM)
+    savepath = filename_list[j]+project_filename
+    doc.save(path = savepath+'-scale-alignC.psx')
+    chunk = doc.chunk
     
-    #match, align
-    chunk.matchPhotos(accuracy=Metashape.HighAccuracy, generic_preselection=True, reference_preselection=False)#High
-    chunk.alignCameras()
+    #break #only break if you want the script to stop here for each folder
     
     #align ground plane with markers
     if align_ground:
@@ -161,15 +169,18 @@ for j in range(folder_count): #run the following code for each folder
             return False
 
         region = chunk.region
-        vertical = ["target 9", "target 3"] 
-        horizontal = ["target 9", "target 1"]
-
-        print(get_marker(horizontal[0], chunk).position)
-        print(get_marker(vertical[0], chunk).position)
-               
+        '''vertical = ["target 9", "target 3"] 
+        horizontal = ["target 9", "target 1"]'''
+        
         horizontal = ["target 9", "target 16"]
-        vertical = ["target 9", "target 3"]
-
+        vertical = ["target 9", "target 3"] #fails on S08, S12
+        #vertical = ["target 2", "target 15"] #run for all?
+        
+        print('H0: ',get_marker(horizontal[0], chunk).position)
+        print('H1: ',get_marker(horizontal[1], chunk).position)
+        print('V0: ',get_marker(vertical[0], chunk).position)
+        print('V1: ',get_marker(vertical[1], chunk).position)
+               
         horizontal = get_marker(horizontal[0], chunk).position - get_marker(horizontal[1], chunk).position
         vertical = get_marker(vertical[0], chunk).position - get_marker(vertical[1], chunk).position
 
@@ -207,13 +218,13 @@ for j in range(folder_count): #run the following code for each folder
     chunk.optimizeCameras()
     
     #depth map, dense cloud
-    chunk.buildDepthMaps(quality=Metashape.HighQuality, filter=Metashape.MildFiltering)#Medium
+    chunk.buildDepthMaps(quality=Metashape.MediumQuality, filter=Metashape.MildFiltering)#Medium
     chunk.buildDenseCloud() 
 
-    #save project (required before building DEM)
-    savepath = filename_list[j]+project_filename
-    doc.save(path = savepath+'.psx')
-    chunk = doc.chunk
+    doc.save()
+    
+    #export dense cloud
+    chunk.exportPoints(path = savepath+' - MetashapeDenseCloud.ply')   
     
     #build DEM and export to TIF at standard resolution 0.001 m/px
     chunk.buildDem()
@@ -222,10 +233,7 @@ for j in range(folder_count): #run the following code for each folder
     #build Orthomosaic and export to TIF at standard resolution 0.001 m/px
     chunk.buildOrthomosaic(fill_holes=False) 
     chunk.exportOrthomosaic(path=savepath+'-orthomosaic.tif',dx=0.001, dy=0.001)   
-    
-    #export dense cloud
-    chunk.exportPoints(path = savepath+' - MetashapeDenseCloud.ply') 
-    
+       
     doc.save()
     
     #cleanup before next folder
