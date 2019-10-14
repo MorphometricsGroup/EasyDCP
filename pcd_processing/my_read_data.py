@@ -1,6 +1,8 @@
 import imageio
 import numpy as np
 import open3d as o3d
+from PIL import Image
+from datetime import datetime
 from plyfile import PlyData, PlyElement
 
 def read_ply(file_path):
@@ -59,3 +61,60 @@ def classifier_apply(pcd, clf):
     pcd_back.colors = o3d.utility.Vector3dVector(pcd_color_np[pred_result != 1, :])
     
     return pcd_fore, pcd_back
+    
+def pcd2raster(pcd, part=500):
+    '''
+    Convert pcd to DOM and Depth DSM
+    However, holes needs to be filled in the future
+    '''
+    
+    pcd_xyz = np.asarray(pcd.points)
+    
+    x_max = pcd_xyz[:,0].max()
+    x_min = pcd_xyz[:,0].min()
+    x_len = x_max - x_min
+    
+    y_max = pcd_xyz[:,1].max()
+    y_min = pcd_xyz[:,1].min()
+    y_len = y_max - y_min
+    
+    z_max = pcd_xyz[:,2].max()
+    z_min = pcd_xyz[:,2].min()
+    z_len = z_max - z_min
+    
+    # convert point cloud to voxel
+    voxel_size = min(x_len, y_len, z_len) / part
+    pcd_voxel = o3d.geometry.VoxelGrid().create_from_point_cloud(pcd, voxel_size=voxel_size)
+    
+    # generate the size of rasters image
+    x_num = (np.ceil(x_len / voxel_size) + 1).astype(int)
+    y_num = (np.ceil(y_len / voxel_size) + 1).astype(int)
+    ## generate empty raster
+    z_np = np.zeros((x_num, y_num))
+    dom_np = np.zeros((x_num, y_num, 4))
+
+    # loop for each voxel (open3d wrap voxel by list, not to numpy directly)
+    print('Start Converting 3D to 2D, this may take some time')
+    t0 = datetime.now()
+    for i in pcd_voxel.voxels:
+        x,y,z = i.grid_index
+        rgb = (i.color * 255).astype(np.uint8)
+
+        if z_np[x, y] < z:
+            z_np[x, y] = z
+            dom_np[x, y, 0:3] = rgb
+            dom_np[x, y, 3] = 255
+
+    print(datetime.now() - t0)
+    
+    # making dom to writable type
+    dom_np = dom_np.astype(np.uint8)
+    
+    # normalize depth back to point cloud z value
+    d_max = z_np.max()
+    d_min = z_np.min()
+    d_len = d_max - d_min
+    depth = z_np / d_len * z_len - z_min
+    
+    depth_dict = {'depth':depth, 'x_min':x_min, 'x_max':x_max, 'y_min':y_min, 'y_max':y_max}
+    return dom_np, depth_dict
