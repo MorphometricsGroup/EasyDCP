@@ -4,6 +4,7 @@ import open3d as o3d
 from PIL import Image
 from datetime import datetime
 from plyfile import PlyData, PlyElement
+from sklearn.tree import DecisionTreeClassifier
 
 def read_ply(file_path):
     pcd = o3d.io.read_point_cloud(file_path)
@@ -61,13 +62,8 @@ def classifier_apply(pcd, clf):
     pcd_back.colors = o3d.utility.Vector3dVector(pcd_color_np[pred_result != 1, :])
     
     return pcd_fore, pcd_back
-    
-def pcd2raster(pcd, part=500):
-    '''
-    Convert pcd to DOM and Depth DSM
-    However, holes needs to be filled in the future
-    '''
-    
+
+def pcd_size(pcd):
     pcd_xyz = np.asarray(pcd.points)
     
     x_max = pcd_xyz[:,0].max()
@@ -82,13 +78,34 @@ def pcd2raster(pcd, part=500):
     z_min = pcd_xyz[:,2].min()
     z_len = z_max - z_min
     
+    shape_info = {'x_min':x_min, 'x_max':x_max, 'x_len': x_len, 
+                  'y_min':y_min, 'y_max':y_max, 'y_len': y_len, 
+                  'z_min':z_min, 'z_max':z_max, 'z_len': z_len}
+    
+    return shape_info
+
+
+def pcd2voxel(pcd, part):
+    s = pcd_size(pcd)
+    
     # convert point cloud to voxel
-    voxel_size = min(x_len, y_len, z_len) / part
+    voxel_size = min(s['x_len'], s['y_len'], s['z_len']) / part
     pcd_voxel = o3d.geometry.VoxelGrid().create_from_point_cloud(pcd, voxel_size=voxel_size)
     
+    return pcd_voxel, voxel_size, s
+    
+def pcd2raster(pcd, part=500):
+    '''
+    Convert pcd to DOM and Depth DSM
+    However, holes needs to be filled in the future
+    '''
+   
+    # convert point cloud to voxel
+    pcd_voxel, voxel_size, s = pcd2voxel(pcd, part)
+    
     # generate the size of rasters image
-    x_num = (np.ceil(x_len / voxel_size) + 1).astype(int)
-    y_num = (np.ceil(y_len / voxel_size) + 1).astype(int)
+    x_num = (np.ceil(s['x_len'] / voxel_size) + 1).astype(int)
+    y_num = (np.ceil(s['y_len'] / voxel_size) + 1).astype(int)
     ## generate empty raster
     z_np = np.zeros((x_num, y_num))
     dom_np = np.zeros((x_num, y_num, 4))
@@ -114,7 +131,6 @@ def pcd2raster(pcd, part=500):
     d_max = z_np.max()
     d_min = z_np.min()
     d_len = d_max - d_min
-    depth = z_np / d_len * z_len - z_min
+    depth = z_np / d_len * s['z_len'] - s['z_min']
     
-    depth_dict = {'depth':depth, 'x_min':x_min, 'x_max':x_max, 'y_min':y_min, 'y_max':y_max}
-    return dom_np, depth_dict
+    return dom_np, depth
