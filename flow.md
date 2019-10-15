@@ -7,13 +7,22 @@
 
 # Pipeline for 3d reconstruction and orthomosaic to phenotypic data
 
-[A] means automated step
-(O) optional manual step
-{x} not implemented
+[A] means automated step  
+{x} not implemented  
+[B] depend on user-defined boolean  
+
+[M] Manual Operation
 
 ## 1. Capture images
 separate images into folders - This could possibly be automated but I did it manually.
-create .csv containing scalebar information
+
+**create .csv containing scalebar information**
+
+* [M] Place scale bars
+* [M] Capture images
+* [M] separate images into folders - This could possibly be automated but I did it manually.
+* [M] Follow installation steps in readme
+* [M] Run pipeline-all.bat to start pipeline-all.py withing agisoft (contains auto_ctrl and pcd_processing portions)
 
 ## 2. Agisoft Reconstruction (auto_ctrl)
 1. [A] create project
@@ -52,13 +61,12 @@ create .csv containing scalebar information
   1. Ensure is PNG with alpha layer
   1. Currently, using **2** class classification, so need `fore.png` and `back.png`
   1. [todo] Edit paths in config file.
-
  	3. [A] Classification of dense cloud from raw image
       	1. [A] Build classifier
       	2. [A] Apply classifier
       	3. [A] Noise filtering by radius outlier removal (depends on training dataset quality)
  	4. [A] Segmentation
-      	1. [A] General DBSCAN algorithm cluster
+       	1. [A] General DBSCAN algorithm cluster
       	2. (O) Check if main plants wrongly segmented
       	3. [A] Remove outlier very small noise groups haven't been removed in *Step 3.3*
       	4. [A] Using x-y axis histogram to find the main body of plants, and remove ground noise
@@ -79,7 +87,6 @@ create .csv containing scalebar information
            	4. $Vol = SUM(CHM) \cdot pixel size ^2 \cdot resolution ^ 3$
  	6. [A] Output CSV containing phenotypic data
  	7. (O) Output model views of individual plants - to check segmentation accuracy
-
 
 # problems, manual steps.
 - clicking GCPs if too small or large to be detected automatically
