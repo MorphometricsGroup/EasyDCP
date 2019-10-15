@@ -7,10 +7,11 @@
 
 # Pipeline for 3d reconstruction and orthomosaic to phenotypic data
 
-[A] means automated step  
+[A] automated step  
 {x} not implemented  
 [B] depend on user-defined boolean  
-
+(O) optional manual step
+(x) not implementsed
 [M] Manual Operation
 
 ## 1. Capture images
