@@ -144,8 +144,6 @@ for j in range(folder_count): #run the following code for each folder
     doc.save(path = savepath+'-scale-alignC.psx')
     chunk = doc.chunk
     
-    #break #only break if you want the script to stop here for each folder
-    
     #align ground plane with markers
     if align_ground:
         
