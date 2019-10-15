@@ -14,7 +14,7 @@ Pipeline for 3d reconstruction and orthomosaic to phenotypic data
 Capture images
 separate images into folders - This could possibly be automated but I did it manually.
 create .csv containing scalebar information
-----agisoft----
+----agisoft(auto_ctrl)----
 [A] create project
 [A] import images
 [A] clear GPS data (if True)
@@ -44,8 +44,8 @@ create .csv containing scalebar information
 [A] build orthomosaic
 [O] check orthomosaic
 [A] export orthomosaic to .TIF 
-----analysis---
-import orthomosaic / dem / dense cloud
+----analysis(pcd_processing)---
+import (orthomosaic/dem/) point cloud
 Haozhou [many steps]
 	A. Classification of dense cloud from raw image
 	B. Noise filtering
@@ -57,6 +57,7 @@ Haozhou [many steps]
 		b. Volume 
 		c. etc
 output CSV containing phenotypic data
+output model views of individual plants - to check segmentation	 accuracy
 
 --
 problems, manual steps. 
