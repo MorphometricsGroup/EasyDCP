@@ -7,23 +7,24 @@
 
 # Pipeline for 3d reconstruction and orthomosaic to phenotypic data
 
-[A] means automated step  
+[A] automated step  
 {x} not implemented  
 [B] depend on user-defined boolean  
+(O) optional manual step
+(x) not implementsed
 [M] Manual Operation
 
 ## 1. Capture images
 separate images into folders - This could possibly be automated but I did it manually.
 
-**create .csv containing scalebar information**
+## 2. create .csv containing scalebar information
+1. [M] Place scale bars
+1. [M] Capture images
+1. [M] separate images into folders - This could possibly be automated but I did it manually.
+1. [M] Follow installation steps in readme
+1. [M] Run pipeline-all.bat to start pipeline-all.py withing agisoft (contains auto_ctrl and pcd_processing portions)
 
-* [M] Place scale bars
-* [M] Capture images
-* [M] separate images into folders - This could possibly be automated but I did it manually.
-* [M] Follow installation steps in readme
-* [M] Run pipeline-all.bat to start pipeline-all.py withing agisoft (contains auto_ctrl and pcd_processing portions)
-
-## 2. Agisoft Reconstruction (auto_ctrl)
+## 3. Agisoft Reconstruction (auto_ctrl)
 1. [A] create project
 2. [A] import images
 3. [A] clear GPS data (if True)
@@ -54,9 +55,9 @@ separate images into folders - This could possibly be automated but I did it man
 10. [O] check orthomosaic
 11. [A] export orthomosaic to .TIF   
 
-## 3. Phenotyping analysis (pcd_processing)
+## 4. Phenotyping analysis (pcd_processing)
 1. [A] read point cloud
-1. (O) **Manual make training dataset**
+1. [M] **Manual make training dataset**
     1. Ensure is PNG with alpha layer
     1. Currently, using **2** class classification, so need `fore.png` and `back.png`
     1. [todo] Edit paths in config file.
