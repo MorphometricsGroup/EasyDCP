@@ -24,6 +24,8 @@ blur_threshold = 0.4
 ignore_gps = True
 use_scalebars = True
 align_ground = True
+build_dem = True
+build_ortho = True
 
 #populate folder list
 folder_list = os.listdir(path_folders) 
@@ -148,7 +150,7 @@ for j in range(folder_count): #run the following code for each folder
     doc.save(path = savepath+'.psx')
     chunk = doc.chunk
     
-    '''#break to check result
+    '''#optional break to check result
     break #only break if you want the script to stop here for each folder
     '''
     
@@ -225,7 +227,7 @@ for j in range(folder_count): #run the following code for each folder
     
     #save project
     doc.save()
-    '''#break to check result
+    '''#optional break to check result
     break #only break if you want the script to stop here for each folder
     '''
     
@@ -235,7 +237,7 @@ for j in range(folder_count): #run the following code for each folder
 
     #save project
     doc.save()
-    '''#break to check result
+    '''#optional break to check result
     break #only break if you want the script to stop here for each folder
     '''
     
@@ -246,22 +248,24 @@ for j in range(folder_count): #run the following code for each folder
     doc.save()
     
     #build DEM and export to TIF at standard resolution 0.001 m/px
-    chunk.buildDem()
-    chunk.exportDem(path=savepath+'-DEM.tif',dx=0.001, dy=0.001)
+    if build_dem:
+        chunk.buildDem()
+        chunk.exportDem(path=savepath+'-DEM.tif',dx=0.001, dy=0.001)
     
     #save project
     doc.save()
-    '''#break to check result
+    '''#optional break to check result
     break #only break if you want the script to stop here for each folder
     '''
     
     #build Orthomosaic and export to TIF at standard resolution 0.001 m/px
-    chunk.buildOrthomosaic(fill_holes=False) 
-    chunk.exportOrthomosaic(path=savepath+'-orthomosaic.tif',dx=0.001, dy=0.001)   
+    if build_ortho:
+        chunk.buildOrthomosaic(fill_holes=False) 
+        chunk.exportOrthomosaic(path=savepath+'-orthomosaic.tif',dx=0.001, dy=0.001)   
     
     #save project
     doc.save()
-    '''#break to check result
+    '''#optional break to check result
     break #only break if you want the script to stop here for each folder
     '''
     

@@ -28,33 +28,33 @@ separate images into folders - This could possibly be automated but I did it man
 ## 2. Agisoft Reconstruction (auto_ctrl)
 1. [A] create project
 2. [A] import images
-3. [A] clear GPS data (if True)
+3. [A][B] clear GPS data
 4. [A] estimate image quality
 5. [A] disable images below user-defined threshold
 6. [A] detect coded targets
 7. [A] match photos
 8. [A] align cameras (create tie points / sparse cloud)
-9. [A] import scale bars from .csv
-10. [A] align model with ground plane using markers or scalebars on ground
+9. [A][B] import scale bars from .csv
+10. [A][B] align model with ground plane using markers or scalebars on ground
 11. [A] detect non-coded markers (cross)
-12. [A] detect non-coded markers (circle?)
+12. [A] detect non-coded markers (circle)
 13. [A] optimize cameras
 14. (O) check alignment / sparse cloud
 15. {x} cleanup sparse cloud (gradual selections)  
     1. Reconstruction uncertainty
-    1. Reprojection Error
-    1. Projection Accuracy  
-1. [A] build depth maps
-2. [A] build dense cloud
-3. (O) check dense cloud
-4. [A] export dense cloud to .PLY
-5. {x} points classification
-6. [A] build DEM
-7. [O] check DEM
-8. [A] export DEM to .TIF
-9. [A] build orthomosaic
-10. [O] check orthomosaic
-11. [A] export orthomosaic to .TIF   
+    2. Reprojection Error
+    3. Projection Accuracy  
+16. [A] build depth maps
+17. [A] build dense cloud
+18. (O) check dense cloud
+19. [A] export dense cloud to .PLY
+20. {x} points classification
+21. [A][B] build DEM
+22. [O] check DEM
+23. [A][B] export DEM to .TIF
+24. [A][B] build orthomosaic
+25. [O] check orthomosaic
+26. [A][B] export orthomosaic to .TIF   
 
 ## 3. Phenotyping analysis (pcd_processing)
 1. [A] read point cloud
@@ -90,6 +90,7 @@ separate images into folders - This could possibly be automated but I did it man
  	7. (O) Output model views of individual plants - to check segmentation accuracy
 
 # problems, manual steps.
+- manually separating images into folders
 - clicking GCPs if too small or large to be detected automatically
 - entering scalebar IF NON CODED
 - markers may be occluded by plants and not put into tie point cloud, preventing ground alignment
