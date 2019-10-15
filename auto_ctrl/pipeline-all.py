@@ -2,19 +2,24 @@
 # modified from: scripts on Agisoft forums by Alexey Pasumansky
 # by Alex Feldman - UTokyo Field Phenomics Lab
 
-# updated 2019.10.10
+# updated 2019.10.15
 # compatibility Metashape Pro 1.5.3
 #! incompatible with nested folders
 #! files in folders root will break the script
 #! Non-agisoft nested folder in photos folder will break script
+#! Agisoft errors will break the script. 
+#>>TODO: Jump to next folder on error
+#>>TODO: write info to log file (failed folders, etc)
 
-import os, Metashape, math
+import os, Metashape, math #for auto_ctrl
 
-print('\n-----------------------\n~~~~start~~~~\n')
+###Begin Agisoft auto_ctrl 3D reconstruction portion
+
+print('\n-----------------------\n~~~~start auto_ctrl~~~~\n')
 
 ##USER DEFINED VARIABLES
 path_folders = 'F:/ALEX_SSD/20190618_fukano_weed/' #enter full path to folders root (no nested folders!)
-project_filename = ' - 00000 - ALLSTEPS-v27-med'
+project_filename = ' - 00000 - ALLSTEPS-v28-med'
 blur_threshold = 0.4
 ignore_gps = True
 use_scalebars = True
@@ -133,7 +138,6 @@ for j in range(folder_count): #run the following code for each folder
              print (eof)
          else:
              print ("x",eof)
-         #break
 
         file.close()
         Metashape.app.update()
@@ -141,8 +145,12 @@ for j in range(folder_count): #run the following code for each folder
 
     #save project (required before building DEM)
     savepath = filename_list[j]+project_filename
-    doc.save(path = savepath+'-scale-alignC.psx')
+    doc.save(path = savepath+'.psx')
     chunk = doc.chunk
+    
+    '''#break to check result
+    break #only break if you want the script to stop here for each folder
+    '''
     
     #align ground plane with markers
     if align_ground:
@@ -194,17 +202,17 @@ for j in range(folder_count): #run the following code for each folder
         print(R.det())
         region.rot = R.t()
         chunk.region = region
-        R = chunk.region.rot		#Bounding box rotation matrix
-        C = chunk.region.center		#Bounding box center vector
+        R = chunk.region.rot        #Bounding box rotation matrix
+        C = chunk.region.center        #Bounding box center vector
 
         if chunk.transform.matrix:
             T = chunk.transform.matrix
-            s = math.sqrt(T[0,0] ** 2 + T[0,1] ** 2 + T[0,2] ** 2) 		#scaling # T.scale()
+            s = math.sqrt(T[0,0] ** 2 + T[0,1] ** 2 + T[0,2] ** 2)         #scaling # T.scale()
             S = Metashape.Matrix().Diag([s, s, s, 1]) #scale matrix
         else:
             S = Metashape.Matrix().Diag([1, 1, 1, 1])
         T = Metashape.Matrix( [[R[0,0], R[0,1], R[0,2], C[0]], [R[1,0], R[1,1], R[1,2], C[1]], [R[2,0], R[2,1], R[2,2], C[2]], [0, 0, 0, 1]])
-        chunk.transform.matrix = S * T.inv()		#resulting chunk transformation matrix		
+        chunk.transform.matrix = S * T.inv()        #resulting chunk transformation matrix        
 
         chunk.resetRegion()
 
@@ -215,24 +223,62 @@ for j in range(folder_count): #run the following code for each folder
     chunk.detectMarkers(type=Metashape.CircularTarget,tolerance=50)
     chunk.optimizeCameras()
     
+    #save project
+    doc.save()
+    '''#break to check result
+    break #only break if you want the script to stop here for each folder
+    '''
+    
     #depth map, dense cloud
     chunk.buildDepthMaps(quality=Metashape.MediumQuality, filter=Metashape.MildFiltering)#Medium
     chunk.buildDenseCloud() 
 
+    #save project
     doc.save()
+    '''#break to check result
+    break #only break if you want the script to stop here for each folder
+    '''
     
     #export dense cloud
-    chunk.exportPoints(path = savepath+' - MetashapeDenseCloud.ply')   
+    chunk.exportPoints(path = savepath+'-MetashapeDenseCloud.ply')   
+    
+    #save project (required before building DEM)
+    doc.save()
     
     #build DEM and export to TIF at standard resolution 0.001 m/px
     chunk.buildDem()
     chunk.exportDem(path=savepath+'-DEM.tif',dx=0.001, dy=0.001)
     
+    #save project
+    doc.save()
+    '''#break to check result
+    break #only break if you want the script to stop here for each folder
+    '''
+    
     #build Orthomosaic and export to TIF at standard resolution 0.001 m/px
     chunk.buildOrthomosaic(fill_holes=False) 
     chunk.exportOrthomosaic(path=savepath+'-orthomosaic.tif',dx=0.001, dy=0.001)   
-       
+    
+    #save project
     doc.save()
+    '''#break to check result
+    break #only break if you want the script to stop here for each folder
+    '''
+    
+    print ('\n3Dphenotyping auto_ctrl portion complete for ',savepath
+
+    
+    #variables to pass to pcd_processing portion
+    cloud = savepath+'-MetashapeDenseCloud.ply'
+    dem = savepath+'-DEM.tif'
+    ortho = path=savepath+'-orthomosaic.tif'
+    #print variables
+    print('path to cloud: ',cloud)
+    print('path to DEM: ',dem)
+    print('path to orthomosaic: ',ortho)
+    
+    #begin pcd_processing portion
+    print('\n-----------------------\n~~~~start pcd_processing~~~~\n')
     
     #cleanup before next folder
     doc.clear()    
