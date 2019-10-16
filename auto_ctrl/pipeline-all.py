@@ -24,6 +24,7 @@ blur_threshold = 0.4
 ignore_gps = True
 use_scalebars = True
 align_ground = True
+export_cloud = True
 build_dem = True
 build_ortho = True
 
@@ -242,7 +243,8 @@ for j in range(folder_count): #run the following code for each folder
     '''
     
     #export dense cloud
-    chunk.exportPoints(path = savepath+'-MetashapeDenseCloud.ply')   
+    if export_cloud:
+        chunk.exportPoints(path = savepath+'-MetashapeDenseCloud.ply')   
     
     #save project (required before building DEM)
     doc.save()

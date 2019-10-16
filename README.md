@@ -16,6 +16,18 @@ And then run `install_packages.bat` in Administrator permission, the batch file 
 Add Metashape program folder to Windows PATH
 See https://helpdeskgeek.com/windows-10/add-windows-path-environment-variable/
 
+## Create training data
+
+Use GIMP to create fore.png and back.png
+1. Use Free Select Tool to select plant parts only - Maybe 3 different plants is enough to represent them all eg. one light green, one dark green, one yellowing
+	* Deselect Antialiasing in Free Select settings pane
+	* Select '1. Pixel (3 x 3) in Brushes tab
+2. Copy the selection and create a new file, PNG *with transparency*
+	* Under Advanced Options in 'Create a New Image' dialog, select Fill with: Transparency
+3. Save as fore.png
+4. Repeat steps 1-3 with background samples and save as back.png
+* Maybe we can have example fore.png and back.png in github
+
 ## Functions
 
 **Agisoft auto control**
