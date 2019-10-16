@@ -2,7 +2,7 @@
 # modified from: scripts on Agisoft forums by Alexey Pasumansky
 # by Alex Feldman - UTokyo Field Phenomics Lab
 
-# updated 2019.10.15
+# updated 2019.10.16
 # compatibility Metashape Pro 1.5.3
 #! incompatible with nested folders
 #! files in folders root will break the script
@@ -91,7 +91,7 @@ for j in range(folder_count): #run the following code for each folder
     chunk.detectMarkers(type=Metashape.CircularTarget12bit,tolerance=100)
    
     #match, align
-    chunk.matchPhotos(accuracy=Metashape.HighAccuracy, generic_preselection=True, reference_preselection=False)#High
+    chunk.matchPhotos(accuracy=Metashape.HighAccuracy, generic_preselection=True, reference_preselection=False)#default: HighAccuracy
     chunk.alignCameras()
 
     #import scalebars from .csv
@@ -149,7 +149,7 @@ for j in range(folder_count): #run the following code for each folder
     #save project (required before building DEM)
     savepath = filename_list[j]+project_filename
     doc.save(path = savepath+'.psx')
-    chunk = doc.chunk
+    chunk = doc.chunk #this line is only necessary after the first save when defining path
     
     '''#optional break to check result
     break #only break if you want the script to stop here for each folder
@@ -232,22 +232,19 @@ for j in range(folder_count): #run the following code for each folder
     break #only break if you want the script to stop here for each folder
     '''
     
-    #depth map, dense cloud
-    chunk.buildDepthMaps(quality=Metashape.MediumQuality, filter=Metashape.MildFiltering)#Medium
+    #build depth map, dense cloud
+    chunk.buildDepthMaps(quality=Metashape.MediumQuality, filter=Metashape.MildFiltering)#default: MediumQuality
     chunk.buildDenseCloud() 
-
-    #save project
-    doc.save()
-    '''#optional break to check result
-    break #only break if you want the script to stop here for each folder
-    '''
     
     #export dense cloud
     if export_cloud:
         chunk.exportPoints(path = savepath+'-MetashapeDenseCloud.ply')   
     
-    #save project (required before building DEM)
+    #save project 
     doc.save()
+    '''#optional break to check result
+    break #only break if you want the script to stop here for each folder
+    '''
     
     #build DEM and export to TIF at standard resolution 0.001 m/px
     if build_dem:
