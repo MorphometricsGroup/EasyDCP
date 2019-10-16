@@ -86,6 +86,7 @@ def pcd_size(pcd):
 
 
 def pcd2voxel(pcd, part):
+    # part: how many part of the shortest axis will be splitted?
     s = pcd_size(pcd)
     
     # convert point cloud to voxel
