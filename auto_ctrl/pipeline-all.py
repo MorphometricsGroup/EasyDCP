@@ -268,18 +268,19 @@ for j in range(folder_count): #run the following code for each folder
     break #only break if you want the script to stop here for each folder
     '''
     
-    print ('\n3Dphenotyping auto_ctrl portion complete for ',savepath
-
-    
+    print ('\n3Dphenotyping auto_ctrl portion complete for ',savepath)
+    '''
+    '''
     #variables to pass to pcd_processing portion
     cloud = savepath+'-MetashapeDenseCloud.ply'
     dem = savepath+'-DEM.tif'
-    ortho = path=savepath+'-orthomosaic.tif'
+    ortho = savepath+'-orthomosaic.tif'
     #print variables
     print('path to cloud: ',cloud)
     print('path to DEM: ',dem)
     print('path to orthomosaic: ',ortho)
-    
+    '''
+    '''
     #begin pcd_processing portion
     print('\n-----------------------\n~~~~start pcd_processing~~~~\n')
     
