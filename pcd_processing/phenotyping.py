@@ -1,12 +1,19 @@
+import os
 import imageio
+import shutil
+import time
 import numpy as np
 import open3d as o3d
+import pandas as pd
 # from PIL import Image
 # from datetime import datetime
+from copy import copy
 from plyfile import PlyData
+from scipy.spatial import ConvexHull
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.svm import OneClassSVM, SVC
 from sklearn.cluster import KMeans
+from min_bounding_rect import min_bounding_rect
 
 
 class Classifier(object):
@@ -43,11 +50,12 @@ class Classifier(object):
             dtc: Decision Tree Classifier
         """
         # Check whether correct input
+        print('[3DPhenotyping][Classifier] Start building classifier')
         path_n = len(path_list)
         kind_n = len(kind_list)
 
         if path_n != kind_n:
-            print('Warning: the image number and kind number not matching!')
+            print('[3DPhenotyping][Classifier][Warning] the image number and kind number not matching!')
 
         self.path_list = path_list[0:min(path_n, kind_n)]
         self.kind_list = kind_list[0:min(path_n, kind_n)]
@@ -56,6 +64,7 @@ class Classifier(object):
         self.train_data = np.empty((0, 3))
         self.train_kind = np.empty(0)
         self.build_training_array()
+        print('[3DPhenotyping][Classifier] Training data prepared')
 
         self.kind_set = set(kind_list)
 
@@ -69,6 +78,7 @@ class Classifier(object):
             elif core == 'svm':
                 self.clf = SVC()
                 # todo: build SVC() classifier
+        print('[3DPhenotyping][Classifier] Classifying model built')
 
     @staticmethod
     def read_png(file_path):
@@ -89,8 +99,41 @@ class Classifier(object):
 
 
 class Plot(object):
+    """
+    =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+    | The vector information are not loaded currently |
+    =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-    def __init__(self, ply_path, classifier):
+    Variables:
+        pcd -> open3d.geometry.pointclouds object
+
+        pcd_xyz = np.asarray(pcd.points) -> numpy.array nx3 object
+
+        pcd_rgb = np.asarray(pcd.colors) -> numpy.array nx3 object
+
+        x_max, y_min, z_len: # coordinate information for point clouds
+
+        pcd_dict -> dict
+            {'-1': o3d.geometry.pointclouds, # background
+              '0': o3d.geometry.pointclouds, # foreground
+              '1': o3d.geometry.pointclouds, # (optional) foreground 2
+              ...etc.}
+
+        pcd_cleaned -> same as pcd_dict
+
+        plants -> dict
+            {'0': [Plant, Plant, Plant, ...],  # background -1 not included
+             '1': [Plant, Plant, Plant, ...].  # (optional)
+             ... etc. }
+    """
+
+    def __init__(self, ply_path, classifier, show_steps=False):
+        """
+        :param ply_path:
+        :param classifier:
+        :param show_steps: if open this, the progress won't continue until the visualizing window is turned off
+        """
+        self.ply_path = ply_path
         self.pcd = self.read_ply(ply_path)
         print('[3DPhenotyping] Ply fild loaded')
 
@@ -114,19 +157,25 @@ class Plot(object):
 
         # classification
         self.pcd_dict = self.classifier_apply(classifier)
-        print('[3DPhenotyping] Point clouds classifed')
+        if show_steps:
+            self._show_pcd(list(self.pcd_dict.values()), window_name='classified', color='Rand')
 
         # turn to voxel
         self.pcd_voxel, self.voxel_size = self.pcd2voxel()
         self.voxel_num = len(self.pcd_voxel.voxels)
         self.voxel_density = self.points_num / self.voxel_num
-        print('[3DPhenotyping] Voxel of splitting 100 part generated')
 
+        # remove noises
         self.pcd_cleaned, self.pcd_cleaned_id = self.noise_filter()
-        print('[3DPhenotyping] Remove noises in all kinds')
+
+        if show_steps:
+            self._show_pcd(list(self.pcd_cleaned.values()), window_name='rm_noised', color='Rand')
 
         # start segmentation
         self.plants = self.segmentation()
+        if show_steps:
+            show_list = [copy(plant.pcd) for plant in self.plants[0]]
+            self._show_pcd(show_list, window_name='Plants', color='Rand')
 
     @staticmethod
     def read_ply(file_path):
@@ -149,48 +198,47 @@ class Plot(object):
         return pcd
 
     def classifier_apply(self, classifier):
-        pcd_xyz_np = np.asarray(self.pcd.points)
-        pcd_color_np = np.asarray(self.pcd.colors)
-
-        pred_result = classifier.clf.predict(pcd_color_np)
+        print('[3DPhenotyping][Classify] Start Classifying')
+        pred_result = classifier.clf.predict(self.pcd_rgb)
 
         pcd_dict = {}
 
         for k in classifier.kind_set:
+            print('[3DPhenotyping][Classify] Begin for class ' + str(k))
             indices = np.where(pred_result == k)[0].tolist()
             pcd_dict[k] = self.pcd.select_down_sample(indices=indices)
+            print('[3DPhenotyping][Classify] kind ' + str(k) + ' classified')
 
         return pcd_dict
 
     def pcd2voxel(self, part=100):
         # param part: how many part of the shortest axis will be split?
+        print('[3DPhenotyping][Voxel] Start Voxel of splitting')
         voxel_size = min(self.x_len, self.y_len, self.z_len) / part
         # convert point cloud to voxel
         pcd_voxel = o3d.geometry.VoxelGrid().create_from_point_cloud(self.pcd, voxel_size=voxel_size)
 
+        print('[3DPhenotyping][Voxel] Voxel of splitting 100 part generated')
         return pcd_voxel, voxel_size
 
     def noise_filter(self):
         pcd_cleaned = {}
         pcd_cleaned_id = {}
-
+        print('[3DPhenotyping][rm_noise] Remove noises')
         for k in self.pcd_dict.keys():
             if k == -1:   # for background, need to apply statistical outlier removal
-                cleaned, indices = self.pcd_dict[-1].remove_statistical_outlier(round(self.voxel_density), 0.01)
-                pcd_cleaned[-1], pcd_cleaned_id[-1] = cleaned.remove_radius_outlier(round(self.voxel_density*2),
-                                                                                    self.voxel_size)
+                cleaned, indices = self.pcd_dict[-1].remove_statistical_outlier\
+                    (nb_neighbors=round(self.voxel_density), std_ratio=0.01)
+                pcd_cleaned[-1], pcd_cleaned_id[-1] = cleaned.remove_radius_outlier\
+                    (nb_points=round(self.voxel_density*2), radius=self.voxel_size)
             else:
-                pcd_cleaned[k], pcd_cleaned_id[k] = self.pcd_dict[k].remove_radius_outlier(nb_points=round(self.voxel_density),
-                                                                                           radius=self.voxel_size)
-        #o3d.visualization.draw_geometries([pcd_cleaned[0]])
+                pcd_cleaned[k], pcd_cleaned_id[k] = self.pcd_dict[k].remove_radius_outlier\
+                    (nb_points=round(self.voxel_density), radius=self.voxel_size)
+            print('[3DPhenotyping][rm_noise] kind ' + str(k) + ' noise removed')
+
         return pcd_cleaned, pcd_cleaned_id
 
-    def write_denoised_ply(self, folder_path):
-        for k in self.pcd_dict.keys():
-            file_name = folder_path + '_' + str(k) + '.ply'
-            o3d.io.write_point_cloud(file_name, self.pcd_cleaned[k])
-
-    def segmentation(self, plant_size=10, plant_num=10):
+    def segmentation(self):   # plant_size=10, plant_num=10
         # may need user to provide plant size and number for segmentation check
         seg_out = {}
         for k in self.pcd_dict.keys():
@@ -205,6 +253,8 @@ class Plot(object):
 
             print('[3DPhenotyping][Segmentation] class ' + str(k) + ' Segmented')
 
+            # KMeans to find the class of noise and plants
+            # # Data prepare for clustering
             pcd_seg_list = []
             pcd_seg_char = np.empty((0, 2))
 
@@ -216,7 +266,9 @@ class Plot(object):
                 char = np.asarray([len(pcd_seg.points), self.calculate_xyz_volumn(pcd_seg)])
                 pcd_seg_char = np.vstack([pcd_seg_char, char])
 
-            # cluster by (points number, and volumn) to remove noise segmenation
+            print('[3DPhenotyping][Segmentation][Clustering] class ' + str(k) + ' Cluster Data Prepared')
+
+            # # cluster by (points number, and volumn) to remove noise segmenation
             km = KMeans(n_clusters=2)
             km.fit(pcd_seg_char)
 
@@ -229,10 +281,11 @@ class Plot(object):
             else:
                 plant_id = np.where(km.labels_ == 1)[0].tolist()
 
-            seg_out[k] = [Plant(pcd_seg_list[i], kind=k) for i in plant_id]
+            seg_out[k] = [Plant(self, pcd_seg_list[p], i+1, kind=k) for i, p in enumerate(plant_id)]
+
+            print('[3DPhenotyping][Segmentation][Clustering] class ' + str(k) + ' Clustered')
 
         return seg_out
-
 
     @staticmethod
     def calculate_xyz_volumn(pcd):
@@ -244,23 +297,192 @@ class Plot(object):
 
         return x_len * y_len * z_len
 
+    @staticmethod
+    def _show_pcd(pcd_list, window_name='Open3D', color=None):
+        # color =
+        #   None:  to display original color
+        #   'Rand': to display a rand color
+        #   [(0, 0.5, 1), ...]   max 1 for 255 color
+        if isinstance(color, str):
+            show_list = []
+            for pcd in pcd_list:
+                pcd_copy = copy(pcd)
+                pcd_copy.paint_uniform_color(np.random.rand(3).tolist())
+                show_list.append(pcd_copy)
+        elif isinstance(color, list):
+            show_list = []
+            for i, c_tuple in enumerate(color):
+                pcd_copy = copy(pcd_list[i])
+                pcd_copy.paint_uniform_color(c_tuple)
+                show_list.append(pcd_copy)
+        else:   # color is None:
+            show_list = pcd_list
 
-    #temp func
-    def show_seged_plants(self):
-        show_list = []
+        print('[3DPhenotyping][Visualizing] Visualizing, calculation paused')
+        o3d.visualization.draw_geometries(show_list, window_name=window_name)
 
-        for seg in self.plants[0]:
-            seg.pcd.paint_uniform_color(np.random.rand(3).tolist())
-            show_list.append(seg.pcd)
+    def write_ply(self):
+        folder, tail = os.path.split(os.path.abspath(self.ply_path))
+        ply_name = tail[:-4]
+        temp_root = os.path.join(folder, ply_name)
 
-        o3d.visualization.draw_geometries(show_list)
+        if os.path.exists(temp_root):
+            shutil.rmtree(temp_root)
+        time.sleep(0.2)   # ensure the folder is cleared
+        os.mkdir(temp_root)
 
+        for k in self.pcd_dict.keys():
+            o3d.io.write_point_cloud(os.path.join(temp_root, 'class[' + str(k) + '].ply'), self.pcd_dict[k])
+            o3d.io.write_point_cloud(os.path.join(temp_root, 'class[' + str(k) + ']-rm_noise.ply'), self.pcd_cleaned[k])
+            if k > -1:
+                for i, plant in enumerate(self.plants[k]):
+                    o3d.io.write_point_cloud(os.path.join(temp_root, 'class[' + str(k) + ']-plant' + str(i) + '.ply'),
+                                             plant.pcd)
+
+        print('[3DPhenotyping][Output] All ply file exported')
+
+    def get_traits(self):
+        out_dict = {'Plot': [], 'kind': [], 'x(m)': [], 'y(m)': [],
+                    'width(m)':[], 'length(m)':[], 'hover_area(m2)':[],
+                    'height(m)':[], 'convex_volume(m3)':[], 'voxel_volume(m3)':[]}
+
+        for k in self.plants.keys():
+            for i, plant in enumerate(self.plants[k]):
+                out_dict['Plot'].append(self.ply_path)
+                out_dict['kind'].append(plant.kind)
+                out_dict['x(m)'].append(plant.center[0])
+                out_dict['y(m)'].append(plant.center[1])
+                out_dict['width(m)'].append(plant.width)
+                out_dict['length(m)'].append(plant.length)
+                out_dict['hover_area(m2)'].append(plant.hull_area)
+                out_dict['height(m)'].append(plant.height)
+                out_dict['convex_volume(m3)'].append(plant.volume_hull_ground)
+                out_dict['voxel_volume(m3)'].append(plant.volumn_voxel)
+
+        return pd.DataFrame(out_dict)
 
 class Plant(object):
 
-    def __init__(self, pcd, kind):
+    def __init__(self, parent, pcd, indices, kind):
+        self.plot = parent
         self.pcd = pcd
+        self.indices = '[Plant ' + str(indices) + ']'
         self.kind = kind
+        self.center = pcd.get_center()
+
+        print('[3DPhenotyping][Traits]' +self.indices + 'Calculating start.')
+
+        self.pcd_xyz = np.asarray(self.pcd.points)
+        self.pcd_rgb = np.asarray(self.pcd.colors)
+
+        self.x_max = self.pcd_xyz[:, 0].max()
+        self.x_min = self.pcd_xyz[:, 0].min()
+        self.x_len = self.x_max - self.x_min
+
+        self.y_max = self.pcd_xyz[:, 1].max()
+        self.y_min = self.pcd_xyz[:, 1].min()
+        self.y_len = self.y_max - self.y_min
+
+        self.z_max = self.pcd_xyz[:, 2].max()
+        self.z_min = self.pcd_xyz[:, 2].min()
+        self.z_len = self.z_max - self.z_min
+
+        self.plane_hull, self.hull_area = self.plane_convex_hull_calc()  # vertex_set (2D ndarray), m^2
+        print('[3DPhenotyping][Traits]' + self.indices + ' 2D convex hull generated')
+
+        res = min_bounding_rect(self.plane_hull)
+        # res = (rot_angle, area, width, length, center_point, corner_points)
+        self.width = res[2]   # unit is m
+        self.length = res[3]   # unit is m
+
+        self.hull_boundary = self.build_cut_boundary()
+        self.pcd_ground = self.hull_boundary.crop_point_cloud(self.plot.pcd_cleaned[-1])
+
+        self.pcd_merged = self.merge_pcd([self.pcd, self.pcd_ground])
+        print('[3DPhenotyping][Traits]' + self.indices + ' ground points merged.')
+
+        # calculate stereo convex hull
+        convex_hull_merged = self.pcd_merged.compute_convex_hull()
+        self.stereo_hull_merged = np.asarray(convex_hull_merged.vertices)
+        self.height = self.stereo_hull_merged[:,2].max() - self.stereo_hull_merged[:,2].min()
+
+        convex_hull_merged_scipy = ConvexHull(self.stereo_hull_merged)
+        self.volume_hull_ground = convex_hull_merged_scipy.volume
+        print('[3DPhenotyping][Traits]' + self.indices + ' 3D convex hull calculating finished.')
+
+        # todo: save convex hull to ply
+        # o3d.io.write_triangle_mesh('hull.ply', convex_hull)
+
+        # voxel volume
+        self.pcd_voxel, self.voxex_size = self.pcd2voxel()
+        self.voxel_num = len(self.pcd_voxel.voxels)
+        self.volumn_voxel = self.voxel_num * (self.voxex_size) ** 3 # unit is m3
+        print('[3DPhenotyping][Traits]' + self.indices + ' voxel generation finished.')
+
+    def plane_convex_hull_calc(self):
+        xy = self.pcd_xyz[:, 0:2]
+        hull = ConvexHull(xy)
+        hull_xy = xy[hull.vertices, :]
+        # in scipy, 2D hull.area is perimeter, hull.volume is area
+        # https://stackoverflow.com/questions/35664675/in-scipys-convexhull-what-does-area-measure
+        #
+        # >>> points = np.array([[-1,-1], [1,1], [-1, 1], [1,-1]])
+        # >>> hull = ConvexHull(points)
+        # ==== 2D ====
+        # >>> print(hull.volume)
+        # 4.00
+        # >>> print(hull.area)
+        # 8.00
+        # ==== 3D ====
+        # >>> points = np.array([[-1,-1, -1], [-1,-1, 1],
+        # ...                    [-1, 1, -1], [-1, 1, 1],
+        # ...                    [1, -1, -1], [1, -1, 1],
+        # ...                    [1,  1, -1], [1,  1, 1]])
+        # >>> hull = ConvexHull(points)
+        # >>> hull.area
+        # 24.0
+        # >>> hull.volume
+        # 8.0
+        return hull_xy, hull.volume
+
+    def build_cut_boundary(self):
+        z_coord = np.zeros((self.plane_hull.shape[0], 1))
+        polygon = np.hstack([self.plane_hull, z_coord])
+        polygon = np.vstack([polygon, polygon[0, :]])
+
+        boundary = o3d.visualization.SelectionPolygonVolume()
+        boundary.orthogonal_axis = "Z"
+        boundary.bounding_polygon = o3d.utility.Vector3dVector(polygon)
+        boundary.axis_max = self.plot.z_max
+        boundary.axis_min = self.plot.z_min
+
+        return boundary
+
+    @staticmethod
+    def merge_pcd(pcd_list):
+        final_pcd = o3d.geometry.PointCloud()
+        xyz = np.empty((0, 3))
+        rgb = np.empty((0, 3))
+
+        for pcd in pcd_list:
+            pcd_xyz = np.asarray(pcd.points)
+            pcd_rgb = np.asarray(pcd.colors)
+
+            xyz = np.vstack([xyz, pcd_xyz])
+            rgb = np.vstack([rgb, pcd_rgb])
+
+        final_pcd.points = o3d.utility.Vector3dVector(xyz)
+        final_pcd.colors = o3d.utility.Vector3dVector(rgb)
+
+        return final_pcd
+
+    def pcd2voxel(self, part=50):
+        # param part: how many part of the shortest axis will be split?
+        voxel_size = min(self.x_len, self.y_len, self.z_len) / part
+        # convert point cloud to voxel
+        pcd_voxel = o3d.geometry.VoxelGrid().create_from_point_cloud(self.pcd, voxel_size=voxel_size)
+        return pcd_voxel, voxel_size
+
 
 
 if __name__ == '__main__':
@@ -271,8 +493,8 @@ if __name__ == '__main__':
                                 '../example/training_data/back.png'],
                      kind_list=[0, -1], core='dtc')
     # can write for loops here for batch processing for a ply list
-    plot1 = Plot('../example/S06.ply', cla)   # size in meter
+    plot1 = Plot('../example/S01.ply', cla)#, show_steps=True)   # size in meter
     # save ply if necessary
-    #plot1.write_denoised_ply('./')
-    print(plot1.plants)
-    plot1.show_seged_plants()
+    plot1.write_ply()
+    plot1_pd = plot1.get_traits()
+    print(plot1_pd)

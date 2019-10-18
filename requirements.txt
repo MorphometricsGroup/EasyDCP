@@ -3,3 +3,4 @@ open3d==0.8.0.0
 plyfile==0.7
 scikit-learn==0.21.3
 imageio==2.6.1
+pandas==0.24.2

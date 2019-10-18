@@ -11,7 +11,7 @@ Right click the `install_packages.bat`，and edit the start paths to your Agisof
 
 `X:\Your_path_to\Agisoft\Metashape Pro\python\python.exe" -m pip install -r requirements.txt`
 
-And then run `install_packages.bat` in Administrator permission, the batch file will automatically install all the packages required for this project.
+And then run `install_packages.bat` in **Administrator permission**, the batch file will automatically install all the packages required for this project.
 
 Add Metashape program folder to Windows PATH
 See https://helpdeskgeek.com/windows-10/add-windows-path-environment-variable/
