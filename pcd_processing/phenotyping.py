@@ -345,10 +345,11 @@ class Plot(object):
         out_dict = {'Plot': [], 'kind': [], 'x(m)': [], 'y(m)': [],
                     'width(m)':[], 'length(m)':[], 'hover_area(m2)':[],
                     'height(m)':[], 'convex_volume(m3)':[], 'voxel_volume(m3)':[]}
+        folder, tail = os.path.split(os.path.abspath(self.ply_path))
 
         for k in self.plants.keys():
             for i, plant in enumerate(self.plants[k]):
-                out_dict['Plot'].append(self.ply_path)
+                out_dict['Plot'].append(tail[:-4])
                 out_dict['kind'].append(plant.kind)
                 out_dict['x(m)'].append(plant.center[0])
                 out_dict['y(m)'].append(plant.center[1])
@@ -359,7 +360,14 @@ class Plot(object):
                 out_dict['convex_volume(m3)'].append(plant.volume_hull_ground)
                 out_dict['voxel_volume(m3)'].append(plant.volumn_voxel)
 
-        return pd.DataFrame(out_dict)
+        df_out = pd.DataFrame(out_dict)
+        df_out = df_out.sort_values(by=['x(m)', 'y(m)']).reset_index()
+        df_out['Plant_id'] = df_out.index.values + 1
+        df_out = df_out[['Plot', 'Plant_id', 'kind', 'x(m)', 'y(m)',
+                         'width(m)', 'length(m)', 'hover_area(m2)', 'height(m)',
+                         'convex_volume(m3)', 'voxel_volume(m3)']]
+
+        return df_out
 
 class Plant(object):
 
@@ -489,12 +497,33 @@ if __name__ == '__main__':
     # >>> from phenotyping import *
 
     # testing examples, and show how to use the APIs
+    # build the general classifier first, to avoid rebuild every time for each ply file.
     cla = Classifier(path_list=['../example/training_data/fore_rm_y.png',
                                 '../example/training_data/back.png'],
                      kind_list=[0, -1], core='dtc')
-    # can write for loops here for batch processing for a ply list
+
+    # for single ply file
     plot1 = Plot('../example/S01.ply', cla)#, show_steps=True)   # size in meter
     # save ply if necessary
     plot1.write_ply()
-    plot1_pd = plot1.get_traits()
-    print(plot1_pd)
+    plot1_df = plot1.get_traits()
+    print(plot1_df)
+    plot1_df.to_csv('plot1.csv')
+
+    # batch processing
+    plot_set = ['../example/S02.ply', '../example/S03.ply']
+    # change to empty list for batch processing
+    # >>> result_container = []
+    result_container = [plot1_df]
+    # here is just for reuse S01 for testing
+
+    for plot in plot_set:
+        # show_steps=True to display output among calculation to check correct or not
+        plot_class = Plot(plot, cla, show_steps=False)
+        # if need to save points among calculation for checking or other software
+        plot_class.write_ply()
+        plot_df = plot_class.get_traits()
+        result_container.append(plot_df)
+
+    plot_all = pd.concat(result_container, axis=0).reset_index()
+    plot_all.to_csv('plot_outputs.csv', index=False)
