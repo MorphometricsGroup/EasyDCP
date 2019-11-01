@@ -45,7 +45,7 @@
 16. [A] build depth maps
 17. [A] build dense cloud
 18. (O) check dense cloud
-19. [A][B] export dense cloud to .PLY
+19. [A] export dense cloud to .PLY
 20. {x} points classification
 21. [A][B] build DEM
 22. [O] check DEM
