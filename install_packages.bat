@@ -1,1 +1,1 @@
-"D:\Applications\Agisoft\Metashape Pro\python\python.exe" -m pip install -r requirements.txt
+"C:\Program Files\Agisoft\Metashape Pro\python\python.exe" -m pip install -r requirements.txt

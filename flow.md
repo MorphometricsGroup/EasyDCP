@@ -25,34 +25,34 @@
 
 ## 2. Agisoft Reconstruction (auto_ctrl)
 1. [A] create project
-1. [A] import images
-1. [A][B] clear GPS data
-1. [A] estimate image quality
-1. [A] disable images below user-defined threshold
-1. [A] detect coded targets
-1. [A] match photos
-1. [A] align cameras (create tie points / sparse cloud)
-1. [A][B] import scale bars from .csv
-1. [A][B] align model with ground plane using markers or scalebars on ground
-1. [A] detect non-coded markers (cross)
-1. [A] detect non-coded markers (circle)
-1. [A] optimize cameras
-1. (O) check alignment / sparse cloud
-1. {x} cleanup sparse cloud (gradual selections)  
+2. [A] import images
+3. [A][B] clear GPS data
+4. [A] estimate image quality
+5. [A] disable images below user-defined threshold
+6. [A] detect coded targets
+7. [A] match photos
+8. [A] align cameras (create tie points / sparse cloud)
+9. [A][B] import scale bars from .csv
+10. [A][B] align model with ground plane using markers or scalebars on ground
+11. [A] detect non-coded markers (cross)
+12. [A] detect non-coded markers (circle)
+13. [A] optimize cameras
+14. (O) check alignment / sparse cloud
+15. {x} cleanup sparse cloud (gradual selections)  
     1. Reconstruction uncertainty
-    1. Reprojection Error
-    1. Projection Accuracy  
-1. [A] build depth maps
-1. [A] build dense cloud
-1. (O) check dense cloud
-1. [A][B] export dense cloud to .PLY
-1. {x} points classification
-1. [A][B] build DEM
-1. [O] check DEM
-1. [A][B] export DEM to .TIF
-1. [A][B] build orthomosaic
-1. [O] check orthomosaic
-1. [A][B] export orthomosaic to .TIF   
+    2. Reprojection Error
+    3. Projection Accuracy  
+16. [A] build depth maps
+17. [A] build dense cloud
+18. (O) check dense cloud
+19. [A] export dense cloud to .PLY
+20. {x} points classification
+21. [A][B] build DEM
+22. [O] check DEM
+23. [A][B] export DEM to .TIF
+24. [A][B] build orthomosaic
+25. [O] check orthomosaic
+26. [A][B] export orthomosaic to .TIF   
 
 ## 3. Phenotyping analysis (pcd_processing)
 1. [A] read point cloud
@@ -61,13 +61,13 @@
     1. [todo] Edit paths in config file.
 1. [A] Classification of dense cloud from raw image
     1. [A] Build classifier
-    1. [A] Apply classifier
-    1. [A] Noise filtering by radius outlier removal (depends on training dataset quality)
+    2. [A] Apply classifier
+    3. [A] Noise filtering by radius outlier removal (depends on training dataset quality)
 1. [A] Segmentation
     1. [A] General DBSCAN algorithm cluster
-    1. (O) Check if main plants wrongly segmented
-    1. [A] Remove outlier very small noise groups haven't been removed in *Step 3.3*
-    1. [A] Using x-y axis histogram to find the main body of plants, and remove ground noise
+    2. (O) Check if main plants wrongly segmented
+    3. [A] Remove outlier very small noise groups haven't been removed in *Step 3.3*
+    4. [A] Using x-y axis histogram to find the main body of plants, and remove ground noise
 1. [A] Phenotyping traits calculation
     1. Length & Width (Long axis and short axis)
         1. Drop Z values, keep X and Y values of all plants points
