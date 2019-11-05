@@ -263,7 +263,7 @@ class Plot(object):
                 pcd_seg = self.pcd_cleaned[k].select_down_sample(indices)
 
                 pcd_seg_list.append(pcd_seg)
-                char = np.asarray([len(pcd_seg.points), self.calculate_xyz_volumn(pcd_seg)])
+                char = np.asarray([len(pcd_seg.points) ** 0.5, self.calculate_xyz_volumn(pcd_seg)])
                 pcd_seg_char = np.vstack([pcd_seg_char, char])
 
             print('[3DPhenotyping][Segmentation][Clustering] class ' + str(k) + ' Cluster Data Prepared')
