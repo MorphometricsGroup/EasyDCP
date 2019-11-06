@@ -1,4 +1,4 @@
-from pcd_processing.phenotyping import *
+from phenotyping import *
 
 cla = Classifier(path_list=['F:/ply/training_data/fore.png',
                             'F:/ply/training_data/back.png'],
