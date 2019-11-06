@@ -1,4 +1,5 @@
 import os
+import colorsys
 import imageio
 import shutil
 import time
@@ -135,7 +136,7 @@ class Plot(object):
         """
         self.ply_path = ply_path
         self.pcd = self.read_ply(ply_path)
-        print('[3DPhenotyping] Ply fild loaded')
+        print('[3DPhenotyping] Ply file "' + self.ply_path + '" loaded')
 
         self.pcd_xyz = np.asarray(self.pcd.points)
         self.pcd_rgb = np.asarray(self.pcd.colors)
@@ -176,6 +177,8 @@ class Plot(object):
         if show_steps:
             show_list = [copy(plant.pcd) for plant in self.plants[0]]
             self._show_pcd(show_list, window_name='Plants', color='Rand')
+
+        self.traits = self._get_traits()
 
     @staticmethod
     def read_ply(file_path):
@@ -305,9 +308,22 @@ class Plot(object):
         #   [(0, 0.5, 1), ...]   max 1 for 255 color
         if isinstance(color, str):
             show_list = []
-            for pcd in pcd_list:
+            # generate distinguishable random colors
+            num = len(pcd_list)
+            dist_colors = []
+            i = 0
+            step = 360.0 / num
+            while i < 360:
+                h = i
+                s = 90 + np.random.rand() * 10
+                l = 50 + np.random.rand() * 10
+                r, g, b = colorsys.hls_to_rgb(h/360.0, l/ 100.0, s/ 100.0)
+                dist_colors.append((r, g, b))
+                i += step
+            # apply colors
+            for i, pcd in enumerate(pcd_list):
                 pcd_copy = copy(pcd)
-                pcd_copy.paint_uniform_color(np.random.rand(3).tolist())
+                pcd_copy.paint_uniform_color(dist_colors[i])
                 show_list.append(pcd_copy)
         elif isinstance(color, list):
             show_list = []
@@ -321,27 +337,7 @@ class Plot(object):
         print('[3DPhenotyping][Visualizing] Visualizing, calculation paused')
         o3d.visualization.draw_geometries(show_list, window_name=window_name)
 
-    def write_ply(self):
-        folder, tail = os.path.split(os.path.abspath(self.ply_path))
-        ply_name = tail[:-4]
-        temp_root = os.path.join(folder, ply_name)
-
-        if os.path.exists(temp_root):
-            shutil.rmtree(temp_root)
-        time.sleep(0.2)   # ensure the folder is cleared
-        os.mkdir(temp_root)
-
-        for k in self.pcd_dict.keys():
-            o3d.io.write_point_cloud(os.path.join(temp_root, 'class[' + str(k) + '].ply'), self.pcd_dict[k])
-            o3d.io.write_point_cloud(os.path.join(temp_root, 'class[' + str(k) + ']-rm_noise.ply'), self.pcd_cleaned[k])
-            if k > -1:
-                for i, plant in enumerate(self.plants[k]):
-                    o3d.io.write_point_cloud(os.path.join(temp_root, 'class[' + str(k) + ']-plant' + str(i) + '.ply'),
-                                             plant.pcd)
-
-        print('[3DPhenotyping][Output] All ply file exported')
-
-    def get_traits(self):
+    def _get_traits(self):
         out_dict = {'Plot': [], 'kind': [], 'x(m)': [], 'y(m)': [],
                     'width(m)':[], 'length(m)':[], 'hover_area(m2)':[],
                     'height(m)':[], 'convex_volume(m3)':[], 'voxel_volume(m3)':[]}
@@ -365,9 +361,32 @@ class Plot(object):
         df_out['Plant_id'] = df_out.index.values + 1
         df_out = df_out[['Plot', 'Plant_id', 'kind', 'x(m)', 'y(m)',
                          'width(m)', 'length(m)', 'hover_area(m2)', 'height(m)',
-                         'convex_volume(m3)', 'voxel_volume(m3)']]
+                         'convex_volume(m3)', 'voxel_volume(m3)', 'index']]
 
         return df_out
+
+    def write_ply(self):
+        folder, tail = os.path.split(os.path.abspath(self.ply_path))
+        ply_name = tail[:-4]
+        temp_root = os.path.join(folder, ply_name)
+
+        if os.path.exists(temp_root):
+            shutil.rmtree(temp_root)
+        time.sleep(1)   # ensure the folder is cleared
+        os.mkdir(temp_root)
+
+        for k in self.pcd_dict.keys():
+            o3d.io.write_point_cloud(os.path.join(temp_root, 'class[' + str(k) + '].ply'), self.pcd_dict[k])
+            o3d.io.write_point_cloud(os.path.join(temp_root, 'class[' + str(k) + ']-rm_noise.ply'), self.pcd_cleaned[k])
+            if k > -1:
+                for i, plant in enumerate(self.plants[k]):
+                    index_show = self.traits[self.traits['index'] == i]['Plant_id'].values[0]
+                    file_name = 'class[' + str(k) + ']-plant' + str(index_show) + '.ply'
+                    file_path = os.path.join(temp_root, file_name)
+                    print('[3DPhenotyping][Output] writing file "'+ file_path + '"')
+                    o3d.io.write_point_cloud(file_path, plant.pcd)
+
+        print('[3DPhenotyping][Output] All ply file exported')
 
 class Plant(object):
 
@@ -503,18 +522,17 @@ if __name__ == '__main__':
                      kind_list=[0, -1], core='dtc')
 
     # for single ply file
-    plot1 = Plot('../example/S01.ply', cla)#, show_steps=True)   # size in meter
+    plot1 = Plot('../example/S01.ply', cla, show_steps=False)   # size in meter
     # save ply if necessary
     plot1.write_ply()
-    plot1_df = plot1.get_traits()
-    print(plot1_df)
-    plot1_df.to_csv('plot1.csv')
+    print(plot1.traits)
+    plot1.traits.to_csv('plot1.csv')
 
     # batch processing
     plot_set = ['../example/S02.ply', '../example/S03.ply']
     # change to empty list for batch processing
     # >>> result_container = []
-    result_container = [plot1_df]
+    result_container = [plot1.traits]
     # here is just for reuse S01 for testing
 
     for plot in plot_set:
@@ -522,8 +540,7 @@ if __name__ == '__main__':
         plot_class = Plot(plot, cla, show_steps=False)
         # if need to save points among calculation for checking or other software
         plot_class.write_ply()
-        plot_df = plot_class.get_traits()
-        result_container.append(plot_df)
+        result_container.append(plot_class.traits)
 
     plot_all = pd.concat(result_container, axis=0).reset_index()
     plot_all.to_csv('plot_outputs.csv', index=False)

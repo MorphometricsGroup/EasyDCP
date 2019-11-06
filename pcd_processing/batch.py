@@ -14,8 +14,7 @@ for plot in plot_set:
     plot_class = Plot(plot, cla, show_steps=False)
     # if need to save points among calculation for checking or other software
     plot_class.write_ply()
-    plot_df = plot_class.get_traits()
-    result_container.append(plot_df)
+    result_container.append(plot_class.traits)
 
 plot_all = pd.concat(result_container, axis=0).reset_index()
 plot_all.to_csv('F:/ply/out/plot_alloutputs-batch2.csv', index=False)
