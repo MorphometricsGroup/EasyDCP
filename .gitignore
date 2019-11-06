@@ -1,3 +1,4 @@
-example/*
+*.ply
+*.csv
 .idea/*
 __pycache__
