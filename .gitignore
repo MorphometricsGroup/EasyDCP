@@ -1,3 +1,5 @@
-example/*
+*_NERV*
 .idea/*
 __pycache__
+*.ply
+*.csv

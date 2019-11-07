@@ -6,15 +6,14 @@ import time
 import numpy as np
 import open3d as o3d
 import pandas as pd
-# from PIL import Image
-# from datetime import datetime
 from copy import copy
-from plyfile import PlyData
 from scipy.spatial import ConvexHull
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.svm import OneClassSVM, SVC
 from sklearn.cluster import KMeans
-from min_bounding_rect import min_bounding_rect
+
+from .pcd_tools import merge_pcd, read_ply
+from .fit_ellipse import *
 
 
 class Classifier(object):
@@ -135,7 +134,7 @@ class Plot(object):
         :param show_steps: if open this, the progress won't continue until the visualizing window is turned off
         """
         self.ply_path = ply_path
-        self.pcd = self.read_ply(ply_path)
+        self.pcd = read_ply(ply_path)
         print('[3DPhenotyping] Ply file "' + self.ply_path + '" loaded')
 
         self.pcd_xyz = np.asarray(self.pcd.points)
@@ -179,26 +178,6 @@ class Plot(object):
             self._show_pcd(show_list, window_name='Plants', color='Rand')
 
         self.traits = self._get_traits()
-
-    @staticmethod
-    def read_ply(file_path):
-        pcd = o3d.io.read_point_cloud(file_path)
-        if not pcd.has_colors():
-            cloud_ply = PlyData.read(file_path)
-            cloud_data = cloud_ply.elements[0].data
-            ply_names = cloud_data.dtype.names
-
-            if 'red' in ply_names:
-                colors = np.vstack((cloud_data['red'] / 255, cloud_data['green'] / 255, cloud_data['blue'] / 255)).T
-                pcd.colors = o3d.utility.Vector3dVector(colors)
-            elif 'diffuse_red' in ply_names:
-                colors = np.vstack((cloud_data['diffuse_red'] / 255, cloud_data['diffuse_green'] / 255,
-                                    cloud_data['diffuse_blue'] / 255)).T
-                pcd.colors = o3d.utility.Vector3dVector(colors)
-            else:
-                print('Can not find color info in ', ply_names)
-
-        return pcd
 
     def classifier_apply(self, classifier):
         print('[3DPhenotyping][Classify] Start Classifying')
@@ -388,6 +367,7 @@ class Plot(object):
 
         print('[3DPhenotyping][Output] All ply file exported')
 
+
 class Plant(object):
 
     def __init__(self, parent, pcd, indices, kind):
@@ -417,15 +397,15 @@ class Plant(object):
         self.plane_hull, self.hull_area = self.plane_convex_hull_calc()  # vertex_set (2D ndarray), m^2
         print('[3DPhenotyping][Traits]' + self.indices + ' 2D convex hull generated')
 
-        res = min_bounding_rect(self.plane_hull)
+        #res = min_bounding_rect(self.plane_hull)
         # res = (rot_angle, area, width, length, center_point, corner_points)
-        self.width = res[2]   # unit is m
-        self.length = res[3]   # unit is m
+        self.width = 1  #res[2]   # unit is m
+        self.length = 1  #res[3]   # unit is m
 
         self.hull_boundary = self.build_cut_boundary()
         self.pcd_ground = self.hull_boundary.crop_point_cloud(self.plot.pcd_cleaned[-1])
 
-        self.pcd_merged = self.merge_pcd([self.pcd, self.pcd_ground])
+        self.pcd_merged = merge_pcd([self.pcd, self.pcd_ground])
         print('[3DPhenotyping][Traits]' + self.indices + ' ground points merged.')
 
         # calculate stereo convex hull
@@ -472,6 +452,15 @@ class Plant(object):
         # 8.0
         return hull_xy, hull.volume
 
+    def fit_bounding_ellipse(self):
+        center = (0, 0)
+        h_axis = 0   # Total length (diameter) of horizontal axis.
+        v_axis = 0   # Total length (diameter) of vertical axis.
+        angle = 0  # 0 - 360
+
+        pass
+        return center, h_axis, v_axis, angle
+
     def build_cut_boundary(self):
         z_coord = np.zeros((self.plane_hull.shape[0], 1))
         polygon = np.hstack([self.plane_hull, z_coord])
@@ -485,31 +474,12 @@ class Plant(object):
 
         return boundary
 
-    @staticmethod
-    def merge_pcd(pcd_list):
-        final_pcd = o3d.geometry.PointCloud()
-        xyz = np.empty((0, 3))
-        rgb = np.empty((0, 3))
-
-        for pcd in pcd_list:
-            pcd_xyz = np.asarray(pcd.points)
-            pcd_rgb = np.asarray(pcd.colors)
-
-            xyz = np.vstack([xyz, pcd_xyz])
-            rgb = np.vstack([rgb, pcd_rgb])
-
-        final_pcd.points = o3d.utility.Vector3dVector(xyz)
-        final_pcd.colors = o3d.utility.Vector3dVector(rgb)
-
-        return final_pcd
-
     def pcd2voxel(self, part=50):
         # param part: how many part of the shortest axis will be split?
         voxel_size = min(self.x_len, self.y_len, self.z_len) / part
         # convert point cloud to voxel
         pcd_voxel = o3d.geometry.VoxelGrid().create_from_point_cloud(self.pcd, voxel_size=voxel_size)
         return pcd_voxel, voxel_size
-
 
 
 if __name__ == '__main__':

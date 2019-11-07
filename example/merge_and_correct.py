@@ -1,20 +1,22 @@
-from phenotyping import *
+import reg_path
+from pcd_processing.phenotyping import *
+from pcd_processing.pcd_tools import *
 import open3d as o3d
 
-plant_merge_list = ['../example/S04/class[0]-plant2.ply', '../example/S04/class[0]-plant4.ply']
+plant_merge_list = ['S04/class[0]-plant2.ply', 'S04/class[0]-plant4.ply']
 pcd_list = []
 for ply_path in plant_merge_list:
-    pcd = Plot.read_ply(ply_path)
+    pcd = read_ply(ply_path)
     pcd_list.append(pcd)
-m_pcd = Plant.merge_pcd(pcd_list)
+m_pcd = merge_pcd(pcd_list)
 
 o3d.visualization.draw_geometries([m_pcd])
 
-cla = Classifier(path_list=['../example/training_data/fore_rm_y.png',
-                            '../example/training_data/back.png'],
+cla = Classifier(path_list=['training_data/fore_rm_y.png',
+                            'training_data/back.png'],
                  kind_list=[0, -1], core='dtc')
 
-plot1 = Plot('../example/S04.ply', cla, show_steps=True)
+plot1 = Plot('S04.ply', cla, show_steps=True)
 
 plant_m = Plant(plot1, m_pcd, 0, 0)
 
