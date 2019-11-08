@@ -11,8 +11,10 @@ from scipy.spatial import ConvexHull
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.svm import OneClassSVM, SVC
 from sklearn.cluster import KMeans
+from skimage.measure import regionprops
 
-from .pcd_tools import merge_pcd, read_ply
+from .pcd_tools import merge_pcd, read_ply, pcd2binary
+from .min_bounding_rect import min_bounding_rect
 from .fit_ellipse import *
 
 
@@ -317,8 +319,9 @@ class Plot(object):
         o3d.visualization.draw_geometries(show_list, window_name=window_name)
 
     def _get_traits(self):
-        out_dict = {'Plot': [], 'kind': [], 'x(m)': [], 'y(m)': [],
-                    'width(m)':[], 'length(m)':[], 'hover_area(m2)':[],
+        out_dict = {'Plot': [], 'kind': [], 'center.x(m)': [], 'center.y(m)': [],
+                    'min_rect_width(m)':[], 'min_rect_length(m)':[], 'hover_area(m2)':[],
+                    'centroid.x(m)':[], 'centroid.y(m)':[], 'long_axis(m)':[], 'short_axis(m)':[], 'orient_deg2yaxis':[],
                     'height(m)':[], 'convex_volume(m3)':[], 'voxel_volume(m3)':[]}
         folder, tail = os.path.split(os.path.abspath(self.ply_path))
 
@@ -326,21 +329,27 @@ class Plot(object):
             for i, plant in enumerate(self.plants[k]):
                 out_dict['Plot'].append(tail[:-4])
                 out_dict['kind'].append(plant.kind)
-                out_dict['x(m)'].append(plant.center[0])
-                out_dict['y(m)'].append(plant.center[1])
-                out_dict['width(m)'].append(plant.width)
-                out_dict['length(m)'].append(plant.length)
+                out_dict['center.x(m)'].append(plant.center[0])
+                out_dict['center.y(m)'].append(plant.center[1])
+                out_dict['min_rect_width(m)'].append(plant.width)
+                out_dict['min_rect_length(m)'].append(plant.length)
                 out_dict['hover_area(m2)'].append(plant.hull_area)
+                out_dict['centroid.x(m)'].append(plant.centroid[0])
+                out_dict['centroid.y(m)'].append(plant.centroid[1])
+                out_dict['long_axis(m)'].append(plant.major_axis)
+                out_dict['short_axis(m)'].append(plant.minor_axis)
+                out_dict['orient_deg2yaxis'].append(plant.orient_degree)
                 out_dict['height(m)'].append(plant.height)
                 out_dict['convex_volume(m3)'].append(plant.volume_hull_ground)
                 out_dict['voxel_volume(m3)'].append(plant.volumn_voxel)
 
         df_out = pd.DataFrame(out_dict)
-        df_out = df_out.sort_values(by=['x(m)', 'y(m)']).reset_index()
+        df_out = df_out.sort_values(by=['center.x(m)', 'center.y(m)']).reset_index()
         df_out['Plant_id'] = df_out.index.values + 1
-        df_out = df_out[['Plot', 'Plant_id', 'kind', 'x(m)', 'y(m)',
-                         'width(m)', 'length(m)', 'hover_area(m2)', 'height(m)',
-                         'convex_volume(m3)', 'voxel_volume(m3)', 'index']]
+        df_out = df_out[['Plot', 'Plant_id', 'kind', 'center.x(m)', 'center.y(m)',
+                         'min_rect_width(m)', 'min_rect_length(m)', 'hover_area(m2)',
+                         'centroid.x(m)', 'centroid.y(m)', 'long_axis(m)', 'short_axis(m)', 'orient_deg2yaxis',
+                         'height(m)', 'convex_volume(m3)', 'voxel_volume(m3)', 'index']]
 
         return df_out
 
@@ -397,10 +406,11 @@ class Plant(object):
         self.plane_hull, self.hull_area = self.plane_convex_hull_calc()  # vertex_set (2D ndarray), m^2
         print('[3DPhenotyping][Traits]' + self.indices + ' 2D convex hull generated')
 
-        #res = min_bounding_rect(self.plane_hull)
+        self.centroid, self.major_axis, self.minor_axis, self.orient_degree = self.fit_region_props()
+        res = min_bounding_rect(self.plane_hull)
         # res = (rot_angle, area, width, length, center_point, corner_points)
-        self.width = 1  #res[2]   # unit is m
-        self.length = 1  #res[3]   # unit is m
+        self.width = res[2]   # unit is m
+        self.length = res[3]   # unit is m
 
         self.hull_boundary = self.build_cut_boundary()
         self.pcd_ground = self.hull_boundary.crop_point_cloud(self.plot.pcd_cleaned[-1])
@@ -452,14 +462,22 @@ class Plant(object):
         # 8.0
         return hull_xy, hull.volume
 
-    def fit_bounding_ellipse(self):
-        center = (0, 0)
-        h_axis = 0   # Total length (diameter) of horizontal axis.
-        v_axis = 0   # Total length (diameter) of vertical axis.
-        angle = 0  # 0 - 360
+    def fit_region_props(self):
+        binary, px_num_per_cm, x_min, y_min = pcd2binary(self.pcd)
+        regions = regionprops(binary, coordinates='xy')
+        props = regions[0]          # this is all coordinate in converted binary images
 
-        pass
-        return center, h_axis, v_axis, angle
+        # convert coordinate from binary images to real point cloud
+        y0, x0 = props.centroid
+        center = ( x0 / px_num_per_cm / 100 + x_min, y0 / px_num_per_cm /100 + y_min)
+
+        major_axis = props.major_axis_length / px_num_per_cm / 100
+        minor_axis = props.minor_axis_length / px_num_per_cm / 100
+
+        phi = props.orientation
+        angle = phi * 180 / np.pi -90
+
+        return center, major_axis, minor_axis, angle
 
     def build_cut_boundary(self):
         z_coord = np.zeros((self.plane_hull.shape[0], 1))

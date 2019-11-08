@@ -40,3 +40,25 @@ def merge_pcd(pcd_list):
 
 def pcd2dom(pcd, voxel_size):
     down_pcd = pcd.voxel_down_sample(voxel_size=voxel_size)
+    pass
+
+def pcd2binary(pcd, dpi=10):
+    # dpi suggest < 20
+    pcd_xyz = np.asarray(pcd.points)
+    x = pcd_xyz[:, 0]
+    y = pcd_xyz[:, 1]
+    x_length_m = x.max() - x.min()
+    y_length_m = y.max() - y.min()
+    px_num_per_cm = int(dpi / 2.54)
+    width = int(np.ceil(x_length_m * 100 * px_num_per_cm))
+    height = int(np.ceil(y_length_m * 100 * px_num_per_cm))
+    ref_x = (x - x.min()) / x_length_m * width
+    ref_y = (y - y.min()) / y_length_m * height
+    ref_pos = np.vstack([ref_x, ref_y]).T.astype(int)
+    ref_pos_rm_dup = np.unique(ref_pos, axis=0)
+
+    out_img = np.zeros((width + 1, height + 1))
+    out_img[ref_pos_rm_dup[:, 0], ref_pos_rm_dup[:, 1]] = 1
+    out_img = out_img.astype(int)
+
+    return out_img, px_num_per_cm, x.min(), y.min()
