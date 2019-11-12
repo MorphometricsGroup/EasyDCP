@@ -1,4 +1,5 @@
 import reg_path
+import pandas as pd
 from pcd_processing.phenotyping import *
 
 cla = Classifier(path_list=['F:/ply/training_data/fore.png',
