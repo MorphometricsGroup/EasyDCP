@@ -45,8 +45,11 @@ def pcd2dom(pcd, voxel_size):
 def pcd2binary(pcd, dpi=10):
     # dpi suggest < 20
     pcd_xyz = np.asarray(pcd.points)
-    x = pcd_xyz[:, 0]
-    y = pcd_xyz[:, 1]
+    # !!!! notice !!!!
+    # in numpy image system, Y axis is 0, X axis is 1
+    y = pcd_xyz[:, 0]
+    x = pcd_xyz[:, 1]
+
     x_length_m = x.max() - x.min()
     y_length_m = y.max() - y.min()
     px_num_per_cm = int(dpi / 2.54)
@@ -61,4 +64,6 @@ def pcd2binary(pcd, dpi=10):
     out_img[ref_pos_rm_dup[:, 0], ref_pos_rm_dup[:, 1]] = 1
     out_img = out_img.astype(int)
 
-    return out_img, px_num_per_cm, x.min(), y.min()
+    left_top_corner = (y.min(), x.min())
+
+    return out_img, px_num_per_cm, left_top_corner

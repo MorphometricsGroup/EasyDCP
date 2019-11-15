@@ -13,9 +13,13 @@ from sklearn.svm import OneClassSVM, SVC
 from sklearn.cluster import KMeans
 from skimage.measure import regionprops
 
-from .pcd_tools import merge_pcd, read_ply, pcd2binary
-from .min_bounding_rect import min_bounding_rect
-from .fit_ellipse import *
+import matplotlib.pyplot as plt
+from matplotlib.patches import Ellipse
+from scipy.stats import gaussian_kde
+
+from pcd_tools import merge_pcd, read_ply, pcd2binary
+from geometry.min_bounding_rect import min_bounding_rect
+from geometry.fit_ellipse import *
 
 
 class Classifier(object):
@@ -138,6 +142,7 @@ class Plot(object):
         self.ply_path = ply_path
         self.pcd = read_ply(ply_path)
         print('[3DPhenotyping] Ply file "' + self.ply_path + '" loaded')
+        self._get_temp_root()
 
         self.pcd_xyz = np.asarray(self.pcd.points)
         self.pcd_rgb = np.asarray(self.pcd.colors)
@@ -320,8 +325,8 @@ class Plot(object):
 
     def _get_traits(self):
         out_dict = {'Plot': [], 'kind': [], 'center.x(m)': [], 'center.y(m)': [],
-                    'min_rect_width(m)':[], 'min_rect_length(m)':[], 'hover_area(m2)':[],
-                    'centroid.x(m)':[], 'centroid.y(m)':[], 'long_axis(m)':[], 'short_axis(m)':[], 'orient_deg2yaxis':[],
+                    'min_rect_width(m)':[], 'min_rect_length(m)':[], 'hover_area(m2)':[], 'PLA(cm2)':[],
+                    'centroid.x(m)':[], 'centroid.y(m)':[], 'long_axis(m)':[], 'short_axis(m)':[], 'orient_deg2xaxis':[],
                     'height(m)':[], 'convex_volume(m3)':[], 'voxel_volume(m3)':[]}
         folder, tail = os.path.split(os.path.abspath(self.ply_path))
 
@@ -334,11 +339,12 @@ class Plot(object):
                 out_dict['min_rect_width(m)'].append(plant.width)
                 out_dict['min_rect_length(m)'].append(plant.length)
                 out_dict['hover_area(m2)'].append(plant.hull_area)
+                out_dict['PLA(cm2)'].append(plant.pla)
                 out_dict['centroid.x(m)'].append(plant.centroid[0])
                 out_dict['centroid.y(m)'].append(plant.centroid[1])
                 out_dict['long_axis(m)'].append(plant.major_axis)
                 out_dict['short_axis(m)'].append(plant.minor_axis)
-                out_dict['orient_deg2yaxis'].append(plant.orient_degree)
+                out_dict['orient_deg2xaxis'].append(plant.orient_degree)
                 out_dict['height(m)'].append(plant.height)
                 out_dict['convex_volume(m3)'].append(plant.volume_hull_ground)
                 out_dict['voxel_volume(m3)'].append(plant.volumn_voxel)
@@ -347,34 +353,98 @@ class Plot(object):
         df_out = df_out.sort_values(by=['center.x(m)', 'center.y(m)']).reset_index()
         df_out['Plant_id'] = df_out.index.values + 1
         df_out = df_out[['Plot', 'Plant_id', 'kind', 'center.x(m)', 'center.y(m)',
-                         'min_rect_width(m)', 'min_rect_length(m)', 'hover_area(m2)',
-                         'centroid.x(m)', 'centroid.y(m)', 'long_axis(m)', 'short_axis(m)', 'orient_deg2yaxis',
+                         'min_rect_width(m)', 'min_rect_length(m)', 'hover_area(m2)', 'PLA(cm2)',
+                         'centroid.x(m)', 'centroid.y(m)', 'long_axis(m)', 'short_axis(m)', 'orient_deg2xaxis',
                          'height(m)', 'convex_volume(m3)', 'voxel_volume(m3)', 'index']]
 
         return df_out
 
-    def write_ply(self):
+    def _get_temp_root(self):
         folder, tail = os.path.split(os.path.abspath(self.ply_path))
         ply_name = tail[:-4]
-        temp_root = os.path.join(folder, ply_name)
-
-        if os.path.exists(temp_root):
-            shutil.rmtree(temp_root)
+        self.temp_root = os.path.join(folder, ply_name)
+        if os.path.exists(self.temp_root):
+            shutil.rmtree(self.temp_root)
         time.sleep(1)   # ensure the folder is cleared
-        os.mkdir(temp_root)
+        os.mkdir(self.temp_root)
 
+    def write_ply(self):
         for k in self.pcd_dict.keys():
-            o3d.io.write_point_cloud(os.path.join(temp_root, 'class[' + str(k) + '].ply'), self.pcd_dict[k])
-            o3d.io.write_point_cloud(os.path.join(temp_root, 'class[' + str(k) + ']-rm_noise.ply'), self.pcd_cleaned[k])
+            o3d.io.write_point_cloud(os.path.join(self.temp_root, 'class[' + str(k) + '].ply'), self.pcd_dict[k])
+            o3d.io.write_point_cloud(os.path.join(self.temp_root, 'class[' + str(k) + ']-rm_noise.ply'), self.pcd_cleaned[k])
             if k > -1:
                 for i, plant in enumerate(self.plants[k]):
                     index_show = self.traits[self.traits['index'] == i]['Plant_id'].values[0]
                     file_name = 'class[' + str(k) + ']-plant' + str(index_show) + '.ply'
-                    file_path = os.path.join(temp_root, file_name)
+                    file_path = os.path.join(self.temp_root, file_name)
                     print('[3DPhenotyping][Output] writing file "'+ file_path + '"')
                     o3d.io.write_point_cloud(file_path, plant.pcd)
 
         print('[3DPhenotyping][Output] All ply file exported')
+
+    def write_fig(self):
+        print('[3DPhenotyping][Output] writing traits figures')
+        for i, raw_id in enumerate(list(self.traits['index'])):
+            print('[3DPhenotyping][Output][Plant ' + str(i+1) + '] traits preparation')
+            fig, ax = plt.subplots(1, 3, figsize=(10, 3), dpi=300,
+                                   gridspec_kw={'width_ratios': [3, 3, 1]})
+            plant = self.plants[0][raw_id]
+            pcd = plant.pcd
+            pcd_xyz = np.asarray(pcd.points)
+
+            x = pcd_xyz[:, 0]
+            y = pcd_xyz[:, 1]
+            z = pcd_xyz[:, 2]
+
+            convex_hull = np.vstack([plant.plane_hull, plant.plane_hull[0, :]])
+
+            corner = plant.rect_res[5]
+            rect_corner = np.vstack([corner, corner[0, :]])
+
+            x0 = plant.centroid[0]
+            y0 = plant.centroid[1]
+            phi = plant.orient_degree
+
+            maj_x = np.cos(np.deg2rad(phi)) * 0.5 * plant.major_axis
+            maj_y = np.sin(np.deg2rad(phi)) * 0.5 * plant.major_axis
+            min_x = np.sin(np.deg2rad(phi)) * 0.5 * plant.minor_axis
+            min_y = np.cos(np.deg2rad(phi)) * 0.5 * plant.minor_axis
+
+            z_lin = np.linspace(z.min(), z.max(), 1000)
+            kernel = gaussian_kde(z)
+            y_d = kernel(z_lin)
+
+            ell = Ellipse(plant.centroid, plant.major_axis, plant.minor_axis, phi, alpha=0.5, zorder=2)
+
+            print('[3DPhenotyping][Output][Plant ' + str(i + 1) + '] Plotting')
+            ax[0].scatter(x, y, marker='.', color='C2', alpha=0.2, zorder=0)
+            ax[0].add_artist(ell)
+            ax[0].plot((x0 - maj_x, x0 + maj_x), (y0 - maj_y, y0 + maj_y), '-k', linewidth=2.5)
+            ax[0].plot((x0 + min_x, x0 - min_x), (y0 - min_y, y0 + min_y), '-k', linewidth=2.5)
+            ax[0].plot(convex_hull[:, 0], convex_hull[:, 1], 'C0--', alpha=0.5, zorder=5)
+            ax[0].scatter(convex_hull[:, 0], convex_hull[:, 1], marker='.', color='C3', zorder=10)
+            ax[0].plot(rect_corner[:, 0], rect_corner[:, 1], color='C1', alpha=0.5, zorder=15)
+            ax[0].plot(x0, y0, 'r.', zorder=20)
+
+            ax[0].axis('scaled')
+            ax[0].set_xlabel('X')
+            ax[0].set_ylabel('Y', rotation=0)
+
+            ax[1].scatter(x, z, marker='.', color='C2')
+            ax[1].set_xlabel('X')
+            ax[1].set_ylabel('Z', rotation=0)
+
+            ax[1].set_title('Plant' + str(i+1))
+
+            ax[2].plot(y_d, z_lin)
+            ax[2].set_xlabel('Histgram')
+            ax[2].set_yticklabels('')
+            ax[2].plot([0, y_d.max()], [np.percentile(z, 90), np.percentile(z, 90)])
+            print('[3DPhenotyping][Output][Plant ' + str(i + 1) + '] Plotting finished')
+
+            plt.tight_layout()
+            plt.savefig(os.path.join(self.temp_root, 'plant' + str(i+1) + '.jpg'))
+            plt.close()
 
 
 class Plant(object):
@@ -407,10 +477,12 @@ class Plant(object):
         print('[3DPhenotyping][Traits]' + self.indices + ' 2D convex hull generated')
 
         self.centroid, self.major_axis, self.minor_axis, self.orient_degree = self.fit_region_props()
-        res = min_bounding_rect(self.plane_hull)
-        # res = (rot_angle, area, width, length, center_point, corner_points)
-        self.width = res[2]   # unit is m
-        self.length = res[3]   # unit is m
+        self.rect_res = min_bounding_rect(self.plane_hull)
+        # rect_res = (rot_angle, area, width, length, center_point, corner_points)
+        self.width = self.rect_res[2]   # unit is m
+        self.length = self.rect_res[3]   # unit is m
+
+        self.pla = self.calcu_projected_leaf_area()
 
         self.hull_boundary = self.build_cut_boundary()
         self.pcd_ground = self.hull_boundary.crop_point_cloud(self.plot.pcd_cleaned[-1])
@@ -463,7 +535,8 @@ class Plant(object):
         return hull_xy, hull.volume
 
     def fit_region_props(self):
-        binary, px_num_per_cm, x_min, y_min = pcd2binary(self.pcd)
+        binary, px_num_per_cm, corner = pcd2binary(self.pcd)
+        x_min, y_min = corner
         regions = regionprops(binary, coordinates='xy')
         props = regions[0]          # this is all coordinate in converted binary images
 
@@ -475,9 +548,21 @@ class Plant(object):
         minor_axis = props.minor_axis_length / px_num_per_cm / 100
 
         phi = props.orientation
-        angle = phi * 180 / np.pi -90
+        angle = - phi * 180 / np.pi # included angle with x axis, clockwise, by regionprops default
+
+        self.pla_img = binary  # preojected leaf area
+        self.px_num_per_cm = px_num_per_cm
 
         return center, major_axis, minor_axis, angle
+
+    def calcu_projected_leaf_area(self):
+        kind, number = np.unique(self.pla_img, return_counts=True)
+        back_num = number[0]
+        fore_num = number[1]
+
+        pixel_size = (1 / self.px_num_per_cm) ** 2   # unit is cm2
+
+        return fore_num * pixel_size
 
     def build_cut_boundary(self):
         z_coord = np.zeros((self.plane_hull.shape[0], 1))
@@ -498,37 +583,3 @@ class Plant(object):
         # convert point cloud to voxel
         pcd_voxel = o3d.geometry.VoxelGrid().create_from_point_cloud(self.pcd, voxel_size=voxel_size)
         return pcd_voxel, voxel_size
-
-
-if __name__ == '__main__':
-    # >>> from phenotyping import *
-
-    # testing examples, and show how to use the APIs
-    # build the general classifier first, to avoid rebuild every time for each ply file.
-    cla = Classifier(path_list=['../example/training_data/fore_rm_y.png',
-                                '../example/training_data/back.png'],
-                     kind_list=[0, -1], core='dtc')
-
-    # for single ply file
-    plot1 = Plot('../example/S01.ply', cla, show_steps=False)   # size in meter
-    # save ply if necessary
-    plot1.write_ply()
-    print(plot1.traits)
-    plot1.traits.to_csv('plot1.csv')
-
-    # batch processing
-    plot_set = ['../example/S02.ply', '../example/S03.ply']
-    # change to empty list for batch processing
-    # >>> result_container = []
-    result_container = [plot1.traits]
-    # here is just for reuse S01 for testing
-
-    for plot in plot_set:
-        # show_steps=True to display output among calculation to check correct or not
-        plot_class = Plot(plot, cla, show_steps=False)
-        # if need to save points among calculation for checking or other software
-        plot_class.write_ply()
-        result_container.append(plot_class.traits)
-
-    plot_all = pd.concat(result_container, axis=0).reset_index()
-    plot_all.to_csv('plot_outputs.csv', index=False)

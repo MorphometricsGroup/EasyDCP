@@ -1,5 +1,6 @@
 *_NERV*
 .idea/*
+phenotyping/example/S*
 __pycache__
 *.ply
 *.csv
