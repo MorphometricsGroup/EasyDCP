@@ -17,9 +17,9 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Ellipse
 from scipy.stats import gaussian_kde
 
-from pcd_tools import merge_pcd, read_ply, pcd2binary
-from geometry.min_bounding_rect import min_bounding_rect
-from geometry.fit_ellipse import *
+from .pcd_tools import merge_pcd, read_ply, pcd2binary
+from .geometry.min_bounding_rect import min_bounding_rect
+from .geometry.fit_ellipse import *
 
 
 class Classifier(object):
@@ -141,7 +141,7 @@ class Plot(object):
         """
         self.ply_path = ply_path
         self.pcd = read_ply(ply_path)
-        print('[3DPhenotyping] Ply file "' + self.ply_path + '" loaded')
+        print(f'[3DPhenotyping] Ply file "{self.ply_path}" loaded')
         self._get_temp_root()
 
         self.pcd_xyz = np.asarray(self.pcd.points)
@@ -193,10 +193,10 @@ class Plot(object):
         pcd_dict = {}
 
         for k in classifier.kind_set:
-            print('[3DPhenotyping][Classify] Begin for class ' + str(k))
+            print(f'[3DPhenotyping][Classify] Begin for class {k}')
             indices = np.where(pred_result == k)[0].tolist()
             pcd_dict[k] = self.pcd.select_down_sample(indices=indices)
-            print('[3DPhenotyping][Classify] kind ' + str(k) + ' classified')
+            print(f'[3DPhenotyping][Classify] kind {k} classified')
 
         return pcd_dict
 
@@ -223,7 +223,7 @@ class Plot(object):
             else:
                 pcd_cleaned[k], pcd_cleaned_id[k] = self.pcd_dict[k].remove_radius_outlier\
                     (nb_points=round(self.voxel_density), radius=self.voxel_size)
-            print('[3DPhenotyping][rm_noise] kind ' + str(k) + ' noise removed')
+            print(f'[3DPhenotyping][rm_noise] kind {k} noise removed')
 
         return pcd_cleaned, pcd_cleaned_id
 
@@ -234,13 +234,13 @@ class Plot(object):
             if k == -1:
                 continue
 
-            print('[3DPhenotyping][Segmentation] Start segmenting class ' + str(k) + ' Please wait...')
+            print(f'[3DPhenotyping][Segmentation] Start segmenting class {k} Please wait...')
             vect = self.pcd_cleaned[k].cluster_dbscan(eps=self.voxel_size * 10, min_points=round(self.voxel_density),
                                                       print_progress=True)
             vect_np = np.asarray(vect)
             seg_id = np.unique(vect_np)
 
-            print('[3DPhenotyping][Segmentation] class ' + str(k) + ' Segmented')
+            print(f'[3DPhenotyping][Segmentation] class {k} Segmented')
 
             # KMeans to find the class of noise and plants
             # # Data prepare for clustering
@@ -255,7 +255,7 @@ class Plot(object):
                 char = np.asarray([len(pcd_seg.points) ** 0.5, self.calculate_xyz_volumn(pcd_seg)])
                 pcd_seg_char = np.vstack([pcd_seg_char, char])
 
-            print('[3DPhenotyping][Segmentation][Clustering] class ' + str(k) + ' Cluster Data Prepared')
+            print(f'[3DPhenotyping][Segmentation][Clustering] class {k} Cluster Data Prepared')
 
             # # cluster by (points number, and volumn) to remove noise segmenation
             km = KMeans(n_clusters=2)
@@ -272,7 +272,7 @@ class Plot(object):
 
             seg_out[k] = [Plant(self, pcd_seg_list[p], i+1, kind=k) for i, p in enumerate(plant_id)]
 
-            print('[3DPhenotyping][Segmentation][Clustering] class ' + str(k) + ' Clustered')
+            print(f'[3DPhenotyping][Segmentation][Clustering] class {k} Clustered')
 
         return seg_out
 
@@ -377,7 +377,7 @@ class Plot(object):
                     index_show = self.traits[self.traits['index'] == i]['Plant_id'].values[0]
                     file_name = 'class[' + str(k) + ']-plant' + str(index_show) + '.ply'
                     file_path = os.path.join(self.temp_root, file_name)
-                    print('[3DPhenotyping][Output] writing file "'+ file_path + '"')
+                    print(f'[3DPhenotyping][Output] writing file "{file_path}"')
                     o3d.io.write_point_cloud(file_path, plant.pcd)
 
         print('[3DPhenotyping][Output] All ply file exported')
@@ -385,7 +385,7 @@ class Plot(object):
     def write_fig(self):
         print('[3DPhenotyping][Output] writing traits figures')
         for i, raw_id in enumerate(list(self.traits['index'])):
-            print('[3DPhenotyping][Output][Plant ' + str(i+1) + '] traits preparation')
+            print(f'[3DPhenotyping][Output][Plant {i+1}] traits preparation')
             fig, ax = plt.subplots(1, 3, figsize=(10, 3), dpi=300,
                                    gridspec_kw={'width_ratios': [3, 3, 1]})
             plant = self.plants[0][raw_id]
@@ -416,7 +416,7 @@ class Plot(object):
 
             ell = Ellipse(plant.centroid, plant.major_axis, plant.minor_axis, phi, alpha=0.5, zorder=2)
 
-            print('[3DPhenotyping][Output][Plant ' + str(i + 1) + '] Plotting')
+            print(f'[3DPhenotyping][Output][Plant {i + 1}] Plotting')
             ax[0].scatter(x, y, marker='.', color='C2', alpha=0.2, zorder=0)
             ax[0].add_artist(ell)
             ax[0].plot((x0 - maj_x, x0 + maj_x), (y0 - maj_y, y0 + maj_y), '-k', linewidth=2.5)
@@ -440,7 +440,7 @@ class Plot(object):
             ax[2].set_xlabel('Histgram')
             ax[2].set_yticklabels('')
             ax[2].plot([0, y_d.max()], [np.percentile(z, 90), np.percentile(z, 90)])
-            print('[3DPhenotyping][Output][Plant ' + str(i + 1) + '] Plotting finished')
+            print(f'[3DPhenotyping][Output][Plant {i + 1}] Plotting finished')
 
             plt.tight_layout()
             plt.savefig(os.path.join(self.temp_root, 'plant' + str(i+1) + '.jpg'))
@@ -456,7 +456,7 @@ class Plant(object):
         self.kind = kind
         self.center = pcd.get_center()
 
-        print('[3DPhenotyping][Traits]' +self.indices + 'Calculating start.')
+        print(f'[3DPhenotyping][Traits]{self.indices} Calculating start.')
 
         self.pcd_xyz = np.asarray(self.pcd.points)
         self.pcd_rgb = np.asarray(self.pcd.colors)
@@ -474,7 +474,7 @@ class Plant(object):
         self.z_len = self.z_max - self.z_min
 
         self.plane_hull, self.hull_area = self.plane_convex_hull_calc()  # vertex_set (2D ndarray), m^2
-        print('[3DPhenotyping][Traits]' + self.indices + ' 2D convex hull generated')
+        print(f'[3DPhenotyping][Traits]{self.indices} 2D convex hull generated')
 
         self.centroid, self.major_axis, self.minor_axis, self.orient_degree = self.fit_region_props()
         self.rect_res = min_bounding_rect(self.plane_hull)
@@ -488,16 +488,16 @@ class Plant(object):
         self.pcd_ground = self.hull_boundary.crop_point_cloud(self.plot.pcd_cleaned[-1])
 
         self.pcd_merged = merge_pcd([self.pcd, self.pcd_ground])
-        print('[3DPhenotyping][Traits]' + self.indices + ' ground points merged.')
+        print(f'[3DPhenotyping][Traits]{self.indices} ground points merged.')
 
         # calculate stereo convex hull
         convex_hull_merged = self.pcd_merged.compute_convex_hull()
         self.stereo_hull_merged = np.asarray(convex_hull_merged.vertices)
-        self.height = self.stereo_hull_merged[:,2].max() - self.stereo_hull_merged[:,2].min()
+        self.height = self.stereo_hull_merged[:, 2].max() - self.stereo_hull_merged[:, 2].min()
 
         convex_hull_merged_scipy = ConvexHull(self.stereo_hull_merged)
         self.volume_hull_ground = convex_hull_merged_scipy.volume
-        print('[3DPhenotyping][Traits]' + self.indices + ' 3D convex hull calculating finished.')
+        print(f'[3DPhenotyping][Traits]{self.indices} 3D convex hull calculating finished.')
 
         # todo: save convex hull to ply
         # o3d.io.write_triangle_mesh('hull.ply', convex_hull)
@@ -506,7 +506,7 @@ class Plant(object):
         self.pcd_voxel, self.voxex_size = self.pcd2voxel()
         self.voxel_num = len(self.pcd_voxel.voxels)
         self.volumn_voxel = self.voxel_num * (self.voxex_size) ** 3 # unit is m3
-        print('[3DPhenotyping][Traits]' + self.indices + ' voxel generation finished.')
+        print(f'[3DPhenotyping][Traits]{self.indices} voxel generation finished.')
 
     def plane_convex_hull_calc(self):
         xy = self.pcd_xyz[:, 0:2]

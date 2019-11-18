@@ -1,5 +1,5 @@
 import unittest
-from base import *
+from phenotypy.base import *
 
 class TestMain(unittest.TestCase):
 

@@ -1,8 +1,8 @@
 import __init__
 import pandas as pd
-from base import *
+import phenotypy as pnt
 
-cla = Classifier(path_list=['training_data/fore_rm_y.png',
+cla = pnt.Classifier(path_list=['training_data/fore_rm_y.png',
                             'training_data/back.png'],
                  kind_list=[0, -1], core='dtc')
 
@@ -16,7 +16,7 @@ result_container = []
 
 for plot in plot_set:
     # show_steps=True to display output among calculation to check correct or not
-    plot_class = Plot(plot, cla, show_steps=False)
+    plot_class = pnt.Plot(plot, cla, show_steps=False)
     # if need to save points among calculation for checking or other software
     plot_class.write_ply()
     plot_class.write_fig()
