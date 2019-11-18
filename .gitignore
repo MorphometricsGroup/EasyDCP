@@ -4,3 +4,4 @@ phenotypy/example/S*
 __pycache__
 *.ply
 *.csv
+alex_*
