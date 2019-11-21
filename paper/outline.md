@@ -1,33 +1,33 @@
-#Paper outline - 3Dphenotyping [Paper Title]
+# Paper outline - 3Dphenotyping [Paper Title]
 
-##Introduction
+## Introduction
 
-##Purpose
+## Purpose
 - phenotype a huge amount of plants automatically
 
-##Current techniques
+## Current techniques
 - Paulus 2019 "Measuring crops in 3D: using geometry for plant phenotyping"
 - weakness of current techniques
 
-##difference of our work
+## difference of our work
 - open source
 - affordable software and hardware
 - low cost (money and time)
 
-##Section 1: Photos to PCD
+## Section 1: Photos to PCD
 
-###Materials and Methods
+### Materials and Methods
 
-###Results
+### Results
 
-##Section 2: PCD to Traits
+## Section 2: PCD to Traits
 
-###Materials and Methods
+### Materials and Methods
 
-###Results
+### Results
 
-##Discussion
+## Discussion
 
-##Conclusion 
+## Conclusion 
 
-###Future Work
+### Future Work
