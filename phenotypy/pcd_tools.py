@@ -1,25 +1,15 @@
 import numpy as np
 import open3d as o3d
-from plyfile import PlyData
+from scipy.spatial import ConvexHull
 
-def read_ply(file_path):
-    pcd = o3d.io.read_point_cloud(file_path)
-    if not pcd.has_colors():
-        cloud_ply = PlyData.read(file_path)
-        cloud_data = cloud_ply.elements[0].data
-        ply_names = cloud_data.dtype.names
+def calculate_xyz_volume(pcd):
+    pcd_xyz = np.asarray(pcd.points)
 
-        if 'red' in ply_names:
-            colors = np.vstack((cloud_data['red'] / 255, cloud_data['green'] / 255, cloud_data['blue'] / 255)).T
-            pcd.colors = o3d.utility.Vector3dVector(colors)
-        elif 'diffuse_red' in ply_names:
-            colors = np.vstack((cloud_data['diffuse_red'] / 255, cloud_data['diffuse_green'] / 255,
-                                cloud_data['diffuse_blue'] / 255)).T
-            pcd.colors = o3d.utility.Vector3dVector(colors)
-        else:
-            print('Can not find color info in ', ply_names)
+    x_len = pcd_xyz[:, 0].max() - pcd_xyz[:, 0].min()
+    y_len = pcd_xyz[:, 1].max() - pcd_xyz[:, 1].min()
+    z_len = pcd_xyz[:, 2].max() - pcd_xyz[:, 2].min()
 
-    return pcd
+    return x_len * y_len * z_len
 
 def merge_pcd(pcd_list):
     final_pcd = o3d.geometry.PointCloud()
@@ -37,6 +27,53 @@ def merge_pcd(pcd_list):
     final_pcd.colors = o3d.utility.Vector3dVector(rgb)
 
     return final_pcd
+
+def build_cut_boundary(polygon, z_range):
+    """
+    :param polygon: np.array shape=[n x 3]
+    :param z_range: list or tuple, z_range=(z_min, z_max)
+    """
+    z_min = z_range[0]
+    z_max = z_range[1]
+
+    boundary = o3d.visualization.SelectionPolygonVolume()
+    boundary.orthogonal_axis = "Z"
+    boundary.bounding_polygon = o3d.utility.Vector3dVector(polygon)
+    boundary.axis_max = z_max
+    boundary.axis_min = z_min
+
+    return boundary
+
+def clip_pcd(pcd, boundary):
+    pass
+
+def convex_hull2d(pcd):
+    # in scipy, 2D hull.area is perimeter, hull.volume is area
+    # https://stackoverflow.com/questions/35664675/in-scipys-convexhull-what-does-area-measure
+    #
+    # >>> points = np.array([[-1,-1], [1,1], [-1, 1], [1,-1]])
+    # >>> hull = ConvexHull(points)
+    # ==== 2D ====
+    # >>> print(hull.volume)
+    # 4.00
+    # >>> print(hull.area)
+    # 8.00
+    # ==== 3D ====
+    # >>> points = np.array([[-1,-1, -1], [-1,-1, 1],
+    # ...                    [-1, 1, -1], [-1, 1, 1],
+    # ...                    [1, -1, -1], [1, -1, 1],
+    # ...                    [1,  1, -1], [1,  1, 1]])
+    # >>> hull = ConvexHull(points)
+    # >>> hull.area
+    # 24.0
+    # >>> hull.volume
+    # 8.0
+    pcd_xyz = np.asarray(pcd.points)
+    xy = pcd_xyz[:, 0:2]
+    hull = ConvexHull(xy)
+    hull_volume = hull.volume
+    hull_xy = xy[hull.vertices, :]
+    return hull_xy, hull_volume
 
 def pcd2dom(pcd, voxel_size):
     down_pcd = pcd.voxel_down_sample(voxel_size=voxel_size)
@@ -67,3 +104,29 @@ def pcd2binary(pcd, dpi=10):
     left_top_corner = (y.min(), x.min())
 
     return out_img, px_num_per_cm, left_top_corner
+
+def pcd2voxel(pcd, part=100):
+    pcd_xyz = np.asarray(pcd.points)
+    points_num = pcd_xyz.shape[0]  # get the size of this plot
+
+    x_max = pcd_xyz[:, 0].max()
+    x_min = pcd_xyz[:, 0].min()
+    x_len = x_max - x_min
+
+    y_max = pcd_xyz[:, 1].max()
+    y_min = pcd_xyz[:, 1].min()
+    y_len = y_max - y_min
+
+    z_max = pcd_xyz[:, 2].max()
+    z_min = pcd_xyz[:, 2].min()
+    z_len = z_max - z_min
+    
+    # param part: how many part of the shortest axis will be split?
+    voxel_size = min(x_len, y_len, z_len) / part
+    # convert point cloud to voxel
+    pcd_voxel = o3d.geometry.VoxelGrid().create_from_point_cloud(pcd, voxel_size=voxel_size)
+
+    voxel_num = len(pcd_voxel.voxels)
+    voxel_density = points_num / voxel_num
+
+    return pcd_voxel, voxel_size, voxel_density

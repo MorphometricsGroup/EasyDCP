@@ -1,7 +1,10 @@
 *_NERV*
 .idea/*
 phenotypy/example/S*
+phenotypy/tests/output/*
+phenotypy/tests/easypcc/
 __pycache__
 *.ply
 *.csv
 alex_*
+*.backup.py
