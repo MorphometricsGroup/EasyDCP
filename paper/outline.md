@@ -13,6 +13,7 @@
 ### Current techniques
 - Paulus 2019 "Measuring crops in 3D: using geometry for plant phenotyping"
 - weakness of current techniques
+- - expensive. technical limitations caused by sunlight, etc 
 
 ### difference of our work
 - open source
