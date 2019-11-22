@@ -18,6 +18,7 @@ from phenotypy.geometry.min_bounding_rect import min_bounding_rect
 from phenotypy.io.folder import make_dir
 from phenotypy.io.pcd import read_ply
 from phenotypy.plotting.stereo import show_pcd
+from phenotypy.plotting.figure import draw_3d_results
 
 
 class Classifier(object):
@@ -178,25 +179,25 @@ class Plot(object):
         self.pcd_xyz = np.asarray(self.pcd.points)
         self.pcd_rgb = np.asarray(self.pcd.colors)
 
-        self.classifier_apply(clf)
+        self.pcd_classified = self.classifier_apply(clf)
         self.pcd_cleaned, _ = self.remove_noise()
 
     def classifier_apply(self, clf):
         print('[3DPhenotyping][Plot][Classifier_apply] Start Classifying')
         pred_result = clf.predict(self.pcd_rgb)
 
-        self.pcd_dict = {}
+        pcd_classified = {}
 
         for k in clf.kind_set:
             print(f'[3DPhenotyping][Plot][Classifier_apply] Begin for class {k}')
             indices = np.where(pred_result == k)[0].tolist()
-            self.pcd_dict[k] = self.pcd.select_down_sample(indices=indices)
+            pcd_classified[k] = self.pcd.select_down_sample(indices=indices)
             print(f'[3DPhenotyping][Plot][Classifier_apply] kind {k} classified')
             # save ply
             o3d.io.write_point_cloud(os.path.join(self.out_folder, f'class[{k}].ply'),
-                                     self.pcd_dict[k])
+                                     pcd_classified[k])
 
-        return self.pcd_dict
+        return pcd_classified
 
     def remove_noise(self, part=100):
         self.pcd_voxel, self.voxel_size, self.voxel_density = pcd2voxel(self.pcd, part=part)
@@ -204,14 +205,14 @@ class Plot(object):
         pcd_cleaned = {}
         pcd_cleaned_id = {}
         print('[3DPhenotyping][Plot][remove_noise] Remove noises')
-        for k in self.pcd_dict.keys():
+        for k in self.pcd_classified.keys():
             if k == -1:   # for background, need to apply statistical outlier removal
-                cleaned, indices = self.pcd_dict[-1].remove_statistical_outlier\
+                cleaned, indices = self.pcd_classified[-1].remove_statistical_outlier\
                     (nb_neighbors=round(self.voxel_density), std_ratio=0.01)
                 pcd_cleaned[-1], pcd_cleaned_id[-1] = cleaned.remove_radius_outlier\
                     (nb_points=round(self.voxel_density*2), radius=self.voxel_size)
             else:
-                pcd_cleaned[k], pcd_cleaned_id[k] = self.pcd_dict[k].remove_radius_outlier\
+                pcd_cleaned[k], pcd_cleaned_id[k] = self.pcd_classified[k].remove_radius_outlier\
                     (nb_points=round(self.voxel_density), radius=self.voxel_size)
             # save ply
             o3d.io.write_point_cloud(os.path.join(self.out_folder, f'class[{k}]-rm_noise.ply'),
@@ -224,7 +225,7 @@ class Plot(object):
     def auto_segmentation(self, denoise=True):
         # may need user to provide plant size and number for segmentation check
         seg_out = {}
-        for k in self.pcd_dict.keys():
+        for k in self.pcd_classified.keys():
             # skip the background
             if k == -1:
                 continue
@@ -289,19 +290,45 @@ class Plot(object):
         pass
         # return seg_out
 
-    def write_figs(self, savepath=None):
-        pass
-        print('rua')
+    def get_traits(self, seg_dict, container_ht=0, savefig=True):
+        out_dict = {'plot': [], 'plant':[], 'kind':[], 'center.x(m)': [], 'center.y(m)': [],
+                    'min_rect_width(m)':[], 'min_rect_length(m)':[], 'hover_area(m2)':[], 'PLA(cm2)':[],
+                    'centroid.x(m)':[], 'centroid.y(m)':[], 'long_axis(m)':[], 'short_axis(m)':[], 'orient_deg2xaxis':[],
+                    'percentile height(m)':[]}
 
+        for k in seg_dict.keys():
+            number = len(seg_dict[k])
+            print(f'[3DPhenotyping][Plot][get_traits] total number of kind {k} is {number}')
+            for i, seg in enumerate(seg_dict[k]):
+                plant = Plant(pcd_input=seg, indices=i, ground_pcd=self.pcd_classified[-1], container_ht=container_ht)
+                if savefig:
+                    plant.draw_3d_results(output_path=self.out_folder)
+                out_dict['plot'].append(self.ply_name)
+                out_dict['plant'].append(i)
+                out_dict['kind'].append(k)
+                out_dict['center.x(m)'].append(plant.center[0])
+                out_dict['center.y(m)'].append(plant.center[1])
+                out_dict['min_rect_width(m)'].append(plant.width)
+                out_dict['min_rect_length(m)'].append(plant.length)
+                out_dict['hover_area(m2)'].append(plant.hull_area)
+                out_dict['PLA(cm2)'].append(plant.pla)
+                out_dict['centroid.x(m)'].append(plant.centroid[0])
+                out_dict['centroid.y(m)'].append(plant.centroid[1])
+                out_dict['long_axis(m)'].append(plant.major_axis)
+                out_dict['short_axis(m)'].append(plant.minor_axis)
+                out_dict['orient_deg2xaxis'].append(plant.orient_degree)
+                out_dict['percentile height(m)'].append(plant.pctl_ht)
+
+        return pd.DataFrame(out_dict)
 
 class Plant(object):
-    # todo: ground point cloud parameters, can cut ground by convex hull
-    def __init__(self, pcd_input, indices, ground_pcd, cut_bg=False, container_ht=0):
+    def __init__(self, pcd_input, indices, ground_pcd, cut_bg=True, container_ht=0):
         if isinstance(pcd_input, str):
             self.pcd = read_ply(pcd_input)
         else:
             self.pcd = pcd_input
         self.center = self.pcd.get_center()
+        self.indices = indices
 
         self.pcd_xyz = np.asarray(self.pcd.points)
         self.pcd_rgb = np.asarray(self.pcd.colors)
@@ -326,7 +353,6 @@ class Plant(object):
         self.width = self.rect_res[2]   # unit is m
         self.length = self.rect_res[3]   # unit is m
 
-
         # calculate the projected 2D image (X-Y)
         binary, px_num_per_cm, corner = pcd2binary(self.pcd)
         # calculate region props
@@ -339,6 +365,9 @@ class Plant(object):
 
         # calcuate percentile height
         self.pctl_ht, self.pctl_ht_plot = self.get_percentile_height(container_ht)
+
+        # voxel (todo)
+        self.pcd_voxel, self.voxel_size, self.voxel_density = pcd2voxel(self.pcd)
 
 
     def clip_background(self):
@@ -400,10 +429,11 @@ class Plant(object):
         z = self.pcd_xyz[:, 2]
         ground_z = np.asarray(self.ground_pcd.points)[:, 2]
 
-        # calculate the ground center of Z, by mean of [per5 - per 90],
+        # calculate the ground center of Z, by mean of [per10 - per 90],
         # to avoid the effects of elevation and noises in upper part
-        ele = ground_z[np.logical_and(ground_z < np.percentile(ground_z, 90),
-                                      ground_z > np.percentile(ground_z, 5))].mean()
+        #ele = ground_z[np.logical_and(ground_z < np.percentile(ground_z, 90),
+        #                              ground_z > np.percentile(ground_z, 10))].mean()
+        ele = np.median(ground_z)
         plant_base = ele + container_ht
 
         ele_z = z[z > plant_base]
@@ -416,3 +446,7 @@ class Plant(object):
                     'top10': top10percentile, 'ground_center':ele}
 
         return percentile_ht, plot_use
+
+    def draw_3d_results(self, output_path='.'):
+        file_name = f'plant{self.indices}.png'
+        draw_3d_results(self, title=f'plant{self.indices}', savepath=f"{output_path}/{file_name}")
