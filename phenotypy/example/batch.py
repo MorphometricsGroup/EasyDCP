@@ -18,8 +18,8 @@ for plot in plot_set:
     # show_steps=True to display output among calculation to check correct or not
     plot_class = pnt.Plot(plot, cla)
     # if need to save points among calculation for checking or other software
-    seg = plot_class.auto_segmentation()
-    traits = plot_class.get_traits(seg, container_ht=0.06)
+    plot_class.auto_segmentation()
+    traits = plot_class.get_traits(container_ht=0.06)
     result_container.append(traits)
 
 plot_all = pd.concat(result_container, axis=0).reset_index()

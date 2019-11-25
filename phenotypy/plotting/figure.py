@@ -37,10 +37,15 @@ def draw_3d_results(plant, title, savepath, dpi=300):
     down_y = downpcd_xyz[:, 1]
     down_z = downpcd_xyz[:, 2]
 
-    ground_pcd_xyz = np.asarray(plant.ground_pcd.points)
+    ground_pcd = plant.ground_pcd.voxel_down_sample(voxel_size=plant.voxel_size * 5)
+    ground_pcd_xyz = np.asarray(ground_pcd.points)
     ground_x = ground_pcd_xyz[:, 0]
     ground_y = ground_pcd_xyz[:, 1]
     ground_z = ground_pcd_xyz[:, 2]
+    mask = ground_z < np.percentile(z, 5)
+    ground_x = ground_x[mask]
+    ground_y = ground_y[mask]
+    ground_z = ground_z[mask]
 
     x_axis_max = round(max(x.max(), rect_corner[:, 0].max(), ground_x.max()), 2)
     x_axis_min = round(min(x.min(), rect_corner[:, 0].min(), ground_x.min()), 2)
@@ -67,15 +72,22 @@ def draw_3d_results(plant, title, savepath, dpi=300):
     fig = plt.figure(figsize=(9, 6), dpi=dpi)
     ax = Axes3D(fig, elev=25, azim=135, rect=(0, 0.07, 1, 0.95))
 
+    # plot the ground on Y-Z
+    ax.scatter(ground_y, ground_z, zs=x_axis_max, zdir='x',
+               color='C4', linewidth=0, marker='.', alpha=0.3, zorder=0, label='ground points')
+    # plot the ground on X-Z
+    ax.scatter(ground_x, ground_z, zs=y_axis_min, zdir='y',
+               color='C4', linewidth=0, marker='.', alpha=0.3, zorder=0)
+
     # plot the shade on X-Y
     ax.scatter(down_x, down_y, zs=z_axis_min, zdir='z',
-               color='C7', marker='.', alpha=0.1, zorder=0)
+               color='C7', linewidth=0, marker='.', alpha=0.3, zorder=1)
     # plot the shade on Y-Z
     ax.scatter(down_y, down_z, zs=x_axis_max, zdir='x',
-               color='C7', marker='.', alpha=0.05, zorder=0)
+               color='C7', linewidth=0, marker='.', alpha=0.3, zorder=1)
     # plot the shade on X-Z
     ax.scatter(down_x, down_z, zs=y_axis_min, zdir='y',
-               color='C7', marker='.', alpha=0.05, zorder=0)
+               color='C7', linewidth=0, marker='.', alpha=0.3, zorder=1)
 
     # plot the ellipse of region props
     ell = Ellipse((x0, y0), plant.major_axis, plant.minor_axis, phi,
@@ -85,14 +97,14 @@ def draw_3d_results(plant, title, savepath, dpi=300):
 
     # plot axis of region props
     ax.plot((x0 - maj_x, x0 + maj_x), (y0 - maj_y, y0 + maj_y), '-k',
-            linewidth=2.5, zdir='z', zs=z_axis_min, label='ellipse axis')
+            linewidth=2.5, zdir='z', zs=z_axis_min, zorder=50, label='ellipse axis')
     ax.plot((x0 + min_x, x0 - min_x), (y0 - min_y, y0 + min_y), '-k',
-            linewidth=2.5, zdir='z', zs=z_axis_min)
+            linewidth=2.5, zdir='z', zs=z_axis_min, zorder=50)
     # plot convex hull
     ax.plot(convex_hull[:, 0], convex_hull[:, 1], 'C0--', alpha=0.5,
             zdir='z', zs=z_axis_min, label='convex hull')
     # plot convex hull convet
-    ax.scatter(convex_hull[:, 0], convex_hull[:, 1], color='C3',
+    ax.scatter(convex_hull[:, 0], convex_hull[:, 1], color='C3', linewidth=0,
                zdir='z', zs=z_axis_min, label='convex vertex')
     ax.plot(rect_corner[:, 0], rect_corner[:, 1], color='C1',
             alpha=0.5, zdir='z', zs=z_axis_min, label='min area rectangle')
@@ -114,27 +126,27 @@ def draw_3d_results(plant, title, savepath, dpi=300):
     ## draw plant base
     ax.plot((y_axis_min, y_axis_max),
             (pctl_ht_plot['plant_base'], pctl_ht_plot['plant_base']), '--',
-            zs=x_axis_max, zdir='x', color='C2', label='plant base')
+            zs=x_axis_max, zdir='x', color='C2', label='plant base', zorder=2)
     ax.plot((x_axis_min, x_axis_max),
             (pctl_ht_plot['plant_base'], pctl_ht_plot['plant_base']), '--',
-            zs=y_axis_min, zdir='y', color='C2')
+            zs=y_axis_min, zdir='y', color='C2', zorder=2)
     ## draw plant top
     ax.plot((y_axis_min, y_axis_max),
             (pctl_ht_plot['plant_top'], pctl_ht_plot['plant_top']), '--',
-            zs=x_axis_max, zdir='x', color='C8', label='plant top')
+            zs=x_axis_max, zdir='x', color='C8', label='plant top', zorder=2)
     ax.plot((x_axis_min, x_axis_max),
             (pctl_ht_plot['plant_top'], pctl_ht_plot['plant_top']), '--',
-            zs=y_axis_min, zdir='y', color='C8')
+            zs=y_axis_min, zdir='y', color='C8', zorder=2)
 
     ## draw kde
-    ax.plot(ele_hist_num_plot, ele_ht_fine, zs=y_axis_min, zdir='y', color='C9', label='relative density')
+    ax.plot(ele_hist_num_plot, ele_ht_fine, zs=y_axis_min, zdir='y', color='C2', label='plant density')
 
     ## draw texts
     ax.text(x_axis_max, y_axis_max, (pctl_ht_plot['plant_base'] + pctl_ht_plot['plant_top']) / 2,
             f'Plant {round(pctl_ht * 100, 1)} cm', zdir="y")
 
     # plot 3d point clouds
-    ax.scatter(down_x, down_y, down_z, marker='.', color=down_color)
+    ax.scatter(down_x, down_y, down_z, marker='.', color=down_color, linewidth=0)
 
     ax.set_xlabel('X')
     ax.set_ylabel('Y')
@@ -148,3 +160,6 @@ def draw_3d_results(plant, title, savepath, dpi=300):
 
     plt.legend(ncol=5, loc='lower center', bbox_to_anchor=(0.5, -0.07))
     plt.savefig(savepath)
+    plt.clf()
+    plt.close(fig)
+    del fig, ax

@@ -165,8 +165,9 @@ class Plot(object):
                 self.pcd_segmented
     """
 
-    def __init__(self, ply_path, clf, output_path='.'):
+    def __init__(self, ply_path, clf, output_path='.', write_ply=True):
         self.ply_path = ply_path
+        self.write_ply = write_ply
         self.pcd = read_ply(ply_path)
         self.folder, tail = os.path.split(os.path.abspath(self.ply_path))
         self.ply_name = tail[:-4]
@@ -174,13 +175,19 @@ class Plot(object):
 
         self.out_folder = os.path.join(output_path, self.ply_name)
         print(f'[3DPhenotyping][Plot][__init__] Setting output folder "{self.out_folder}"')
-        make_dir(self.out_folder, clean=True)
+        if self.write_ply:
+            make_dir(self.out_folder, clean=True)
+        else:
+            print(f'[3DPhenotyping][Plot][__init__] Mode "write_ply" == False, output folder creating ignored')
 
         self.pcd_xyz = np.asarray(self.pcd.points)
         self.pcd_rgb = np.asarray(self.pcd.colors)
 
         self.pcd_classified = self.classifier_apply(clf)
         self.pcd_cleaned, _ = self.remove_noise()
+
+        self.segmented = False
+        self.seg_out = {}
 
     def classifier_apply(self, clf):
         print('[3DPhenotyping][Plot][Classifier_apply] Start Classifying')
@@ -194,8 +201,11 @@ class Plot(object):
             pcd_classified[k] = self.pcd.select_down_sample(indices=indices)
             print(f'[3DPhenotyping][Plot][Classifier_apply] kind {k} classified')
             # save ply
-            o3d.io.write_point_cloud(os.path.join(self.out_folder, f'class[{k}].ply'),
-                                     pcd_classified[k])
+            if self.write_ply:
+                o3d.io.write_point_cloud(os.path.join(self.out_folder, f'class[{k}].ply'),
+                                         pcd_classified[k])
+            else:
+                print(f'[3DPhenotyping][Plot][Classifier_apply] Mode "write_ply" == False, ply file not saved.')
 
         return pcd_classified
 
@@ -215,8 +225,11 @@ class Plot(object):
                 pcd_cleaned[k], pcd_cleaned_id[k] = self.pcd_classified[k].remove_radius_outlier\
                     (nb_points=round(self.voxel_density), radius=self.voxel_size)
             # save ply
-            o3d.io.write_point_cloud(os.path.join(self.out_folder, f'class[{k}]-rm_noise.ply'),
-                                     pcd_cleaned[k])
+            if self.write_ply:
+                o3d.io.write_point_cloud(os.path.join(self.out_folder, f'class[{k}]-rm_noise.ply'),
+                                         pcd_cleaned[k])
+            else:
+                print(f'[3DPhenotyping][Plot][remove_noise] Mode "write_ply" == False, ply file not saved.')
             # todo: add kde of ground points, and remove noises very close to ground points
             print(f'[3DPhenotyping][Plot][remove_noise] kind {k} noise removed')
 
@@ -279,47 +292,56 @@ class Plot(object):
                 seg_out[k].append(pcd_seg_list[s_id])
                 file_name = f'class[{k}]-plant{i}.ply'
                 file_path = os.path.join(self.out_folder, file_name)
-                print(f'[3DPhenotyping][Plot][AutoSegment][Output] writing file "{file_path}"')
-                o3d.io.write_point_cloud(file_path, pcd_seg_list[s_id])
+                if self.write_ply:
+                    print(f'[3DPhenotyping][Plot][AutoSegment][Output] writing file "{file_path}"')
+                    o3d.io.write_point_cloud(file_path, pcd_seg_list[s_id])
 
             print(f'[3DPhenotyping][Plot][AutoSegment][Clustering] class {k} Clustered')
 
+        self.segmented = True
+        self.seg_out = seg_out
         return seg_out
 
     def shp_segmentation(self, shp_dir):
+        seg_out = {}
         pass
+        #self.segmented = True
+        #self.seg_out = seg_out
         # return seg_out
 
-    def get_traits(self, seg_dict, container_ht=0, savefig=True):
-        out_dict = {'plot': [], 'plant':[], 'kind':[], 'center.x(m)': [], 'center.y(m)': [],
-                    'min_rect_width(m)':[], 'min_rect_length(m)':[], 'hover_area(m2)':[], 'PLA(cm2)':[],
-                    'centroid.x(m)':[], 'centroid.y(m)':[], 'long_axis(m)':[], 'short_axis(m)':[], 'orient_deg2xaxis':[],
-                    'percentile height(m)':[]}
+    def get_traits(self, container_ht=0, savefig=True):
+        if not self.segmented:
+            raise AttributeError('This plot have not been segmented, please do Plot.auto_segmentation() or Plot.shp_segmentation() first')
+        else:
+            out_dict = {'plot': [], 'plant':[], 'kind':[], 'center.x(m)': [], 'center.y(m)': [],
+                        'min_rect_width(m)':[], 'min_rect_length(m)':[], 'hover_area(m2)':[], 'PLA(cm2)':[],
+                        'centroid.x(m)':[], 'centroid.y(m)':[], 'long_axis(m)':[], 'short_axis(m)':[], 'orient_deg2xaxis':[],
+                        'percentile_height(m)':[]}
+            seg_dict = self.seg_out
+            for k in seg_dict.keys():
+                number = len(seg_dict[k])
+                print(f'[3DPhenotyping][Plot][get_traits] total number of kind {k} is {number}')
+                for i, seg in enumerate(seg_dict[k]):
+                    plant = Plant(pcd_input=seg, indices=i, ground_pcd=self.pcd_classified[-1], container_ht=container_ht)
+                    if savefig and self.write_ply:
+                        plant.draw_3d_results(output_path=self.out_folder)
+                    out_dict['plot'].append(self.ply_name)
+                    out_dict['plant'].append(i)
+                    out_dict['kind'].append(k)
+                    out_dict['center.x(m)'].append(plant.center[0])
+                    out_dict['center.y(m)'].append(plant.center[1])
+                    out_dict['min_rect_width(m)'].append(plant.width)
+                    out_dict['min_rect_length(m)'].append(plant.length)
+                    out_dict['hover_area(m2)'].append(plant.hull_area)
+                    out_dict['PLA(cm2)'].append(plant.pla)
+                    out_dict['centroid.x(m)'].append(plant.centroid[0])
+                    out_dict['centroid.y(m)'].append(plant.centroid[1])
+                    out_dict['long_axis(m)'].append(plant.major_axis)
+                    out_dict['short_axis(m)'].append(plant.minor_axis)
+                    out_dict['orient_deg2xaxis'].append(plant.orient_degree)
+                    out_dict['percentile_height(m)'].append(plant.pctl_ht)
 
-        for k in seg_dict.keys():
-            number = len(seg_dict[k])
-            print(f'[3DPhenotyping][Plot][get_traits] total number of kind {k} is {number}')
-            for i, seg in enumerate(seg_dict[k]):
-                plant = Plant(pcd_input=seg, indices=i, ground_pcd=self.pcd_classified[-1], container_ht=container_ht)
-                if savefig:
-                    plant.draw_3d_results(output_path=self.out_folder)
-                out_dict['plot'].append(self.ply_name)
-                out_dict['plant'].append(i)
-                out_dict['kind'].append(k)
-                out_dict['center.x(m)'].append(plant.center[0])
-                out_dict['center.y(m)'].append(plant.center[1])
-                out_dict['min_rect_width(m)'].append(plant.width)
-                out_dict['min_rect_length(m)'].append(plant.length)
-                out_dict['hover_area(m2)'].append(plant.hull_area)
-                out_dict['PLA(cm2)'].append(plant.pla)
-                out_dict['centroid.x(m)'].append(plant.centroid[0])
-                out_dict['centroid.y(m)'].append(plant.centroid[1])
-                out_dict['long_axis(m)'].append(plant.major_axis)
-                out_dict['short_axis(m)'].append(plant.minor_axis)
-                out_dict['orient_deg2xaxis'].append(plant.orient_degree)
-                out_dict['percentile height(m)'].append(plant.pctl_ht)
-
-        return pd.DataFrame(out_dict)
+            return pd.DataFrame(out_dict)
 
 class Plant(object):
     def __init__(self, pcd_input, indices, ground_pcd, cut_bg=True, container_ht=0):
@@ -428,6 +450,7 @@ class Plant(object):
     def get_percentile_height(self, container_ht=0):
         z = self.pcd_xyz[:, 2]
         ground_z = np.asarray(self.ground_pcd.points)[:, 2]
+        ground_z = ground_z[ground_z < np.percentile(z, 5)]
 
         # calculate the ground center of Z, by mean of [per10 - per 90],
         # to avoid the effects of elevation and noises in upper part
@@ -449,4 +472,5 @@ class Plant(object):
 
     def draw_3d_results(self, output_path='.'):
         file_name = f'plant{self.indices}.png'
+
         draw_3d_results(self, title=f'plant{self.indices}', savepath=f"{output_path}/{file_name}")

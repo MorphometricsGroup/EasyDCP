@@ -12,18 +12,22 @@ def plot_init():
     plot = pnt.Plot('data/weed.ply', cla, output_path='output')
     return plot
 
-def test_plot_auto_segmentation(plot_init):
+def test_plot_0_without_seg(plot_init):
+    with pytest.raises(AttributeError) as excinfo:
+        plot_init.get_traits(container_ht=0.06)
+    print(excinfo.value)
+    assert "This plot have not been segmented" in str(excinfo.value)
+
+def test_plot_1_auto_segmentation(plot_init):
     seg = plot_init.auto_segmentation()
     print(type(seg), len(seg))
     for k in seg.keys():
         print(k, len(seg[k]))
 
-def test_plot_output(plot_init):
-    seg = plot_init.auto_segmentation()
-    df = plot_init.get_traits(seg, 0.06)
+def test_plot_2_output(plot_init):
+    df = plot_init.get_traits(container_ht=0.06)
     print(df)
     print(list(df.columns))
-
 
 '''
 class TestMain(unittest.TestCase):
