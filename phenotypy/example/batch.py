@@ -19,7 +19,7 @@ for plot in plot_set:
     plot_class = pnt.Plot(plot, cla)
     # if need to save points among calculation for checking or other software
     plot_class.auto_segmentation()
-    traits = plot_class.get_traits(container_ht=0.06)
+    traits = plot_class.get_traits(container_ht=0.057)
     result_container.append(traits)
 
 plot_all = pd.concat(result_container, axis=0).reset_index()

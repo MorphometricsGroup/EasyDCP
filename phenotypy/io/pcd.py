@@ -1,6 +1,7 @@
 import open3d as o3d
 import numpy as np
 from plyfile import PlyData
+from phenotypy.pcd_tools import merge_pcd
 
 def read_ply(file_path):
     pcd = o3d.io.read_point_cloud(file_path)
@@ -20,6 +21,18 @@ def read_ply(file_path):
             print('Can not find color info in ', ply_names)
 
     return pcd
+
+def read_plys(file_list):
+    """
+    read a bunch of ply (e.g. two ply), and merge them into one (without registration, just add x,y,z one by one)
+    :param file_list: ['file1.ply', 'file2.ply']
+    :return: o3d.geometry.pointclouds
+    """
+    pcd_list = []
+    for file_path in file_list:
+        pcd_list.append(read_ply(file_path))
+
+    return merge_pcd(pcd_list)
 
 def write_ply(file_path):
     pass

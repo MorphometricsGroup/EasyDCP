@@ -17,6 +17,7 @@ from phenotypy.pcd_tools import (merge_pcd,
 from phenotypy.geometry.min_bounding_rect import min_bounding_rect
 from phenotypy.io.folder import make_dir
 from phenotypy.io.pcd import read_ply
+from phenotypy.io.shp import read_shp, read_shps
 from phenotypy.plotting.stereo import show_pcd
 from phenotypy.plotting.figure import draw_3d_results
 
@@ -138,6 +139,10 @@ class Plot(object):
              '1': [o3d.geometry.pointclouds, o3d.geometry.pointclouds, ...].  # (optional)
              ... etc. }
 
+        pcd_segmented_name
+            {'0': ['class[0]-plant0', 'class[0]-plant1', ...],
+             '1': ['class[1]-plant0', 'class[1]-plant1', ...]]}
+
     Functions:
         classifier_apply: apply the specified classifier.
             [params]
@@ -187,7 +192,8 @@ class Plot(object):
         self.pcd_cleaned, _ = self.remove_noise()
 
         self.segmented = False
-        self.seg_out = {}
+        self.pcd_segmented = {}
+        self.pcd_segmented_name = {}
 
     def classifier_apply(self, clf):
         print('[3DPhenotyping][Plot][Classifier_apply] Start Classifying')
@@ -238,6 +244,7 @@ class Plot(object):
     def auto_segmentation(self, denoise=True):
         # may need user to provide plant size and number for segmentation check
         seg_out = {}
+        seg_out_name = {}
         for k in self.pcd_classified.keys():
             # skip the background
             if k == -1:
@@ -288,10 +295,12 @@ class Plot(object):
             temp_df = temp_df.sort_values(by=['x', 'y']).reset_index()
 
             seg_out[k] = []
+            seg_out_name[k] = []
             for i, s_id in enumerate(temp_df['seg_id']):
                 seg_out[k].append(pcd_seg_list[s_id])
-                file_name = f'class[{k}]-plant{i}.ply'
-                file_path = os.path.join(self.out_folder, file_name)
+                file_name = f'class[{k}]-plant{i}'
+                file_path = os.path.join(self.out_folder, f'{file_name}.ply')
+                seg_out_name[k].append(file_name)
                 if self.write_ply:
                     print(f'[3DPhenotyping][Plot][AutoSegment][Output] writing file "{file_path}"')
                     o3d.io.write_point_cloud(file_path, pcd_seg_list[s_id])
@@ -299,15 +308,52 @@ class Plot(object):
             print(f'[3DPhenotyping][Plot][AutoSegment][Clustering] class {k} Clustered')
 
         self.segmented = True
-        self.seg_out = seg_out
+        self.pcd_segmented = seg_out
+        self.pcd_segmented_name = seg_out_name
         return seg_out
 
-    def shp_segmentation(self, shp_dir):
+    def shp_segmentation(self, shp_dir, correct_coord=None, rename=True):
         seg_out = {}
-        pass
-        #self.segmented = True
-        #self.seg_out = seg_out
-        # return seg_out
+        seg_out_name = {}
+        if isinstance(shp_dir, str):   # input one shp file
+            shp_seg = read_shp(shp_dir, correct_coord)
+        else:
+            shp_seg = read_shps(shp_dir, correct_coord=correct_coord, rename=rename)
+
+        axis_max = self.pcd_xyz[:, 2].max()
+        axis_min = self.pcd_xyz[:, 2].min()
+
+        for k in self.pcd_cleaned.keys():
+            if k == -1:
+                continue
+
+            seg_out[k] = []
+            seg_out_name[k] = []
+
+            print(f'[3DPhenotyping][Plot][AutoSegment][Clustering] class {k} Cluster Data Prepared')
+            for plot_key in shp_seg.keys():
+                boundary = o3d.visualization.SelectionPolygonVolume()
+
+                boundary.orthogonal_axis = "Z"
+                boundary.bounding_polygon = o3d.utility.Vector3dVector(shp_seg[plot_key])
+                boundary.axis_max = axis_max
+                boundary.axis_min = axis_min
+
+                roi = boundary.crop_point_cloud(self.pcd_cleaned[k])
+                seg_out[k].append(roi)
+
+                file_name = f'class[{k}]-{plot_key}'
+                file_path = os.path.join(self.out_folder, f'{file_name}.ply')
+                seg_out_name[k].append(file_name)
+
+                if self.write_ply:
+                    print(f'[3DPhenotyping][Plot][AutoSegment][Output] writing file "{file_path}"')
+                    o3d.io.write_point_cloud(file_path, roi)
+
+        self.segmented = True
+        self.pcd_segmented = seg_out
+        self.pcd_segmented_name = seg_out_name
+        return seg_out
 
     def get_traits(self, container_ht=0, savefig=True):
         if not self.segmented:
@@ -317,14 +363,14 @@ class Plot(object):
                         'min_rect_width(m)':[], 'min_rect_length(m)':[], 'hover_area(m2)':[], 'PLA(cm2)':[],
                         'centroid.x(m)':[], 'centroid.y(m)':[], 'long_axis(m)':[], 'short_axis(m)':[], 'orient_deg2xaxis':[],
                         'percentile_height(m)':[]}
-            seg_dict = self.seg_out
+            seg_dict = self.pcd_segmented
             for k in seg_dict.keys():
                 number = len(seg_dict[k])
                 print(f'[3DPhenotyping][Plot][get_traits] total number of kind {k} is {number}')
                 for i, seg in enumerate(seg_dict[k]):
                     plant = Plant(pcd_input=seg, indices=i, ground_pcd=self.pcd_classified[-1], container_ht=container_ht)
                     if savefig and self.write_ply:
-                        plant.draw_3d_results(output_path=self.out_folder)
+                        plant.draw_3d_results(output_path=self.out_folder, file_name=self.pcd_segmented_name[k][i])
                     out_dict['plot'].append(self.ply_name)
                     out_dict['plant'].append(i)
                     out_dict['kind'].append(k)
@@ -470,7 +516,11 @@ class Plant(object):
 
         return percentile_ht, plot_use
 
-    def draw_3d_results(self, output_path='.'):
-        file_name = f'plant{self.indices}.png'
+    def draw_3d_results(self, output_path='.', file_name=None):
+        if file_name is None:
+            plant_name = f'plant{self.indices}'
+        else:
+            plant_name = file_name
 
-        draw_3d_results(self, title=f'plant{self.indices}', savepath=f"{output_path}/{file_name}")
+        file_name = f'{plant_name}.png'
+        draw_3d_results(self, title=plant_name, savepath=f"{output_path}/{file_name}")
