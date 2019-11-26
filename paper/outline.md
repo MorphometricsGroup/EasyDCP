@@ -21,6 +21,7 @@
 - low cost (money and time)
 
 ## Materials and Methods
+- see flow.md
 
 ### Section 1: Photos to PCD
 
@@ -41,6 +42,7 @@
 ### Section 1: Photos to PCD
 
 - Produced PCD . Show figures
+- Give specs about CPU time , image resolution, number of images, folders, points
 - compare Projected LA from raw image to PLA from HZ script
 
 ### Section 2: PCD to Traits
@@ -49,8 +51,10 @@
 - Compare to Planteye traits (height, heightmax?, and projected leaf area)
 
 ## Discussion
-- ground level. Substrate surface or bottom of container? Below ground leaves in the case of measuring on a raised platform like planteye?
-- tested on field with spaces between plants but difficulties with classification and segmentation make it difficult to use 
+- ground level. Substrate surface or bottom of container?...
+- - ... Below ground leaves in the case of measuring on a raised platform like planteye?
+- tested on field with spaces between plants but difficulties ...
+- - ... with classification and segmentation make it difficult to use 
 - - (too many misclassified weeds throw off the segmentation)
 
 ## Conclusion 
