@@ -3,7 +3,9 @@
 ## Introduction
 
 ### Background
-
+- 9billion people problem
+- phenotyping is the key for food security
+- image analysis is the key for phenotyping
 - phenotyping for breeding, yield, etc
 
 ### Purpose
