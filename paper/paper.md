@@ -1,4 +1,4 @@
-# Paper - 3Dphenotyping [Paper Title]
+# Paper - 3Dphenotyping [Deprecated - Working in Google Docs https://docs.google.com/document/d/1E-a4MgMSM8KgAtBTQ1at1qHCPCWirKf19LddKAyruMg/edit?usp=sharing ]
 
 ## Abstract
 (copied from IPPS Abstract)
