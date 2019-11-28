@@ -16,7 +16,7 @@ from phenotypy.pcd_tools import (merge_pcd,
                                  build_cut_boundary)
 from phenotypy.geometry.min_bounding_rect import min_bounding_rect
 from phenotypy.io.folder import make_dir
-from phenotypy.io.pcd import read_ply
+from phenotypy.io.pcd import read_ply, read_plys
 from phenotypy.io.shp import read_shp, read_shps
 from phenotypy.plotting.stereo import show_pcd
 from phenotypy.plotting.figure import draw_3d_results
@@ -35,6 +35,8 @@ class Classifier(object):
         """
         :param path_list: the list training png path
             e.g. path_list = ['fore.png', 'back.png']
+            or 'xxxx.ply'
+            or 'o3d.geometry.PointCloud object'
 
         :param kind_list: list for related kind for path_list
             -1 is background
@@ -97,9 +99,19 @@ class Classifier(object):
 
     def build_training_array(self):
         for img_path, kind in zip(self.path_list, self.kind_list):
-            img_np = self.read_png(img_path)
-            kind_np = np.array([kind] * img_np.shape[0])
+            img_np = None
+            if isinstance(img_path, o3d.geometry.PointCloud):
+                img_np = np.asarray(img_path.colors)
+            elif isinstance(img_path, str):
+                if '.png' in img_path:
+                    img_np = self.read_png(img_path)
+                elif '.ply' in img_path:
+                    pcd = read_ply(img_path)
+                    img_np = np.asarray(pcd.colors)
+            else:
+                raise TypeError(f"{img_path} is not supported, please only using png and ply files")
 
+            kind_np = np.array([kind] * img_np.shape[0])
             self.train_data = np.vstack([self.train_data, img_np])
             self.train_kind = np.hstack([self.train_kind, kind_np])
 
@@ -170,16 +182,33 @@ class Plot(object):
                 self.pcd_segmented
     """
 
-    def __init__(self, ply_path, clf, output_path='.', write_ply=True):
+    def __init__(self, ply_path, clf, unit='m', output_path='.', write_ply=True):
         self.ply_path = ply_path
         self.write_ply = write_ply
-        self.pcd = read_ply(ply_path)
-        self.folder, tail = os.path.split(os.path.abspath(self.ply_path))
-        self.ply_name = tail[:-4]
+        if os.path.isfile(ply_path):
+            self.pcd = read_ply(ply_path, unit=unit)
+            self.folder, tail = os.path.split(os.path.abspath(self.ply_path))
+            self.ply_name = tail[:-4]
+        elif os.path.isdir(ply_path):
+            list_dir = os.listdir(ply_path)
+            ply_list = []
+            for item in list_dir:
+                item_full_path = os.path.join(ply_path, item)
+                if os.path.isfile(item_full_path) and '.ply' in item:
+                    ply_list.append(item_full_path)
+            if len(ply_list) == 0:
+                raise EOFError(f'[{ply_path}] has no ply file')
+            self.pcd = read_plys(ply_list, unit=unit)
+            self.folder = os.path.abspath(ply_path)
+            self.ply_name = os.path.basename(ply_path)
+        else:
+            raise TypeError(f'[{ply_path}] is neither a ply file or folder')
+
+
         print(f'[3DPhenotyping][Plot][__init__] Ply file "{self.ply_path}" loaded')
 
         self.out_folder = os.path.join(output_path, self.ply_name)
-        print(f'[3DPhenotyping][Plot][__init__] Setting output folder "{self.out_folder}"')
+        print(f'[3DPhenotyping][Plot][__init__] Setting output folder "{os.path.abspath(self.out_folder)}"')
         if self.write_ply:
             make_dir(self.out_folder, clean=True)
         else:
@@ -234,6 +263,7 @@ class Plot(object):
             if self.write_ply:
                 o3d.io.write_point_cloud(os.path.join(self.out_folder, f'class[{k}]-rm_noise.ply'),
                                          pcd_cleaned[k])
+                print(f'[3DPhenotyping][Plot][remove_noise] ply file class[{k}]-rm_noise.ply saved to {self.out_folder}')
             else:
                 print(f'[3DPhenotyping][Plot][remove_noise] Mode "write_ply" == False, ply file not saved.')
             # todo: add kde of ground points, and remove noises very close to ground points

@@ -8,3 +8,4 @@ __pycache__
 *.csv
 alex_*
 *.backup.py
+test_temp.py

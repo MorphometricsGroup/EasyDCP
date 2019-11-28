@@ -2,7 +2,18 @@ import __init__
 import pytest
 import phenotypy as pnt
 import pandas as pd
-'''
+
+@pytest.fixture(scope="session", autouse=True)
+def plot_init_brocoli():
+    cla = pnt.Classifier(path_list=['data/brocoli_train_plant1.ply',
+                                    'data/brocoli_train_soil.ply',
+                                    'data/brocoli_train_soil_gcp.ply'],
+                         kind_list=[0, -1, -1], core='dtc')
+    plot = pnt.Plot('data/brocoli.ply', cla, output_path='output')
+    return plot
+
+# def test_classsifier_apply(plot_init_brocoli):
+
 @pytest.fixture(scope="session", autouse=True)
 def plot_init():
     cla = pnt.Classifier(path_list=['data/weed_fore.png',
@@ -28,7 +39,7 @@ def test_plot_2_output(plot_init):
     df = plot_init.get_traits(container_ht=0.057)
     print('\n', df)
     print('\n', list(df.columns))
-'''
+
 
 @pytest.fixture(scope="session", autouse=True)
 def plot_init_potato():

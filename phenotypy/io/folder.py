@@ -9,4 +9,4 @@ def make_dir(dir_path, clean=False):
             time.sleep(1)  # ensure the folder is cleared
             os.mkdir(dir_path)
     else:
-        os.mkdir(dir_path)
+        os.makedirs(dir_path)
