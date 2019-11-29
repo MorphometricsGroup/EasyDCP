@@ -3,6 +3,7 @@
 phenotypy/example/S*
 phenotypy/tests/output/*
 phenotypy/tests/easypcc/
+phenotypy/example/plot_out/*
 __pycache__
 *.ply
 *.csv

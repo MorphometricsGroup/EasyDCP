@@ -19,7 +19,7 @@ from phenotypy.io.folder import make_dir
 from phenotypy.io.pcd import read_ply, read_plys
 from phenotypy.io.shp import read_shp, read_shps
 from phenotypy.plotting.stereo import show_pcd
-from phenotypy.plotting.figure import draw_3d_results
+from phenotypy.plotting.figure import draw_3d_results, draw_plot_seg_results
 
 
 class Classifier(object):
@@ -271,8 +271,9 @@ class Plot(object):
 
         return pcd_cleaned, pcd_cleaned_id
 
-    def auto_segmentation(self, denoise=True):
+    def auto_segmentation(self, denoise=True, name_by='x', ascending=True, img_folder='.'):
         # may need user to provide plant size and number for segmentation check
+        # ascending = True, from 0 to max. False: from max to 0
         seg_out = {}
         seg_out_name = {}
         for k in self.pcd_classified.keys():
@@ -321,12 +322,13 @@ class Plot(object):
 
             temp_df = pd.DataFrame({'seg_id':[p for p in plant_id],
                                     'x':[pcd_seg_list[p].get_center()[0] for p in plant_id],
-                                    'y':[pcd_seg_list[p].get_center()[0] for p in plant_id]})
-            temp_df = temp_df.sort_values(by=['x', 'y']).reset_index()
+                                    'y':[pcd_seg_list[p].get_center()[1] for p in plant_id]})
+            temp_df = temp_df.sort_values(by=name_by, ascending=ascending).reset_index()
 
             seg_out[k] = []
             seg_out_name[k] = []
-            for i, s_id in enumerate(temp_df['seg_id']):
+            for i in range(len(temp_df)):
+                s_id = int(temp_df.iloc[i]['seg_id'])
                 seg_out[k].append(pcd_seg_list[s_id])
                 file_name = f'class[{k}]-plant{i}'
                 file_path = os.path.join(self.out_folder, f'{file_name}.ply')
@@ -336,6 +338,17 @@ class Plot(object):
                     o3d.io.write_point_cloud(file_path, pcd_seg_list[s_id])
 
             print(f'[3DPhenotyping][Plot][AutoSegment][Clustering] class {k} Clustered')
+
+            if img_folder == '.':
+                savepath = os.path.join(self.out_folder, f'{self.ply_name}-class[{k}].png')
+            else:
+                savepath = os.path.join(img_folder, f'{self.ply_name}-class[{k}].png')
+
+            # calculate output size
+            len_xyz = self.pcd_xyz.max(axis=0) - self.pcd_xyz.min(axis=0)
+            draw_plot_seg_results(pcd_seg_list, list(temp_df['seg_id']),
+                                  title=f'{self.ply_name}-class[{k}] segmentation',
+                                  savepath=savepath, size=(len_xyz[0], len_xyz[1]))
 
         self.segmented = True
         self.pcd_segmented = seg_out

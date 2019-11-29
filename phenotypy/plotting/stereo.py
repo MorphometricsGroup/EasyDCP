@@ -1,7 +1,7 @@
-import colorsys
 import numpy as np
 import open3d as o3d
 from copy import copy
+from .color import distinguish_color
 
 def show_pcd(pcd_list, window_name='Open3D', color=None):
     # color =
@@ -13,16 +13,7 @@ def show_pcd(pcd_list, window_name='Open3D', color=None):
         show_list = []
         # generate distinguishable random colors
         num = len(pcd_list)
-        dist_colors = []
-        i = 0
-        step = 360.0 / num
-        while i < 360:
-            h = i
-            s = 90 + np.random.rand() * 10
-            l = 50 + np.random.rand() * 10
-            r, g, b = colorsys.hls_to_rgb(h / 360.0, l / 100.0, s / 100.0)
-            dist_colors.append((r, g, b))
-            i += step
+        dist_colors = distinguish_color(num)
         # apply colors
         for i, pcd in enumerate(pcd_list):
             pcd_copy = copy(pcd)

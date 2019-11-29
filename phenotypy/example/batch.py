@@ -18,7 +18,7 @@ for plot in plot_set:
     # show_steps=True to display output among calculation to check correct or not
     plot_class = pnt.Plot(plot, cla)
     # if need to save points among calculation for checking or other software
-    plot_class.auto_segmentation()
+    plot_class.auto_segmentation(denoise=True, ascending=True, img_folder='plot_out')
     traits = plot_class.get_traits(container_ht=0.057)
     result_container.append(traits)
 
