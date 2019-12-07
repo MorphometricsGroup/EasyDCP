@@ -8,6 +8,8 @@ from sklearn.svm import OneClassSVM, SVC
 from sklearn.cluster import KMeans
 from skimage.measure import regionprops
 
+from scipy.stats import gaussian_kde
+
 from phenotypy.pcd_tools import (merge_pcd,
                                  pcd2binary,
                                  pcd2voxel,
@@ -271,7 +273,7 @@ class Plot(object):
 
         return pcd_cleaned, pcd_cleaned_id
 
-    def auto_segmentation(self, denoise=True, name_by='x', ascending=True, img_folder='.'):
+    def auto_segmentation(self, denoise=True, name_by='x', ascending=True, eps_times=10, img_folder='.'):
         # may need user to provide plant size and number for segmentation check
         # ascending = True, from 0 to max. False: from max to 0
         seg_out = {}
@@ -282,13 +284,13 @@ class Plot(object):
                 continue
 
             print(f'[3DPhenotyping][Plot][AutoSegment] Start segmenting class {k} Please wait...')
-            vect = self.pcd_cleaned[k].cluster_dbscan(eps=self.voxel_size * 10,
+            vect = self.pcd_cleaned[k].cluster_dbscan(eps=self.voxel_size * eps_times,
                                                       min_points=round(self.voxel_density),
                                                       print_progress=True)
             vect_np = np.asarray(vect)
             seg_id = np.unique(vect_np)
 
-            print(f'[3DPhenotyping][Plot][AutoSegment] class {k} Segmented')
+            print(f'\n[3DPhenotyping][Plot][AutoSegment] class {k} Segmented')
 
             # KMeans to find the class of noise and plants
             # # Data prepare for clustering
@@ -398,7 +400,7 @@ class Plot(object):
         self.pcd_segmented_name = seg_out_name
         return seg_out
 
-    def get_traits(self, container_ht=0, savefig=True):
+    def get_traits(self, container_ht=0, ground_ht='auto', savefig=True):
         if not self.segmented:
             raise AttributeError('This plot have not been segmented, please do Plot.auto_segmentation() or Plot.shp_segmentation() first')
         else:
@@ -411,7 +413,8 @@ class Plot(object):
                 number = len(seg_dict[k])
                 print(f'[3DPhenotyping][Plot][get_traits] total number of kind {k} is {number}')
                 for i, seg in enumerate(seg_dict[k]):
-                    plant = Plant(pcd_input=seg, indices=i, ground_pcd=self.pcd_classified[-1], container_ht=container_ht)
+                    plant = Plant(pcd_input=seg, indices=i, ground_pcd=self.pcd_classified[-1],
+                                  container_ht=container_ht, ground_ht=ground_ht)
                     if savefig and self.write_ply:
                         plant.draw_3d_results(output_path=self.out_folder, file_name=self.pcd_segmented_name[k][i])
                     out_dict['plot'].append(self.ply_name)
@@ -433,7 +436,8 @@ class Plot(object):
             return pd.DataFrame(out_dict)
 
 class Plant(object):
-    def __init__(self, pcd_input, indices, ground_pcd, cut_bg=True, container_ht=0):
+
+    def __init__(self, pcd_input, indices, ground_pcd, cut_bg=True, container_ht=0, ground_ht='auto'):
         if isinstance(pcd_input, str):
             self.pcd = read_ply(pcd_input)
         else:
@@ -475,7 +479,7 @@ class Plant(object):
         self.pla = self.get_projected_leaf_area(binary, px_num_per_cm)
 
         # calcuate percentile height
-        self.pctl_ht, self.pctl_ht_plot = self.get_percentile_height(container_ht)
+        self.pctl_ht, self.pctl_ht_plot = self.get_percentile_height(container_ht, ground_ht)
 
         # voxel (todo)
         self.pcd_voxel, self.voxel_size, self.voxel_density = pcd2voxel(self.pcd)
@@ -536,16 +540,28 @@ class Plant(object):
     # -=-=-=-=-=-=-=-=-=-=-=-=-
     # | traits from 3D points |
     # -=-=-=-=-=-=-=-=-=-=-=-=-
-    def get_percentile_height(self, container_ht=0):
+    def get_percentile_height(self, container_ht=0, ground_ht='auto'):
         z = self.pcd_xyz[:, 2]
-        ground_z = np.asarray(self.ground_pcd.points)[:, 2]
-        ground_z = ground_z[ground_z < np.percentile(z, 5)]
+        if ground_ht == 'auto':
+            ground_z = np.asarray(self.ground_pcd.points)[:, 2]
+            ground_z = ground_z[ground_z < np.percentile(z, 5)]
 
-        # calculate the ground center of Z, by mean of [per10 - per 90],
-        # to avoid the effects of elevation and noises in upper part
-        #ele = ground_z[np.logical_and(ground_z < np.percentile(ground_z, 90),
-        #                              ground_z > np.percentile(ground_z, 10))].mean()
-        ele = np.median(ground_z)
+            # calculate the ground center of Z, by mean of [per5 - per 90],
+            # to avoid the effects of elevation and noises in upper part
+            """
+            ele = ground_z[np.logical_and(ground_z < np.percentile(ground_z, 80),
+                                          ground_z > np.percentile(ground_z, 5))]
+            ele = np.median(ground_z)
+            """
+            ele_ht_fine = np.linspace(ground_z.min(), ground_z.max(), 1000)
+            ele_kernel = gaussian_kde(ground_z)
+            ele_hist_num = ele_kernel(ele_ht_fine)
+
+            ele = np.median(ground_z)
+            # to be continued
+        else:
+            ele = ground_ht
+
         plant_base = ele + container_ht
 
         ele_z = z[z > plant_base]
