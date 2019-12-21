@@ -54,47 +54,66 @@
 25. [O] check orthomosaic
 26. [A][B] export orthomosaic to .TIF   
 
-## 3. Phenotyping analysis (pcd_processing)
-1. [A] read point cloud
-    1. Ensure is PNG with alpha layer
-    1. Currently, using **2** class classification, so need `fore.png` and `back.png`
-    1. [todo] Edit paths in config file.
-1. [A] Classification of dense cloud from raw image
+## 3. Phenotyping analysis (phenotypy)
+1. [A] File I/O
+    1. read Plot ply file   
+       `>>> pnt.read_ply('one_plot.ply')`  
+       if need to merge multiply ply files as one plot (in the case of planteye left and right ply files)  
+       `>>> pnt.read_plys(['plot_left.ply', 'plot_right.ply'])`
+    1. read shp file (optional)
+       `>>> pnt.read_shp('boundary.shp')`  
+       `>>> pnt.read_shps(['boundary1.shp', 'boundary2.shp'])`  
+1. [A] Classification of dense cloud (split fore- and back-ground)
+    1. [M] Make training data
+       * Image training data
+          1. At least Need `fore.png` and `back.png`
+          2. Ensure is PNG with alpha layer
+          3. Using Photoshop or GIMP to crop the images
+       * Point cloud data
+          1. Need `fore.ply` and `back.ply`
+          2. Using CloudCompare to crop the ply file
     1. [A] Build classifier
+       1. Load training data and tell the kinds of them
+       2. `cla=pnt.Classifier(path_list, kind_list)`
+       3. [todo] choose 'SVM' or other classifier, or support one-class classification to avoid the heterogeneity of background, only foreground is required.
     2. [A] Apply classifier
     3. [A] Noise filtering by radius outlier removal (depends on training dataset quality)
 1. [A] Segmentation
-    1. [A] General DBSCAN algorithm cluster
-    2. (O) Check if main plants wrongly segmented
-    3. [A] Remove outlier very small noise groups haven't been removed in *Step 3.3*
-    4. [A] Using x-y axis histogram to find the main body of plants, and remove ground noise
+    1. Auto-segmentation(DBSCAN algorithm)
+        1. [A] General DBSCAN algorithm cluster
+           [todo] DBSCAN parameter need manual given, automatic it.
+        2. [A] KMeans to split the large object (plant) with small object (noise) by [number of points, volumn of objects],  remove small noise groups
+        3. [A] Sort by X or Y to number the order of each plants
+    2. Shp-segmentation
+        1. Crop the fore-ground plot cloud by the given shp boundary
 1. [A] Phenotyping traits calculation
-    1. Length & Width (Long axis and short axis)
+    1. Length & Width
         1. Drop Z values, keep X and Y values of all plants points
         1. Build the 2D convex hull of plants points
         1. Find the minimum area bounding rectangle
-        1. Long axis (Length) = Rectangle.Length
-        1. Short axis (Width) = Rectangle.Width
-    1. Cover Area
-        1. = 2D Convex Hull.Area
+        1. Length = Rectangle.Length
+        1. Width = Rectangle.Width
+    1. Region Props
+        1. Build the 2D binary DOM of plants
+        1. Apply skimage.region_pros() algorithm to find the fitting ellipse
+        2. get the center, long axis, and short axis of ellipse
+    1. Projected leaf area
+        1. Build the 2D binary DOM of plants
+        1. Calculate the scale of pixels, count the pixel numbers
     1. Height
-        1. Using the 2D convex hull as the boundary, to cut ground points
-        1. Merge cut ground points with plants points
-        1. Height = Z_max(Merged Points) - Z_min(Merged Points)
-    1. Convex Volume
-        1. Build the 3D convex hull of merged points
-        1. Calculate the volume of this 3D convex hull
-    1. Concave Hull Volume
-    1. Voxel Volume
-        1. Build Voxel grid (split the shortest axis to 50 parts) to only plants voxles (**Not merged points**)
-        1. Get the side length of voxel
-        1. Calculate the each voxel volume (= side length ^ 3)
-        1. Count the number of total voxels
-        1. Volume = Voxel number \* voxel volume
+        1. Get ground height
+           * Manual given ground height Z value 
+           * Auto calculate ground height
+               1. Use the 2D convex hull as the boundary, to cut ground points
+               2. Use the median of ground points as the ground height
+        1. Get container height, default is 0+ground_height
+        1. Filter plant points over container_height
+        1. Build the histogram of filtered plant points Z values
+        1. Height = mean(10 percentile) - Z_min()
 1. [A] Output CSV containing phenotypic data
-1. (O) Output model views of individual plants - to check segmentation accuracy
+1. (O) Output figure of traits to check the performance of this method
 
-# problems, manual steps.
+# Problems, manual steps.
 - manually separating images into folders
 - clicking GCPs if too small or large to be detected automatically
 - entering scalebar IF NON CODED

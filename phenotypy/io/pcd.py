@@ -39,6 +39,7 @@ def read_ply(file_path, unit='m'):
         raise TypeError(f'Cannot use [{unit}] as unit, please only tape m, cm, mm, or km.')
 
     pcd.points = o3d.utility.Vector3dVector(np.asarray(pcd.points) / divider)  # cm to m
+    pcd.estimate_normals()
 
     return pcd
 
