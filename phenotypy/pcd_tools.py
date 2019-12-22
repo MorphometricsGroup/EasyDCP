@@ -1,6 +1,9 @@
 import numpy as np
 import open3d as o3d
 from scipy.spatial import ConvexHull
+from matplotlib.path import Path
+from skimage.morphology import disk
+from skimage import filters
 
 def calculate_xyz_volume(pcd):
     pcd_xyz = np.asarray(pcd.points)
@@ -75,9 +78,100 @@ def convex_hull2d(pcd):
     hull_xy = xy[hull.vertices, :]
     return hull_xy, hull_volume
 
-def pcd2dom(pcd, voxel_size):
-    down_pcd = pcd.voxel_down_sample(voxel_size=voxel_size)
-    pass
+def round2val(a, round_val):
+    return np.floor( np.array(a, dtype=float) / round_val) * round_val
+
+def pcd2dxm(pcd, dens=1, interp=True):
+    # dens = how many points per pixel, default is 1 (highest resolution)
+    rua = pd.DataFrame(np.hstack([np.asarray(pcd.points), np.asarray(pcd.colors)*255]), columns=['x','y','z','r', 'g', 'b'])
+    rua_len = rua.max() - rua.min()
+    
+    grid_num = int(np.ceil(len(rua) / dens))
+    # x/res * y/res = grid_num
+    # x * y / res^2 = grid_num
+    # x * y / grid_num = res^2
+    res = np.sqrt(rua_len['x'] * rua_len['y'] / grid_num)
+    
+    x_num = int(np.ceil(rua_len['x'] / res))
+    y_num = int(np.ceil(rua_len['y'] / res))
+    
+    rua['x_round'] = round2val(rua['x'], res)
+    rua['y_round'] = round2val(rua['y'], res)
+    
+    rua['x_pos'] = rua['x_round'] / res
+    rua['y_pos'] = rua['y_round'] / res
+    x_pos_min = rua['x_pos'].min()
+    y_pos_min = rua['y_pos'].min()
+    rua['x_pos'] = rua['x_pos'] - x_pos_min
+    rua['y_pos'] = rua['y_pos'] - y_pos_min
+    
+    group_xy = rua.groupby(['x_round', 'y_round'])
+    group_mean = group_xy['z'].max()
+    idx = group_xy['z'].transform(max) == rua['z']
+    rua_grid = rua[idx]
+    
+    dsm = np.ones((x_num+1, y_num+1)) * np.nan
+    dsm[rua['x_pos'].astype(int), rua['y_pos'].astype(int)] = rua['z']
+    
+    dom = np.zeros((x_num+1, y_num+1, 4))
+    dom[rua['x_pos'].astype(int), rua['y_pos'].astype(int), 0] = rua['r']
+    dom[rua['x_pos'].astype(int), rua['y_pos'].astype(int), 1] = rua['g']
+    dom[rua['x_pos'].astype(int), rua['y_pos'].astype(int), 2] = rua['b']
+    dom[rua['x_pos'].astype(int), rua['y_pos'].astype(int), 3] = 255
+    dom = dom.astype(np.uint8)
+    
+    del rua, rua_grid, group_xy, group_mean
+    
+    if interp:
+        # find the boundary of point clouds
+        plane_hull, _ = convex_hull2d(pcd)
+        plane_hull = np.vstack([plane_hull, plane_hull[0, :]])
+        plane_hull = round2val(plane_hull, res) / res
+        plane_hull = np.int_(plane_hull)
+
+        plane_hull[:, 0] = plane_hull[:, 0] - int(x_pos_min)
+        plane_hull[:, 1] = plane_hull[:, 1] - int(y_pos_min)
+
+        # find all the empty pixels
+        holes = np.argwhere(dom[:,:,3]==0)
+        
+        # find all the empty pixels in the boundary to aviod unncessary calculation
+        path = Path(plane_hull)
+        grid = path.contains_points(holes)
+        holes_in = holes[grid]
+        # and its mask
+        mask = np.zeros((x_num+1, y_num+1))
+        mask[holes_in[:,0], holes_in[:,1]] = 1
+        mask = mask==1
+        
+        # interp the DOM
+        r = dom[:,:,0]
+        g = dom[:,:,1]
+        b = dom[:,:,2]
+
+        r_filter = filters.rank.mean(r, selem=disk(7))#, mask=mask)
+        g_filter = filters.rank.mean(g, selem=disk(7))#, mask=mask)
+        b_filter = filters.rank.mean(b, selem=disk(7))#, mask=mask)
+
+        r[mask] = r_filter[mask]
+        g[mask] = g_filter[mask]
+        b[mask] = b_filter[mask]
+        
+        del r_filter, g_filter, b_filter
+        a = dom[:,:,3].copy()
+        a[mask] = 255
+        dom_new = np.stack([r,g,b,a], axis=2)
+
+        # interp the DSM
+        #[To be continued, because]
+        # Filter.rank.mean only support 
+        # > ValueError: Images of type float must be between -1 and 1.
+
+        dom_new = dom_new.astype(np.uint8)
+        
+        return dom_new, dsm
+    else:
+        return dom, dsm
 
 def pcd2binary(pcd, dpi=10):
     # dpi suggest < 20
