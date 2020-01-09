@@ -18,15 +18,15 @@ import os, Metashape, math #for auto_ctrl
 print('\n-----------------------\n~~~~start auto_ctrl~~~~\n')
 
 ##USER DEFINED VARIABLES
-path_folders = 'F:/ALEX_SSD/20190618_fukano_weed/' #enter full path to folders root (no nested folders!)
-project_filename = ' - 00000 - ALLSTEPS-v28-med'
-blur_threshold = 0.4
-ignore_gps = True
+path_folders = 'C:/Users/CREST/Pictures/191227pheno/' #'F:/ALEX_SSD/20190618_fukano_weed/' #enter full path to folders root (no nested folders!)
+project_filename = '-v032'#' - 00000 - ALLSTEPS-v28-med'
+blur_threshold = 0.5
+ignore_gps = False#True
 use_scalebars = True
-align_ground = True
+align_ground = False#True
 export_cloud = True
-build_dem = True
-build_ortho = True
+build_dem = False#True
+build_ortho = False#True
 
 #populate folder list
 folder_list = os.listdir(path_folders) 
@@ -181,8 +181,8 @@ for j in range(folder_count): #run the following code for each folder
         '''vertical = ["target 9", "target 3"] 
         horizontal = ["target 9", "target 1"]'''
         
-        horizontal = ["target 9", "target 16"]
-        vertical = ["target 9", "target 3"] #fails on S08, S12
+        horizontal = ["target 8", "target 7"]#["target 9", "target 16"]
+        vertical = ["target 8", "target 6"]#["target 9", "target 3"] #fails on S08, S12
         #vertical = ["target 2", "target 15"] #run for all?
         
         print('H0: ',get_marker(horizontal[0], chunk).position)
@@ -223,7 +223,7 @@ for j in range(folder_count): #run the following code for each folder
     
     #detect non-coded targets and optimize cameras
     chunk.detectMarkers(type=Metashape.CrossTarget,tolerance=50)
-    chunk.detectMarkers(type=Metashape.CircularTarget,tolerance=50)
+    '''chunk.detectMarkers(type=Metashape.CircularTarget,tolerance=50)'''
     chunk.optimizeCameras()
     
     #save project
@@ -233,9 +233,9 @@ for j in range(folder_count): #run the following code for each folder
     '''
     
     #build depth map, dense cloud
-    chunk.buildDepthMaps(quality=Metashape.MediumQuality, filter=Metashape.MildFiltering)#default: MediumQuality
+    chunk.buildDepthMaps(quality=Metashape.MediumQuality, filter=Metashape.MildFiltering)#default: MediumQuality, MildFiltering
+    doc.save()
     chunk.buildDenseCloud() 
-    
     #export dense cloud
     if export_cloud:
         chunk.exportPoints(path = savepath+'-MetashapeDenseCloud.ply')   
