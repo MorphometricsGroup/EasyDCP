@@ -1,10 +1,10 @@
 # TODO
-
+* [ ] add numbered subfolders (to new chunk? may require revising other code doc.chunk)
 * [ ] test with and without optimizeCameras
-* [ ] create part-2 pipeline where user may move steps they want to do after a manual check
+* [ ] create part-2 pipeline where user may move steps they want to do after a break/ manual check
 * [ ] play with YPR
 * [ ] add titles to steps in script
-
+* [ ] scalebar markers as corners of boundbox
 # Pipeline for 3d reconstruction and orthomosaic to phenotypic data
 
 [A] automated step  
