@@ -18,8 +18,8 @@ import os, Metashape, math #for auto_ctrl
 print('\n-----------------------\n~~~~start auto_ctrl~~~~\n')
 
 ##USER DEFINED VARIABLES
-path_folders = 'C:/Users/CREST/Pictures/191227pheno/' #'F:/ALEX_SSD/20190618_fukano_weed/' #enter full path to folders root (no nested folders!)
-project_filename = '-v032'#' - 00000 - ALLSTEPS-v28-med'
+path_folders = 'C:/Users/Alex/Pictures/191227pheno/' #'F:/ALEX_SSD/20190618_fukano_weed/' #enter full path to folders root (no nested folders!)
+project_filename = '-v033'#' - 00000 - ALLSTEPS-v28-med'
 blur_threshold = 0.5
 ignore_gps = False#True
 use_scalebars = True
@@ -27,6 +27,7 @@ align_ground = False#True
 export_cloud = True
 build_dem = False#True
 build_ortho = False#True
+detect_markers = True
 
 #populate folder list
 folder_list = os.listdir(path_folders) 
@@ -88,7 +89,8 @@ for j in range(folder_count): #run the following code for each folder
             print ('DISABLE %s' %(image))
 
     #detect circular coded targets
-    chunk.detectMarkers(type=Metashape.CircularTarget12bit,tolerance=100)
+    if detect_markers:
+        chunk.detectMarkers(type=Metashape.CircularTarget12bit,tolerance=100)
    
     #match, align
     chunk.matchPhotos(accuracy=Metashape.HighAccuracy, generic_preselection=True, reference_preselection=False)#default: HighAccuracy
@@ -222,9 +224,10 @@ for j in range(folder_count): #run the following code for each folder
         print(filename_list[j]," Ground alignment finished")
     
     #detect non-coded targets and optimize cameras
-    chunk.detectMarkers(type=Metashape.CrossTarget,tolerance=50)
-    '''chunk.detectMarkers(type=Metashape.CircularTarget,tolerance=50)'''
-    chunk.optimizeCameras()
+    if detect_markers:
+        chunk.detectMarkers(type=Metashape.CrossTarget,tolerance=50)
+        '''chunk.detectMarkers(type=Metashape.CircularTarget,tolerance=50)'''
+        chunk.optimizeCameras()
     
     #save project
     doc.save()
