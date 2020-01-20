@@ -18,16 +18,17 @@ import os, Metashape, math #for auto_ctrl
 print('\n-----------------------\n~~~~start auto_ctrl~~~~\n')
 
 ##USER DEFINED VARIABLES
-path_folders = 'C:/Users/Alex/Pictures/191227pheno/' #'F:/ALEX_SSD/20190618_fukano_weed/' #enter full path to folders root (no nested folders!)
-project_filename = '-v033'#' - 00000 - ALLSTEPS-v28-med'
+path_folders = 'T:/2020agisoft/' #'F:/ALEX_SSD/20190618_fukano_weed/' #enter full path to folders root (no nested folders!)
+project_filename = '-v034'#' - 00000 - ALLSTEPS-v28-med'
 blur_threshold = 0.5
-ignore_gps = False#True
-use_scalebars = True
-align_ground = False#True
-export_cloud = True
-build_dem = False#True
-build_ortho = False#True
-detect_markers = True
+ignore_gps = True #set to True if photos have bad GPS info, such as RGB handheld camera with GPS at short range
+use_scalebars = True #set to True if you used coded-target scalebars and have provided scalebars.csv file 
+align_ground = False #set to True if you want to use the scalebars to align the ground plane
+export_cloud = True #set to True if you want to export the point cloud to .PLY file
+build_dem = False #set to True if you want to build and export DEM as .TIF file
+build_ortho = False #set to True if you want to build and export orthomosaic as .TIF file
+detect_targets = True #set to True if you used Agisoft coded targets
+detect_markers = True #set to True if you used non-coded cross (chessboard) markers
 
 #populate folder list
 folder_list = os.listdir(path_folders) 
@@ -89,7 +90,7 @@ for j in range(folder_count): #run the following code for each folder
             print ('DISABLE %s' %(image))
 
     #detect circular coded targets
-    if detect_markers:
+    if detect_targets:
         chunk.detectMarkers(type=Metashape.CircularTarget12bit,tolerance=100)
    
     #match, align
@@ -280,8 +281,10 @@ for j in range(folder_count): #run the following code for each folder
     ortho = savepath+'-orthomosaic.tif'
     #print variables
     print('path to cloud: ',cloud)
-    print('path to DEM: ',dem)
-    print('path to orthomosaic: ',ortho)
+    if build_dem:
+        print('path to DEM: ',dem)
+    if build_ortho:
+        print('path to orthomosaic: ',ortho)
     '''
     '''
     #begin pcd_processing portion
