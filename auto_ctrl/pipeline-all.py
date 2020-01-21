@@ -2,11 +2,11 @@
 # modified from: scripts on Agisoft forums by Alexey Pasumansky
 # by Alex Feldman - UTokyo Field Phenomics Lab
 
-# updated 2019.10.16
+# updated 2020.01.20
 # compatibility Metashape Pro 1.5.3
-#! incompatible with nested folders
+'''#! incompatible with nested folders
 #! files in folders root will break the script
-#! Non-agisoft nested folder in photos folder will break script
+#! Non-agisoft nested folder in photos folder will break script'''
 #! Agisoft errors will break the script. 
 #>>TODO: Jump to next folder on error
 #>>TODO: write info to log file (failed folders, etc)
@@ -15,11 +15,11 @@ import os, Metashape, math #for auto_ctrl
 
 ###Begin Agisoft auto_ctrl 3D reconstruction portion
 
-print('\n-----------------------\n~~~~start auto_ctrl~~~~\n')
+print('\n----[3Dphenotyping]----\n~~~~start auto_ctrl~~~~\n')
 
 ##USER DEFINED VARIABLES
-path_folders = 'T:/2020agisoft/' #'F:/ALEX_SSD/20190618_fukano_weed/' #enter full path to folders root (no nested folders!)
-project_filename = '-v034'#' - 00000 - ALLSTEPS-v28-med'
+path_folders = 'T:/2020agisoft/191227pheno/' #enter full path to folders root (no nested folders!)
+project_filename = '-v040'#' - 00000 - ALLSTEPS-v28-med'
 blur_threshold = 0.5
 ignore_gps = True #set to True if photos have bad GPS info, such as RGB handheld camera with GPS at short range
 use_scalebars = True #set to True if you used coded-target scalebars and have provided scalebars.csv file 
@@ -30,6 +30,32 @@ build_ortho = False #set to True if you want to build and export orthomosaic as 
 detect_targets = True #set to True if you used Agisoft coded targets
 detect_markers = True #set to True if you used non-coded cross (chessboard) markers
 
+##FUNCTIONS
+def vect(a, b):
+    """
+    Normalized vector product for two vectors
+    """
+
+    result = Metashape.Vector([a.y*b.z - a.z*b.y, a.z*b.x - a.x*b.z, a.x*b.y - a.y *b.x])
+    return result.normalized()
+
+def get_marker(label, chunk):
+    """
+    Returns marker instance from chunk based on the label correspondence
+    """
+    
+    for marker in chunk.markers:
+        if label == marker.label:
+            return marker
+    print("Marker not found! " + label)
+    return False
+
+def append_by_type(filename, filepath):
+    #print('~~~',filename)
+    type = filename.rsplit(".",1)[-1].lower()
+    if type in  ["jpg", "jpeg", "png"]:#, "tif", "tiff"]: #! change 1 to -1 and test with folder in photos folder
+        photo_list.append("/".join([filepath, filename]))
+
 #populate folder list
 folder_list = os.listdir(path_folders) 
 folder_count = len(folder_list)
@@ -39,38 +65,91 @@ for i in range(folder_count):
     print(i,folder_list[i])
 photo_list = list()
 filename_list = list()
+nest_list = list()
 
-#fill path list
-print('\n[3Dphenotyping] filling path list...')
+#fill folder list
+print('\n[3Dphenotyping] filling folder list...')
 for i in range(folder_count):
     if folder_list[i] != 'skip':
         path_photos = path_folders+folder_list[i]
         filename_list.append("/".join([path_photos,folder_list[i]])) 
-        print(i)
+        print("folder_list",i,folder_list[i])
     else:
         folder_count = folder_count - 1
     
 doc = Metashape.app.document
 
 for j in range(folder_count): #run the following code for each folder    
-
-    chunk = doc.addChunk()
     
-    #ensure photo list is empty
+    #ensure photo list and agisoft document are empty
     photo_list.clear()
+    doc.clear()  
     
-    #import photos
+    #set 'has nested folders' to false (none have been found yet)
+    has_nested = False
+    
+    #populate file list
+    print("\n-----------------------------------")
+    print("\n[3Dphenotyping] Looking for photos...")
+    print("folder_list",j,folder_list[j])
     if folder_list[j] != 'skip':
         path_photos = path_folders+folder_list[j]
-    image_list = os.listdir(path_photos)
+    file_list = os.listdir(path_photos)
     print(str(j)+':','path_photos',path_photos)
-    #print('file list:',image_list)
-    for photo in image_list: #create photo list
-        if photo.rsplit(".",1)[1].lower() in  ["jpg", "jpeg"]:#, "tif", "tiff"]: #! change 1 to -1 and test with folder in photos folder
-            photo_list.append("/".join([path_photos, photo]))
-    chunk.addPhotos(photo_list)
-    print(j)    
-    print('path:',filename_list[j])
+    print('file list:',file_list)
+    #look for nested folders
+    for item in file_list: 
+        if "." not in item:
+            print(item,"is a nested folder!")
+            has_nested = True
+            nestpath = "/".join([path_photos,item])
+            print('nestpath:',nestpath)
+            nest_list.append(nestpath)
+        else:
+            #look through files to find photos
+            '''split = item.rsplit(".",1)[-1].lower()
+            print('split: ',split)'''
+            append_by_type(item, path_photos)
+            '''if split in  ["jpg", "jpeg", "png"]:#, "tif", "tiff"]: #! change 1 to -1 and test with folder in photos folder
+                photo_list.append("/".join([path_photos, item]))'''
+    photo_count = len(photo_list)
+    print('\nphoto count:',photo_count) 
+    #print('photo list:',photo_list)
+    
+    #populate file list from nested folders
+    if has_nested:
+        print("#justnestedthings\n")
+        print('nest list: ',nest_list)
+        for item in nest_list:
+            print('item:',item)
+            file_list = os.listdir(item)
+            #print ('\nFL:',file_list)
+            for file in file_list:
+                if "." not in file:
+                    print(file,"is a nested folder! Ignoring!!")
+                else:
+                    append_by_type(file, item)
+        photo_count = len(photo_list)
+        print('\nphoto count:',photo_count) 
+        #print('photo list:',photo_list)
+    
+    #import photos
+    if photo_count > 0:
+        print("\n[3Dphenotyping] Adding photos...")
+        chunk = doc.addChunk()
+        chunk.addPhotos(photo_list)
+    else:
+        print('no photos found! moving to next folder...')
+        continue #skip the rest of the loop because no photos were found.
+    print(j,'save path:',filename_list[j])
+    
+    #save project - first save
+    savepath = filename_list[j]+project_filename
+    doc.save(path = savepath+'.psx')
+    chunk = doc.chunk #this line is only necessary after the first save when defining path
+    
+    #DEBUG
+    #continue
     
     #clear GPS data
     if ignore_gps:
@@ -149,18 +228,16 @@ for j in range(folder_count): #run the following code for each folder
         Metashape.app.update()
         print("Scalebars script finished")
 
-    #save project (required before building DEM)
-    savepath = filename_list[j]+project_filename
-    doc.save(path = savepath+'.psx')
-    chunk = doc.chunk #this line is only necessary after the first save when defining path
+    #save project
+    doc.save()
     
-    '''#optional break to check result
-    break #only break if you want the script to stop here for each folder
+    '''#optional continue to check result
+    continue #only use if you want the script to stop here for each folder
     '''
     
     #align ground plane with markers
     if align_ground:
-        
+        '''
         def vect(a, b):
             """
             Normalized vector product for two vectors
@@ -179,7 +256,7 @@ for j in range(folder_count): #run the following code for each folder
                     return marker
             print("Marker not found! " + label)
             return False
-
+'''
         region = chunk.region
         '''vertical = ["target 9", "target 3"] 
         horizontal = ["target 9", "target 1"]'''
@@ -232,8 +309,8 @@ for j in range(folder_count): #run the following code for each folder
     
     #save project
     doc.save()
-    '''#optional break to check result
-    break #only break if you want the script to stop here for each folder
+    '''#optional continue to check result
+    continue #only use if you want the script to stop here for each folder
     '''
     
     #build depth map, dense cloud
@@ -246,8 +323,8 @@ for j in range(folder_count): #run the following code for each folder
     
     #save project 
     doc.save()
-    '''#optional break to check result
-    break #only break if you want the script to stop here for each folder
+    '''#optional continue to check result
+    continue #only use if you want the script to stop here for each folder
     '''
     
     #build DEM and export to TIF at standard resolution 0.001 m/px
@@ -257,8 +334,8 @@ for j in range(folder_count): #run the following code for each folder
     
     #save project
     doc.save()
-    '''#optional break to check result
-    break #only break if you want the script to stop here for each folder
+    '''#optional continue to check result
+    continue #only use if you want the script to stop here for each folder
     '''
     
     #build Orthomosaic and export to TIF at standard resolution 0.001 m/px
@@ -268,8 +345,8 @@ for j in range(folder_count): #run the following code for each folder
     
     #save project
     doc.save()
-    '''#optional break to check result
-    break #only break if you want the script to stop here for each folder
+    '''#optional continue to check result
+    continue #only use if you want the script to stop here for each folder
     '''
     
     print ('\n3Dphenotyping auto_ctrl portion complete for ',savepath)
@@ -288,9 +365,6 @@ for j in range(folder_count): #run the following code for each folder
     '''
     '''
     #begin pcd_processing portion
-    print('\n-----------------------\n~~~~start pcd_processing~~~~\n')
-    
-    #cleanup before next folder
-    doc.clear()    
+    print('\n-----------------------\n~~~~start pcd_processing~~~~\n') 
    
 print('Finished!')
