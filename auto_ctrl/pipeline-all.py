@@ -19,7 +19,7 @@ print('\n----[3Dphenotyping]----\n~~~~start auto_ctrl~~~~\n')
 
 ##USER DEFINED VARIABLES
 path_folders = 'T:/2020agisoft/191227pheno/' #enter full path to folders root (no nested folders!)
-project_filename = '-v040'#' - 00000 - ALLSTEPS-v28-med'
+project_filename = '-v041-all'#' - 00000 - ALLSTEPS-v28-med'
 blur_threshold = 0.5
 ignore_gps = True #set to True if photos have bad GPS info, such as RGB handheld camera with GPS at short range
 use_scalebars = True #set to True if you used coded-target scalebars and have provided scalebars.csv file 
@@ -29,6 +29,9 @@ build_dem = False #set to True if you want to build and export DEM as .TIF file
 build_ortho = False #set to True if you want to build and export orthomosaic as .TIF file
 detect_targets = True #set to True if you used Agisoft coded targets
 detect_markers = True #set to True if you used non-coded cross (chessboard) markers
+#variables regarding nested folders
+select_nested = False #set to True if you want to only use selected nested folders
+nested_folders = ['1','2']
 
 ##FUNCTIONS
 def vect(a, b):
@@ -74,8 +77,7 @@ for i in range(folder_count):
         path_photos = path_folders+folder_list[i]
         filename_list.append("/".join([path_photos,folder_list[i]])) 
         print("folder_list",i,folder_list[i])
-    else:
-        folder_count = folder_count - 1
+    else: folder_count = folder_count - 1
     
 doc = Metashape.app.document
 
@@ -83,6 +85,7 @@ for j in range(folder_count): #run the following code for each folder
     
     #ensure photo list and agisoft document are empty
     photo_list.clear()
+    nest_list.clear()
     doc.clear()  
     
     #set 'has nested folders' to false (none have been found yet)
@@ -92,43 +95,64 @@ for j in range(folder_count): #run the following code for each folder
     print("\n-----------------------------------")
     print("\n[3Dphenotyping] Looking for photos...")
     print("folder_list",j,folder_list[j])
-    if folder_list[j] != 'skip':
-        path_photos = path_folders+folder_list[j]
+    if folder_list[j] != 'skip': path_photos = path_folders+folder_list[j]
+    '''
+    '''
     file_list = os.listdir(path_photos)
     print(str(j)+':','path_photos',path_photos)
     print('file list:',file_list)
     #look for nested folders
     for item in file_list: 
-        if "." not in item:
+        if "." not in item: #check if folder
             print(item,"is a nested folder!")
             has_nested = True
             nestpath = "/".join([path_photos,item])
             print('nestpath:',nestpath)
             nest_list.append(nestpath)
-        else:
-            #look through files to find photos
-            '''split = item.rsplit(".",1)[-1].lower()
-            print('split: ',split)'''
-            append_by_type(item, path_photos)
-            '''if split in  ["jpg", "jpeg", "png"]:#, "tif", "tiff"]: #! change 1 to -1 and test with folder in photos folder
-                photo_list.append("/".join([path_photos, item]))'''
+        else: append_by_type(item, path_photos)
+        '''
+        '''
+
     photo_count = len(photo_list)
     print('\nphoto count:',photo_count) 
     #print('photo list:',photo_list)
     
     #populate file list from nested folders
     if has_nested:
-        print("#justnestedthings\n")
+        print("\n[3Dphenotyping] Checking nested folders...\n")
         print('nest list: ',nest_list)
         for item in nest_list:
             print('item:',item)
-            file_list = os.listdir(item)
-            #print ('\nFL:',file_list)
-            for file in file_list:
-                if "." not in file:
-                    print(file,"is a nested folder! Ignoring!!")
-                else:
-                    append_by_type(file, item)
+            folder_name = item.rsplit("/",1)[-1].lower()
+            char0 = folder_name[0]
+            print('folder name:',folder_name,'char0:',char0)
+            if select_nested:
+                for m in range(len(nested_folders)):
+                    if nested_folders[m] == char0:
+                        print('selected nested folder found!')
+                        '''
+                        '''
+                        file_list = os.listdir(item)
+                        #print ('\nFL:',file_list)
+                        for file in file_list:
+                            if "." not in file:
+                                print(file,"is a nested folder! Ignoring!!")
+                            else: 
+                                append_by_type(file, item)
+                                '''
+                                '''
+            else: 
+                '''
+                '''
+                file_list = os.listdir(item)
+                #print ('\nFL:',file_list)
+                for file in file_list:
+                    if "." not in file:
+                        print(file,"is a nested folder! Ignoring!!")
+                    else: 
+                        append_by_type(file, item)
+                        '''
+                        '''
         photo_count = len(photo_list)
         print('\nphoto count:',photo_count) 
         #print('photo list:',photo_list)
@@ -169,8 +193,7 @@ for j in range(folder_count): #run the following code for each folder
             print ('DISABLE %s' %(image))
 
     #detect circular coded targets
-    if detect_targets:
-        chunk.detectMarkers(type=Metashape.CircularTarget12bit,tolerance=100)
+    if detect_targets: chunk.detectMarkers(type=Metashape.CircularTarget12bit,tolerance=100)
    
     #match, align
     chunk.matchPhotos(accuracy=Metashape.HighAccuracy, generic_preselection=True, reference_preselection=False)#default: HighAccuracy
@@ -318,8 +341,7 @@ for j in range(folder_count): #run the following code for each folder
     doc.save()
     chunk.buildDenseCloud() 
     #export dense cloud
-    if export_cloud:
-        chunk.exportPoints(path = savepath+'-MetashapeDenseCloud.ply')   
+    if export_cloud: chunk.exportPoints(path = savepath+'-MetashapeDenseCloud.ply')   
     
     #save project 
     doc.save()
@@ -358,10 +380,8 @@ for j in range(folder_count): #run the following code for each folder
     ortho = savepath+'-orthomosaic.tif'
     #print variables
     print('path to cloud: ',cloud)
-    if build_dem:
-        print('path to DEM: ',dem)
-    if build_ortho:
-        print('path to orthomosaic: ',ortho)
+    if build_dem: print('path to DEM: ',dem)
+    if build_ortho: print('path to orthomosaic: ',ortho)
     '''
     '''
     #begin pcd_processing portion
