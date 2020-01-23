@@ -19,7 +19,7 @@ print('\n----[3Dphenotyping]----\n~~~~start auto_ctrl~~~~\n')
 
 ##USER DEFINED VARIABLES
 path_folders = 'T:/2020agisoft/191227pheno/' #enter full path to folders root (no nested folders!)
-project_filename = '-v041-all'#' - 00000 - ALLSTEPS-v28-med'
+project_filename = '-v042-all-nocross'#' - 00000 - ALLSTEPS-v28-med'
 blur_threshold = 0.5
 ignore_gps = True #set to True if photos have bad GPS info, such as RGB handheld camera with GPS at short range
 use_scalebars = True #set to True if you used coded-target scalebars and have provided scalebars.csv file 
@@ -28,7 +28,7 @@ export_cloud = True #set to True if you want to export the point cloud to .PLY f
 build_dem = False #set to True if you want to build and export DEM as .TIF file
 build_ortho = False #set to True if you want to build and export orthomosaic as .TIF file
 detect_targets = True #set to True if you used Agisoft coded targets
-detect_markers = True #set to True if you used non-coded cross (chessboard) markers
+detect_markers = False #set to True if you used non-coded cross (chessboard) markers
 #variables regarding nested folders
 select_nested = False #set to True if you want to only use selected nested folders
 nested_folders = ['1','2']
@@ -184,7 +184,7 @@ for j in range(folder_count): #run the following code for each folder
     
     
     #estimate image quality and disable below threshold
-    chunk.estimateImageQuality() 
+    chunk.analyzePhotos() 
     print('--- Disabling Cameras below',blur_threshold)
     for image in chunk.cameras:
     #print (image.meta['Image/Quality'])
