@@ -18,12 +18,16 @@ def read_shp(shp_path, correct_coord=None):
 
     for i, shape in enumerate(shp.shapes()):
         plot_name = shp.records()[i][-1]
-        plot_name = plot_name.replace(r'/', '_')
-        plot_name = plot_name.replace(r'\\', '_')
+        if isinstance(plot_name, str):
+            plot_name = plot_name.replace(r'/', '_')
+            plot_name = plot_name.replace(r'\\', '_')
+        else:
+            plot_name = str(plot_name)
         coord_np = np.asarray(shape.points)
         # correct
-        coord_np[:, 0] -= correct_coord[0]
-        coord_np[:, 1] -= correct_coord[1]
+        if correct_coord is not None:
+            coord_np[:, 0] -= correct_coord[0]
+            coord_np[:, 1] -= correct_coord[1]
         coord_np = np.insert(coord_np, 2, 0, axis=1)
 
         shp_dict[plot_name] = coord_np
@@ -69,3 +73,8 @@ def read_shps(shp_list, correct_coord=None, rename=True):
         warnings.warn(f"the total polygon number({len(shp_dict)}) is not same as the sum of all shp files({total_len})")
 
     return shp_dict
+    
+def read_xyz(file_path):
+    with open(file_path, 'r') as f:
+        x, y, z = f.read().split(' ')
+    return (float(x), float(y), float(z))

@@ -8,7 +8,7 @@ from scipy.stats import gaussian_kde
 
 from phenotypy.pcd_tools import convex_hull2d
 
-def draw_plot_seg_results(pcd_seg_list, selected_id_list, title, savepath, size=(9, 6), dpi=300):
+def draw_plot_seg_results(pcd_seg_list, selected_id_list, title, savepath, show_id=True, size=(9, 6), dpi=300):
     """
     :param pcd_seg_list: [geometry::PointCloud with 35 points., geometry::PointCloud with 76 points., ...]
     :param selected_id_list: [5, 14, 8, 12, 21, 22, 23]
@@ -51,7 +51,7 @@ def draw_plot_seg_results(pcd_seg_list, selected_id_list, title, savepath, size=
 
         convex_container.append(convex_hull)
         center_container.append(pcd_seg_list[sid].get_center())
-        text_container.append(f"Plant{i}")
+        text_container.append(str(i))
 
     w, h = size
     max_len = max(w, h)
@@ -67,7 +67,8 @@ def draw_plot_seg_results(pcd_seg_list, selected_id_list, title, savepath, size=
         convex = convex_container[i]
         text = text_container[i]
         ax.plot(convex[:, 0], convex[:, 1], 'r--')
-        ax.text(x=center[0], y=center[1], s=text, ha='center', va='center')
+        if show_id:
+            ax.text(x=center[0], y=center[1], s=text, ha='center', va='center')
 
     ax.set_xlabel('X')
     ax.set_ylabel('Y')
