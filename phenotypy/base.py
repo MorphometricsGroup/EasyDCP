@@ -184,7 +184,7 @@ class Plot(object):
                 self.pcd_segmented
     """
 
-    def __init__(self, ply_path, clf, unit='m', output_path='.', write_ply=True):
+    def __init__(self, ply_path, clf, unit='m', output_path='.', write_ply=False):
         self.ply_path = ply_path
         self.write_ply = write_ply
         if os.path.isfile(ply_path):
@@ -206,14 +206,14 @@ class Plot(object):
         else:
             raise TypeError(f'[{ply_path}] is neither a ply file or folder')
 
-
         print(f'[3DPhenotyping][Plot][__init__] Ply file "{self.ply_path}" loaded')
 
-        self.out_folder = os.path.join(output_path, self.ply_name)
-        print(f'[3DPhenotyping][Plot][__init__] Setting output folder "{os.path.abspath(self.out_folder)}"')
         if self.write_ply:
+            self.out_folder = os.path.join(output_path, self.ply_name)
             make_dir(self.out_folder, clean=True)
+            print(f'[3DPhenotyping][Plot][__init__] Setting output folder "{os.path.abspath(self.out_folder)}"')
         else:
+            self.out_folder = output_path
             print(f'[3DPhenotyping][Plot][__init__] Mode "write_ply" == False, output folder creating ignored')
 
         self.pcd_xyz = np.asarray(self.pcd.points)
@@ -273,9 +273,10 @@ class Plot(object):
 
         return pcd_cleaned, pcd_cleaned_id
 
-    def auto_segmentation(self, denoise=True, name_by='x', ascending=True, eps_times=10, img_folder='.'):
+    def auto_segmentation(self, denoise=True, name_by='x', ascending=True, eps_times=10, min_points=None, img_folder='.', show_id=True):
         # may need user to provide plant size and number for segmentation check
         # ascending = True, from 0 to max. False: from max to 0
+        # [todo] denoise currently not working, need to split this huge function to several parts
         seg_out = {}
         seg_out_name = {}
         for k in self.pcd_classified.keys():
@@ -284,8 +285,11 @@ class Plot(object):
                 continue
 
             print(f'[3DPhenotyping][Plot][AutoSegment] Start segmenting class {k} Please wait...')
+            if min_points is None:
+                min_points = round(self.voxel_density)
+                
             vect = self.pcd_cleaned[k].cluster_dbscan(eps=self.voxel_size * eps_times,
-                                                      min_points=round(self.voxel_density),
+                                                      min_points=min_points,
                                                       print_progress=True)
             vect_np = np.asarray(vect)
             seg_id = np.unique(vect_np)
@@ -321,10 +325,11 @@ class Plot(object):
                 plant_id = np.where(km.labels_ == 0)[0].tolist()
             else:
                 plant_id = np.where(km.labels_ == 1)[0].tolist()
-
+                    
             temp_df = pd.DataFrame({'seg_id':[p for p in plant_id],
                                     'x':[pcd_seg_list[p].get_center()[0] for p in plant_id],
                                     'y':[pcd_seg_list[p].get_center()[1] for p in plant_id]})
+
             temp_df = temp_df.sort_values(by=name_by, ascending=ascending).reset_index()
 
             seg_out[k] = []
@@ -336,7 +341,8 @@ class Plot(object):
                 file_path = os.path.join(self.out_folder, f'{file_name}.ply')
                 seg_out_name[k].append(file_name)
                 if self.write_ply:
-                    print(f'[3DPhenotyping][Plot][AutoSegment][Output] writing file "{file_path}"')
+                    if i < 5 or i > len(temp_df)-5:
+                        print(f'[3DPhenotyping][Plot][AutoSegment][Output] writing file "{file_path}"')
                     o3d.io.write_point_cloud(file_path, pcd_seg_list[s_id])
 
             print(f'[3DPhenotyping][Plot][AutoSegment][Clustering] class {k} Clustered')
@@ -349,8 +355,8 @@ class Plot(object):
             # calculate output size
             len_xyz = self.pcd_xyz.max(axis=0) - self.pcd_xyz.min(axis=0)
             draw_plot_seg_results(pcd_seg_list, list(temp_df['seg_id']),
-                                  title=f'{self.ply_name}-class[{k}] segmentation',
-                                  savepath=savepath, size=(len_xyz[0], len_xyz[1]))
+                                  title=f'{self.ply_name}-class[{k}] segmentation (# {len(temp_df)})',
+                                  savepath=savepath, size=(len_xyz[0], len_xyz[1]), show_id=show_id)
 
         self.segmented = True
         self.pcd_segmented = seg_out
@@ -377,6 +383,7 @@ class Plot(object):
 
             print(f'[3DPhenotyping][Plot][AutoSegment][Clustering] class {k} Cluster Data Prepared')
             for plot_key in shp_seg.keys():
+                # can use pcd_tools.build_cut_boundary()
                 boundary = o3d.visualization.SelectionPolygonVolume()
 
                 boundary.orthogonal_axis = "Z"
@@ -434,6 +441,13 @@ class Plot(object):
                     out_dict['percentile_height(m)'].append(plant.pctl_ht)
 
             return pd.DataFrame(out_dict)
+
+class Plot_New(object):
+
+    def __init__(self):
+        pass
+
+
 
 class Plant(object):
 
@@ -583,3 +597,121 @@ class Plant(object):
 
         file_name = f'{plant_name}.png'
         draw_3d_results(self, title=plant_name, savepath=f"{output_path}/{file_name}")
+        
+        
+class Plant_New(object):
+
+    def __init__(self, pcd_input, clf, container_ht=0, ground_ht='auto'):
+        if isinstance(pcd_input, str):
+            pcd_all = read_ply(pcd_input)
+        else:
+            pcd_all = pcd_input
+            
+        pred_result = clf.predict(np.asarray(pcd_all.colors))
+        idx_bg = np.where(pred_result == -1)[0].tolist()
+        idx_fg = np.where(pred_result == 0)[0].tolist()
+        
+        self.pcd = pcd_all.select_down_sample(indices=idx_fg)
+        self.ground_pcd = pcd_all.select_down_sample(indices=idx_bg)
+        
+        self.center = self.pcd.get_center()
+
+        self.pcd_xyz = np.asarray(self.pcd.points)
+        self.pcd_rgb = np.asarray(self.pcd.colors)
+
+        # calculate the convex hull 2d
+        self.plane_hull, self.hull_area = convex_hull2d(self.pcd)  # vertex_set (2D ndarray), m^2
+
+        # calculate min_area_bounding_rectangle,
+        # rect_res = (rot_angle, area, width, length, center_point, corner_points)
+        self.rect_res = min_bounding_rect(self.plane_hull)
+        self.width = self.rect_res[2]   # unit is m
+        self.length = self.rect_res[3]   # unit is m
+
+        # calculate the projected 2D image (X-Y)
+        binary, px_num_per_cm, corner = pcd2binary(self.pcd)
+        # calculate region props
+        self.centroid, self.major_axis, self.minor_axis, self.orient_degree = self.get_region_props(binary,
+                                                                                                    px_num_per_cm,
+                                                                                                    corner)
+        # calculate projected leaf area
+        self.pla_img = binary
+        self.pla = self.get_projected_leaf_area(binary, px_num_per_cm)
+
+        # calcuate percentile height
+        self.pctl_ht, self.pctl_ht_plot = self.get_percentile_height(container_ht, ground_ht)
+
+        # voxel (todo)
+        self.pcd_voxel, self.voxel_size, self.voxel_density = pcd2voxel(self.pcd)
+
+    # -=-=-=-=-=-=-=-=-=-=-=-=
+    # | traits from 2D image |
+    # -=-=-=-=-=-=-=-=-=-=-=-=
+
+    def get_region_props(self, binary, px_num_per_cm, corner):
+        x_min, y_min = corner
+        regions = regionprops(binary, coordinates='xy')
+        props = regions[0]          # this is all coordinate in converted binary images
+
+        # convert coordinate from binary images to real point cloud
+        y0, x0 = props.centroid
+        center = ( x0 / px_num_per_cm / 100 + x_min, y0 / px_num_per_cm /100 + y_min)
+
+        major_axis = props.major_axis_length / px_num_per_cm / 100
+        minor_axis = props.minor_axis_length / px_num_per_cm / 100
+
+        phi = props.orientation
+        angle = - phi * 180 / np.pi # included angle with x axis, clockwise, by regionprops default
+
+        return center, major_axis, minor_axis, angle
+
+    def get_projected_leaf_area(self, binary, px_num_per_cm):
+        kind, number = np.unique(binary, return_counts=True)
+        # back_num = number[0]
+        fore_num = number[1]
+
+        pixel_size = (1 / px_num_per_cm) ** 2   # unit is cm2
+
+        return fore_num * pixel_size
+
+    # -=-=-=-=-=-=-=-=-=-=-=-=-
+    # | traits from 3D points |
+    # -=-=-=-=-=-=-=-=-=-=-=-=-
+    def get_percentile_height(self, container_ht=0, ground_ht='auto'):
+        z = self.pcd_xyz[:, 2]
+        if ground_ht == 'auto':
+            ground_z = np.asarray(self.ground_pcd.points)[:, 2]
+            ground_z = ground_z[ground_z < np.percentile(z, 5)]
+
+            # calculate the ground center of Z, by mean of [per5 - per 90],
+            # to avoid the effects of elevation and noises in upper part
+            """
+            ele = ground_z[np.logical_and(ground_z < np.percentile(ground_z, 80),
+                                          ground_z > np.percentile(ground_z, 5))]
+            ele = np.median(ground_z)
+            """
+            ele_ht_fine = np.linspace(ground_z.min(), ground_z.max(), 1000)
+            ele_kernel = gaussian_kde(ground_z)
+            ele_hist_num = ele_kernel(ele_ht_fine)
+
+            ele = np.median(ground_z)
+            # to be continued
+        else:
+            ele = ground_ht
+
+        plant_base = ele + container_ht
+
+        ele_z = z[z > plant_base]
+        top10percentile = np.percentile(ele_z, 90)
+        plant_top = ele_z[ele_z > top10percentile].mean()
+
+        percentile_ht = plant_top - plant_base
+
+        plot_use = {'plant_top':plant_top, 'plant_base':plant_base,
+                    'top10': top10percentile, 'ground_center':ele}
+
+        return percentile_ht, plot_use
+
+    def draw_3d_results(self, plant_name, output_path='.', ):
+        file_name = f'{plant_name}.png'
+        draw_3d_results(self, title=plant_name, savepath=f"{output_path}/{plant_name}")
