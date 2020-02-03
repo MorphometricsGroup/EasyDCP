@@ -1,4 +1,4 @@
-# script for pipeline from multiple folders of photos
+# script for phenotyping pipeline from multiple folders of photos
 # modified from: scripts on Agisoft forums by Alexey Pasumansky
 # by Alex Feldman - UTokyo Field Phenomics Lab
 
@@ -18,7 +18,7 @@ import os, Metashape, math #for auto_ctrl
 
 ##USER DEFINED VARIABLES
 path_folders = 'T:/2020agisoft/191227pheno/' #enter full path to folders root (no nested folders!)
-project_filename = '-v049-all-nocross-high'#' - 00000 - ALLSTEPS-v28-med'
+project_filename = '-v050-all-nocross-high'#' - 00000 - ALLSTEPS-v28-med'
 #variables regarding nested folders (see readme)
 select_nested = False #set to True if you want to only use selected nested folders
 nested_folders = ['1','2'] #put the first character of the folder names you want to use here
@@ -392,7 +392,7 @@ for j in range(folder_count): #run the following code for each folder
     # Change agisoft_quality variable to set downscale parameter
     chunk.buildDepthMaps(downscale=depth_downscale, filter_mode=Metashape.MildFiltering)#defaults: MildFiltering
     doc.save()
-    chunk.buildDenseCloud() 
+    chunk.buildDenseCloud(point_conﬁdence=True) 
     #export dense cloud
     if export_cloud: chunk.exportPoints(path = savepath+'-MetashapeDenseCloud.ply')   
     
