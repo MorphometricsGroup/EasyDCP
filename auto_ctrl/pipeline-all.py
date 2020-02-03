@@ -17,7 +17,7 @@ import os, Metashape, math #for auto_ctrl
 
 ##USER DEFINED VARIABLES
 path_folders = 'T:/2020agisoft/191227pheno/' #enter full path to folders root (no nested folders!)
-project_filename = '-v047-all-nocross-high'#' - 00000 - ALLSTEPS-v28-med'
+project_filename = '-v048-all-nocross-high'#' - 00000 - ALLSTEPS-v28-med'
 #variables regarding nested folders
 select_nested = False #set to True if you want to only use selected nested folders
 nested_folders = ['1','2'] #put the first character of the folder names you want to use here
@@ -25,7 +25,7 @@ nested_folders = ['1','2'] #put the first character of the folder names you want
 blur_threshold = 0.5 #set this to the minimum acceptable image quality rating provided by Agisoft 
 detect_targets = True #set to True if you used Agisoft coded targets
 target_tolerance = 100
-detect_markers = False #set to True if you used non-coded cross (chessboard) markers
+detect_markers = False #set to True if you used non-coded (cross) markers
 cross_tolerance = 50
 ignore_gps = True #set to True if photos have bad GPS info, such as RGB handheld camera with GPS at short range
 use_scalebars = True #set to True if you used coded-target scalebars and have provided scalebars.csv file 
@@ -73,9 +73,8 @@ def disable_below_threshold(threshold):
             image.enabled = False
             print ('DISABLE %s' %(image))
 
-def detect_cross_and_optimize(arg1):
-    chunk.detectMarkers(target_type=Metashape.CrossTarget,tolerance=arg1)
-    chunk.optimizeCameras()
+def detect_noncoded_marker(tol):
+    chunk.detectMarkers(target_type=Metashape.CrossTarget,tolerance=tol)
 
 print('\n----',banner1,'----\n~~~~start auto_ctrl~~~~\n')    
 
@@ -351,9 +350,9 @@ for j in range(folder_count): #run the following code for each folder
         print(filename_list[j]," Ground alignment finished")
     
     #detect non-coded targets and optimize cameras
-    if detect_markers: detect_cross_and_optimize(cross_tolerance)
-    '''chunk.detectMarkers(target_type=Metashape.CrossTarget,tolerance=50)
-    chunk.optimizeCameras()'''
+    if detect_markers: detect_noncoded_marker(cross_tolerance)
+
+    chunk.optimizeCameras()
     
     #save project
     doc.save()
