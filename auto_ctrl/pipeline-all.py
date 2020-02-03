@@ -2,10 +2,11 @@
 # modified from: scripts on Agisoft forums by Alexey Pasumansky
 # by Alex Feldman - UTokyo Field Phenomics Lab
 
-# updated 2020.01.20
-# compatibility Metashape Pro 1.5.3
-'''#! incompatible with nested folders
-#! files in folders root will break the script
+# updated 2020.02.03
+# compatibility Metashape Pro 1.6.1
+## Incompatible Metashape Pro 1.5.x and below
+# compatible with one level of nested folders (see readme)
+'''#! files in folders root will break the script
 #! Non-agisoft nested folder in photos folder will break script'''
 #! Agisoft errors will break the script. 
 #>>TODO: Jump to next folder on error
@@ -17,12 +18,13 @@ import os, Metashape, math #for auto_ctrl
 
 ##USER DEFINED VARIABLES
 path_folders = 'T:/2020agisoft/191227pheno/' #enter full path to folders root (no nested folders!)
-project_filename = '-v048-all-nocross-high'#' - 00000 - ALLSTEPS-v28-med'
-#variables regarding nested folders
+project_filename = '-v049-all-nocross-high'#' - 00000 - ALLSTEPS-v28-med'
+#variables regarding nested folders (see readme)
 select_nested = False #set to True if you want to only use selected nested folders
 nested_folders = ['1','2'] #put the first character of the folder names you want to use here
 #agisoft variables
-blur_threshold = 0.5 #set this to the minimum acceptable image quality rating provided by Agisoft 
+agisoft_quality = 0 #choose a number: 0:Custom, 1:Highest, 2:High, 3:Medium, 4:Low, 5:Lowest
+blur_threshold = 0.5 #set this to the minimum acceptable image quality rating provided by Agisoft. default = 0.5
 detect_targets = True #set to True if you used Agisoft coded targets
 target_tolerance = 100
 detect_markers = False #set to True if you used non-coded (cross) markers
@@ -34,8 +36,31 @@ export_cloud = True #set to True if you want to export the point cloud to .PLY f
 build_dem = False #set to True if you want to build and export DEM as .TIF file
 build_ortho = False #set to True if you want to build and export orthomosaic as .TIF file
 
-##User does not need to change these variables
+#These variables correspond to agisoft_quality variable above
+if agisoft_quality = 0: #Custom: Set your desired parameters here and change agisoft_quality to 0 to use
+    match_downscale = 1 #Highest=0,High=1,Medium=2,Low=4,Lowest=8
+    depth_downscale = 4 #Ultra=1,  High=2,Medium=4,Low=8,Lowest=16
+
+#Do not change these variables
+elif agisoft_quality = 1: #Highest
+    match_downscale = 0
+    depth_downscale = 1
+elif agisoft_quality = 2: #High
+    match_downscale = 1
+    depth_downscale = 2
+elif agisoft_quality = 3: #Medium
+    match_downscale = 2
+    depth_downscale = 4
+elif agisoft_quality = 4: #Low
+    match_downscale = 4
+    depth_downscale = 8
+elif agisoft_quality = 5: #Lowest
+    match_downscale = 8
+    depth_downscale = 16
+
+#User does not need to change these variables
 banner1 = '\n[3Dphenotyping][auto_ctrl]'
+doc = Metashape.app.document
 
 ##FUNCTIONS
 def vect(a, b):
@@ -74,7 +99,7 @@ def disable_below_threshold(threshold):
             print ('DISABLE %s' %(image))
 
 def detect_noncoded_marker(tol):
-    chunk.detectMarkers(target_type=Metashape.CrossTarget,tolerance=tol)
+    chunk.detectMarkers(target_type=Metashape.CrossTarget,tolerance=tol) #todo: update to support cross and circle noncoded
 
 print('\n----',banner1,'----\n~~~~start auto_ctrl~~~~\n')    
 
@@ -98,8 +123,6 @@ for i in range(folder_count):
         print("folder_list",i,folder_list[i])
     else: folder_count = folder_count - 1
     
-doc = Metashape.app.document
-
 for j in range(folder_count): #run the following code for each folder    
     
     #ensure photo list and agisoft document are empty
@@ -214,12 +237,14 @@ for j in range(folder_count): #run the following code for each folder
 
     #match, align
     print(banner1,'Matching and Aligning cameras...')
-    chunk.matchPhotos(downscale=1, generic_preselection=True, reference_preselection=False)#defaults: 1,True,False
+    # Change agisoft_quality variable to set downscale parameter
+    chunk.matchPhotos(downscale=match_downscale, generic_preselection=True, reference_preselection=False)#defaults: True,False
     chunk.alignCameras()
 
     #DEBUG
     '''doc.save()  
-    continue'''
+    continue #only use if you want the script to stop here for each folder
+    '''
     
 
     #import scalebars from .csv
@@ -349,26 +374,27 @@ for j in range(folder_count): #run the following code for each folder
 
         print(filename_list[j]," Ground alignment finished")
     
-    #detect non-coded targets and optimize cameras
+    #detect non-coded targets
     if detect_markers: detect_noncoded_marker(cross_tolerance)
 
+    #optimize cameras
     chunk.optimizeCameras()
     
     #save project
     doc.save()
+    
     '''#optional continue to check result
     continue #only use if you want the script to stop here for each folder
     '''
     
     #build depth map, dense cloud
     print(banner1,'Building depth maps and dense cloud...')
-    chunk.buildDepthMaps(downscale=2, filter_mode=Metashape.MildFiltering)#defaults: 4,MildFiltering
+    # Change agisoft_quality variable to set downscale parameter
+    chunk.buildDepthMaps(downscale=depth_downscale, filter_mode=Metashape.MildFiltering)#defaults: MildFiltering
     doc.save()
     chunk.buildDenseCloud() 
     #export dense cloud
     if export_cloud: chunk.exportPoints(path = savepath+'-MetashapeDenseCloud.ply')   
-    
-    #save project 
     
     '''#optional continue to check result
     continue #only use if you want the script to stop here for each folder
@@ -379,10 +405,8 @@ for j in range(folder_count): #run the following code for each folder
         doc.save()
         print(banner1,'Building DEM...')
         chunk.buildDem()
-        print('todo: update script for 1.6 API')
+        print('todo: update script for 1.6 API [export disabled]')
         #chunk.exportRaster(???) exportDem(path=savepath+'-DEM.tif',dx=0.001, dy=0.001)
-    
-    #save project
     
     '''#optional continue to check result
     continue #only use if you want the script to stop here for each folder
@@ -393,17 +417,16 @@ for j in range(folder_count): #run the following code for each folder
         print(banner1,'Building orthomosaic...')
         doc.save()
         chunk.buildOrthomosaic(fill_holes=False) 
-        print('todo: update script for 1.6 API')
+        print('todo: update script for 1.6 API [export disabled]')
         #chunk.exportRaster(???) exportOrthomosaic(path=savepath+'-orthomosaic.tif',dx=0.001, dy=0.001)   
     
     #save project
     doc.save()
+    
     '''#optional continue to check result
     continue #only use if you want the script to stop here for each folder
     '''
 
-    '''
-    '''
     #variables to pass to pcd_processing portion
     cloud = savepath+'-MetashapeDenseCloud.ply'
     dem = savepath+'-DEM.tif'
