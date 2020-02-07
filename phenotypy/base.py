@@ -10,17 +10,16 @@ from skimage.measure import regionprops
 
 from scipy.stats import gaussian_kde
 
-from phenotypy.pcd_tools import (merge_pcd,
-                                 pcd2binary,
+from phenotypy.pcd_tools import (pcd2binary,
                                  pcd2voxel,
                                  calculate_xyz_volume,
                                  convex_hull2d,
                                  build_cut_boundary)
 from phenotypy.geometry.min_bounding_rect import min_bounding_rect
+from phenotypy.io.cprint import printYellow
 from phenotypy.io.folder import make_dir
 from phenotypy.io.pcd import read_ply, read_plys
 from phenotypy.io.shp import read_shp, read_shps
-from phenotypy.plotting.stereo import show_pcd
 from phenotypy.plotting.figure import draw_3d_results, draw_plot_seg_results
 
 
@@ -60,12 +59,12 @@ class Classifier(object):
             dtc: Decision Tree Classifier
         """
         # Check whether correct input
-        print('[3DPhenotyping][Classifier] Start building classifier')
+        print('[Pnt][Classifier] Start building classifier')
         path_n = len(path_list)
         kind_n = len(kind_list)
 
         if path_n != kind_n:
-            print('[3DPhenotyping][Classifier][Warning] the image number and kind number not matching!')
+            print('[Pnt][Classifier][Warning] the image number and kind number not matching!')
 
         self.path_list = path_list[0:min(path_n, kind_n)]
         self.kind_list = kind_list[0:min(path_n, kind_n)]
@@ -74,7 +73,7 @@ class Classifier(object):
         self.train_data = np.empty((0, 3))
         self.train_kind = np.empty(0)
         self.build_training_array()
-        print('[3DPhenotyping][Classifier] Training data prepared')
+        print('[Pnt][Classifier] Training data prepared')
 
         self.kind_set = set(kind_list)
 
@@ -88,7 +87,7 @@ class Classifier(object):
             elif core == 'svm':
                 self.clf = SVC()
                 # todo: build SVC() classifier
-        print('[3DPhenotyping][Classifier] Classifying model built')
+        print('[Pnt][Classifier] Classifying model built')
 
     @staticmethod
     def read_png(file_path):
@@ -187,6 +186,8 @@ class Plot(object):
     def __init__(self, ply_path, clf, unit='m', output_path='.', write_ply=False):
         self.ply_path = ply_path
         self.write_ply = write_ply
+
+        # file I/O
         if os.path.isfile(ply_path):
             self.pcd = read_ply(ply_path, unit=unit)
             self.folder, tail = os.path.split(os.path.abspath(self.ply_path))
@@ -206,164 +207,230 @@ class Plot(object):
         else:
             raise TypeError(f'[{ply_path}] is neither a ply file or folder')
 
-        print(f'[3DPhenotyping][Plot][__init__] Ply file "{self.ply_path}" loaded')
+        print(f'[Pnt][Plot][__init__] Ply file "{self.ply_path}" loaded')
 
         if self.write_ply:
             self.out_folder = os.path.join(output_path, self.ply_name)
             make_dir(self.out_folder, clean=True)
-            print(f'[3DPhenotyping][Plot][__init__] Setting output folder "{os.path.abspath(self.out_folder)}"')
+            print(f'[Pnt][Plot][__init__] Setting output folder "{os.path.abspath(self.out_folder)}"')
         else:
             self.out_folder = output_path
-            print(f'[3DPhenotyping][Plot][__init__] Mode "write_ply" == False, output folder creating ignored')
+            print(f'[Pnt][Plot][__init__] Mode "write_ply" == False, output folder creating ignored')
 
         self.pcd_xyz = np.asarray(self.pcd.points)
         self.pcd_rgb = np.asarray(self.pcd.colors)
 
         self.pcd_classified = self.classifier_apply(clf)
-        self.pcd_cleaned, _ = self.remove_noise()
 
         self.segmented = False
         self.pcd_segmented = {}
         self.pcd_segmented_name = {}
+        self.cov_warning = 0
 
     def classifier_apply(self, clf):
-        print('[3DPhenotyping][Plot][Classifier_apply] Start Classifying')
+        print('[Pnt][Plot][Classifier_apply] Start Classifying')
         pred_result = clf.predict(self.pcd_rgb)
 
         pcd_classified = {}
 
         for k in clf.kind_set:
-            print(f'[3DPhenotyping][Plot][Classifier_apply] Begin for class {k}')
+            print(f'[Pnt][Plot][Classifier_apply] |-- classify class {k}')
             indices = np.where(pred_result == k)[0].tolist()
             pcd_classified[k] = self.pcd.select_down_sample(indices=indices)
-            print(f'[3DPhenotyping][Plot][Classifier_apply] kind {k} classified')
             # save ply
             if self.write_ply:
                 o3d.io.write_point_cloud(os.path.join(self.out_folder, f'class[{k}].ply'),
                                          pcd_classified[k])
+                print(f'[Pnt][Plot][Classifier_apply] |   |-- save to {self.out_folder}/class[{k}].ply')
             else:
-                print(f'[3DPhenotyping][Plot][Classifier_apply] Mode "write_ply" == False, ply file not saved.')
+                print(f'[Pnt][Plot][Classifier_apply] |   |-- mode "write_ply" == False, ply file not saved.')
 
         return pcd_classified
 
-    def remove_noise(self, part=100):
-        self.pcd_voxel, self.voxel_size, self.voxel_density = pcd2voxel(self.pcd, part=part)
+    def remove_noise(self, divide=100):
+        # currently not recommend to use for sparse plant pcd, has removed from default __init__ steps.
+        # # suitable for sfm -> single plants, which has large point numbers, delete some of them doesn't
+        #            effect too much;
+        # not suitable for plot level, each plant only have few points, may loss too much information
+        pcd_voxel, voxel_size, voxel_density = pcd2voxel(self.pcd, part=divide)
 
         pcd_cleaned = {}
         pcd_cleaned_id = {}
-        print('[3DPhenotyping][Plot][remove_noise] Remove noises')
+        print('[Pnt][Plot][remove_noise] Remove noises')
         for k in self.pcd_classified.keys():
             if k == -1:   # for background, need to apply statistical outlier removal
                 cleaned, indices = self.pcd_classified[-1].remove_statistical_outlier\
-                    (nb_neighbors=round(self.voxel_density), std_ratio=0.01)
+                    (nb_neighbors=round(voxel_density), std_ratio=0.01)
                 pcd_cleaned[-1], pcd_cleaned_id[-1] = cleaned.remove_radius_outlier\
-                    (nb_points=round(self.voxel_density*2), radius=self.voxel_size)
+                    (nb_points=round(voxel_density*2), radius=voxel_size)
             else:
                 pcd_cleaned[k], pcd_cleaned_id[k] = self.pcd_classified[k].remove_radius_outlier\
-                    (nb_points=round(self.voxel_density), radius=self.voxel_size)
+                    (nb_points=round(voxel_density), radius=voxel_size)
             # save ply
             if self.write_ply:
                 o3d.io.write_point_cloud(os.path.join(self.out_folder, f'class[{k}]-rm_noise.ply'),
                                          pcd_cleaned[k])
-                print(f'[3DPhenotyping][Plot][remove_noise] ply file class[{k}]-rm_noise.ply saved to {self.out_folder}')
+                print(f'[Pnt][Plot][remove_noise] ply file class[{k}]-rm_noise.ply saved to {self.out_folder}')
             else:
-                print(f'[3DPhenotyping][Plot][remove_noise] Mode "write_ply" == False, ply file not saved.')
+                print(f'[Pnt][Plot][remove_noise] Mode "write_ply" == False, ply file not saved.')
             # todo: add kde of ground points, and remove noises very close to ground points
-            print(f'[3DPhenotyping][Plot][remove_noise] kind {k} noise removed')
+            print(f'[Pnt][Plot][remove_noise] Kind {k} noise removed')
 
-        return pcd_cleaned, pcd_cleaned_id
+        self.pcd_classified = pcd_cleaned
+        return pcd_cleaned   #, pcd_cleaned_id
 
-    def auto_segmentation(self, denoise=True, name_by='x', ascending=True, eps_times=10, min_points=None, img_folder='.', show_id=True):
-        # may need user to provide plant size and number for segmentation check
-        # ascending = True, from 0 to max. False: from max to 0
-        # [todo] denoise currently not working, need to split this huge function to several parts
+    def auto_dbscan_args(self, eps_grids=10, divide=100):
+        # split the shortest axis into 100 parts
+        # the dbscan eps is the length of 10 grids
+        # the min_points is the mean points of each grids (voxels)
+        pcd_voxel, voxel_size, voxel_density = pcd2voxel(self.pcd, part=divide)
+        eps = voxel_size * eps_grids
+        min_points = round(voxel_density)
+        print(f'[Pnt][Plot][DBSCAN_Args] Recommend use eps={eps}, min_points={min_points} based on point density.')
+        return eps, min_points
+
+    def dbscan_segment(self, eps, min_points, pcd_dict=None):
+        if pcd_dict is None:
+            seg_in = self.pcd_classified
+        else:
+            seg_in = pcd_dict
+
         seg_out = {}
-        seg_out_name = {}
-        for k in self.pcd_classified.keys():
-            # skip the background
-            if k == -1:
-                continue
+        for k in seg_in.keys():
+            if k == -1: continue   # skip the background
 
-            print(f'[3DPhenotyping][Plot][AutoSegment] Start segmenting class {k} Please wait...')
-            if min_points is None:
-                min_points = round(self.voxel_density)
-                
-            vect = self.pcd_cleaned[k].cluster_dbscan(eps=self.voxel_size * eps_times,
-                                                      min_points=min_points,
-                                                      print_progress=True)
+            print(f'[Pnt][Plot][DBSCAN_Segment] Start segmenting class {k} Please wait...')
+            vect = seg_in[k].cluster_dbscan(eps=eps, min_points=min_points,
+                                                         print_progress=True)
             vect_np = np.asarray(vect)
             seg_id = np.unique(vect_np)
 
-            print(f'\n[3DPhenotyping][Plot][AutoSegment] class {k} Segmented')
-
-            # KMeans to find the class of noise and plants
-            # # Data prepare for clustering
+            print(f'\n[Pnt][Plot][DBSCAN_Segment] Class {k} Segmented to {len(seg_id)} parts')
             pcd_seg_list = []
-            pcd_seg_char = np.empty((0, 2))
-
-            for seg in seg_id:
+            pcd_seg_num = []
+            for i, seg in enumerate(seg_id):
                 indices = np.where(vect_np == seg)[0].tolist()
-                pcd_seg = self.pcd_cleaned[k].select_down_sample(indices)
-
+                pcd_seg = seg_in[k].select_down_sample(indices)
                 pcd_seg_list.append(pcd_seg)
-                # todo: add mean height as a parameter
-                char = np.asarray([len(pcd_seg.points) ** 0.5,
-                                   calculate_xyz_volume(pcd_seg)])
-                pcd_seg_char = np.vstack([pcd_seg_char, char])
+                pcd_seg_num.append(len(indices))
 
-            print(f'[3DPhenotyping][Plot][AutoSegment][Clustering] class {k} Cluster Data Prepared')
+            seg_out[k] = pcd_seg_list
 
-            # # cluster by (points number, and volumn) to remove noise segmenation
+            # coefficient of variance check to judge if need KMeans remove noise
+            # [10000,13000,15000] -> 0.16222142113076257
+            # [10000,13000,15000,12, 100]) -> 0.8369722427881723
+            x = np.asarray(pcd_seg_num)
+            cov = x.std() / x.mean()
+            if cov >= 0.3:
+                printYellow(f'[Warning] The coefficient of variance of point numbers too large ({round(cov,3)}), may contain noises!')
+                if len(pcd_seg_num) < 20:
+                    printYellow(f'{pcd_seg_num}')
+                else:
+                    printYellow(f"[{str(pcd_seg_num[:10])[1:-1]}, ..., {str(pcd_seg_num[-10:])[1:-1]}]")
+                printYellow(f'Please consider use kmeans_split() to remove outlier noises.')
+                self.cov_warning = True
+
+        self.segmented = True
+        self.pcd_segmented = seg_out
+        return seg_out
+
+    def kmeans_split(self, pcd_dict=None):
+        if pcd_dict is None:
+            split_in = self.pcd_segmented
+            if not self.segmented:
+                raise LookupError(f"The plot has not been segmented yet, please do dbscan_segment() first")
+        else:
+            split_in = pcd_dict
+
+        split_out = {}
+        for k in split_in.keys():
+            if k == -1: continue
+            characters = np.empty((0, 2))
+            for pcd_seg in split_in[k]:
+                char = np.asarray([len(pcd_seg.points) ** 0.5, calculate_xyz_volume(pcd_seg)])
+                characters = np.vstack([characters, char])
+            print(f'[Pnt][Plot][KMeans] class {k} Cluster Data Prepared')
+
+            # cluster by (points number, and volumn) to remove noise segmenation
             km = KMeans(n_clusters=2)
-            km.fit(pcd_seg_char)
+            km.fit(characters)
 
-            class0 = pcd_seg_char[km.labels_ == 0, :]
-            class1 = pcd_seg_char[km.labels_ == 1, :]
+            class0 = characters[km.labels_ == 0, :]
+            class1 = characters[km.labels_ == 1, :]
 
             # find the class label with largest point clouds (plants)
             if class0.mean(axis=0)[0] > class1.mean(axis=0)[0]:
                 plant_id = np.where(km.labels_ == 0)[0].tolist()
             else:
                 plant_id = np.where(km.labels_ == 1)[0].tolist()
-                    
-            temp_df = pd.DataFrame({'seg_id':[p for p in plant_id],
-                                    'x':[pcd_seg_list[p].get_center()[0] for p in plant_id],
-                                    'y':[pcd_seg_list[p].get_center()[1] for p in plant_id]})
 
-            temp_df = temp_df.sort_values(by=name_by, ascending=ascending).reset_index()
+            split_out[k] = [split_in[k][id] for id in plant_id]
 
-            seg_out[k] = []
-            seg_out_name[k] = []
-            for i in range(len(temp_df)):
-                s_id = int(temp_df.iloc[i]['seg_id'])
-                seg_out[k].append(pcd_seg_list[s_id])
+        self.pcd_segmented = split_out
+        return split_out
+
+    def sort_order(self, name_by='x', ascending=True, pcd_dict=None):
+        if pcd_dict is None:
+            reset_in = self.pcd_segmented
+            if not self.segmented:
+                raise LookupError(f"The plot has not been segmented yet, please do dbscan_segment() first")
+        else:
+            reset_in = pcd_dict
+
+        reset_out = {}
+        for k in reset_in.keys():
+            if k == -1: continue
+            seg_id_list = []
+            x_list = []
+            y_list = []
+            for i, pcd in enumerate(reset_in[k]):
+                x = pcd.get_center()[0]
+                y = pcd.get_center()[1]
+                seg_id_list.append(i)
+                x_list.append(x)
+                y_list.append(y)
+            order_df = pd.DataFrame(dict(seg_id=seg_id_list, x=x_list, y=y_list))
+            order_df = order_df.sort_values(by=name_by, ascending=ascending).reset_index()
+
+            reset_out[k] = [reset_in[k][i] for i in order_df['seg_id']]
+
+        self.pcd_segmented = reset_out
+        return reset_out
+
+    def save_segment_result(self, img_folder='.', show_id=True, pcd_dict=None):
+        if pcd_dict is None:
+            save_in = self.pcd_segmented
+            if not self.segmented:
+                raise LookupError(f"The plot has not been segmented yet, please do dbscan_segment() first")
+        else:
+            save_in = pcd_dict
+
+        for k in save_in.keys():
+            if k == -1: continue
+            # save ply files
+            pcd_id = []
+            for i, pcd in enumerate(save_in[k]):
+                pcd_id.append(i)
                 file_name = f'class[{k}]-plant{i}'
                 file_path = os.path.join(self.out_folder, f'{file_name}.ply')
-                seg_out_name[k].append(file_name)
                 if self.write_ply:
-                    if i < 5 or i > len(temp_df)-5:
-                        print(f'[3DPhenotyping][Plot][AutoSegment][Output] writing file "{file_path}"')
-                    o3d.io.write_point_cloud(file_path, pcd_seg_list[s_id])
+                    o3d.io.write_point_cloud(file_path, pcd)
+                    if i < 5 or i > len(save_in[k])-5:
+                        print(f'[Pnt][Plot][Save_Seg] writing file "{file_path}"')
 
-            print(f'[3DPhenotyping][Plot][AutoSegment][Clustering] class {k} Clustered')
-
+            # draw images
             if img_folder == '.':
                 savepath = os.path.join(self.out_folder, f'{self.ply_name}-class[{k}].png')
             else:
                 savepath = os.path.join(img_folder, f'{self.ply_name}-class[{k}].png')
-
-            # calculate output size
-            len_xyz = self.pcd_xyz.max(axis=0) - self.pcd_xyz.min(axis=0)
-            draw_plot_seg_results(pcd_seg_list, list(temp_df['seg_id']),
-                                  title=f'{self.ply_name}-class[{k}] segmentation (# {len(temp_df)})',
+            len_xyz = self.pcd_xyz.max(axis=0) - self.pcd_xyz.min(axis=0)  # calculate the size of figure
+            draw_plot_seg_results(save_in[k], pcd_id,
+                                  title=f'{self.ply_name}-class[{k}] ({len(save_in[k])} segments)',
                                   savepath=savepath, size=(len_xyz[0], len_xyz[1]), show_id=show_id)
+            print(f'[Pnt][Plot][Save_Seg] writing image to "{savepath}"')
 
-        self.segmented = True
-        self.pcd_segmented = seg_out
-        self.pcd_segmented_name = seg_out_name
-        return seg_out
 
-    def shp_segmentation(self, shp_dir, correct_coord=None, rename=True):
+    def shp_segment(self, shp_dir, correct_coord=None, rename=True):
         seg_out = {}
         seg_out_name = {}
         if isinstance(shp_dir, str):   # input one shp file
@@ -374,14 +441,14 @@ class Plot(object):
         axis_max = self.pcd_xyz[:, 2].max()
         axis_min = self.pcd_xyz[:, 2].min()
 
-        for k in self.pcd_cleaned.keys():
+        for k in self.pcd_classified.keys():
             if k == -1:
                 continue
 
             seg_out[k] = []
             seg_out_name[k] = []
 
-            print(f'[3DPhenotyping][Plot][AutoSegment][Clustering] class {k} Cluster Data Prepared')
+            print(f'[Pnt][Plot][AutoSegment][Clustering] class {k} Cluster Data Prepared')
             for plot_key in shp_seg.keys():
                 # can use pcd_tools.build_cut_boundary()
                 boundary = o3d.visualization.SelectionPolygonVolume()
@@ -391,7 +458,7 @@ class Plot(object):
                 boundary.axis_max = axis_max
                 boundary.axis_min = axis_min
 
-                roi = boundary.crop_point_cloud(self.pcd_cleaned[k])
+                roi = boundary.crop_point_cloud(self.pcd_classified[k])
                 seg_out[k].append(roi)
 
                 file_name = f'class[{k}]-{plot_key}'
@@ -399,7 +466,7 @@ class Plot(object):
                 seg_out_name[k].append(file_name)
 
                 if self.write_ply:
-                    print(f'[3DPhenotyping][Plot][AutoSegment][Output] writing file "{file_path}"')
+                    print(f'[Pnt][Plot][AutoSegment][Output] writing file "{file_path}"')
                     o3d.io.write_point_cloud(file_path, roi)
 
         self.segmented = True
@@ -407,46 +474,53 @@ class Plot(object):
         self.pcd_segmented_name = seg_out_name
         return seg_out
 
-    def get_traits(self, container_ht=0, ground_ht='auto', savefig=True):
-        if not self.segmented:
-            raise AttributeError('This plot have not been segmented, please do Plot.auto_segmentation() or Plot.shp_segmentation() first')
+
+    def get_traits(self, container_ht=0, ground_ht='auto', savefig=True, pcd_dict=None):
+        if pcd_dict is None:
+            traits_in = self.pcd_segmented
+            if not self.segmented:
+                raise LookupError(f"The plot has not been segmented yet, please do dbscan_segment() first")
         else:
-            out_dict = {'plot': [], 'plant':[], 'kind':[], 'center.x(m)': [], 'center.y(m)': [],
-                        'min_rect_width(m)':[], 'min_rect_length(m)':[], 'hover_area(m2)':[], 'PLA(cm2)':[],
-                        'centroid.x(m)':[], 'centroid.y(m)':[], 'long_axis(m)':[], 'short_axis(m)':[], 'orient_deg2xaxis':[],
-                        'percentile_height(m)':[]}
-            seg_dict = self.pcd_segmented
-            for k in seg_dict.keys():
-                number = len(seg_dict[k])
-                print(f'[3DPhenotyping][Plot][get_traits] total number of kind {k} is {number}')
-                for i, seg in enumerate(seg_dict[k]):
-                    plant = Plant(pcd_input=seg, indices=i, ground_pcd=self.pcd_classified[-1],
-                                  container_ht=container_ht, ground_ht=ground_ht)
-                    if savefig and self.write_ply:
-                        plant.draw_3d_results(output_path=self.out_folder, file_name=self.pcd_segmented_name[k][i])
-                    out_dict['plot'].append(self.ply_name)
-                    out_dict['plant'].append(i)
-                    out_dict['kind'].append(k)
-                    out_dict['center.x(m)'].append(plant.center[0])
-                    out_dict['center.y(m)'].append(plant.center[1])
-                    out_dict['min_rect_width(m)'].append(plant.width)
-                    out_dict['min_rect_length(m)'].append(plant.length)
-                    out_dict['hover_area(m2)'].append(plant.hull_area)
-                    out_dict['PLA(cm2)'].append(plant.pla)
-                    out_dict['centroid.x(m)'].append(plant.centroid[0])
-                    out_dict['centroid.y(m)'].append(plant.centroid[1])
-                    out_dict['long_axis(m)'].append(plant.major_axis)
-                    out_dict['short_axis(m)'].append(plant.minor_axis)
-                    out_dict['orient_deg2xaxis'].append(plant.orient_degree)
-                    out_dict['percentile_height(m)'].append(plant.pctl_ht)
+            traits_in = pcd_dict
 
-            return pd.DataFrame(out_dict)
+        out_dict = {'plot': [], 'plant':[], 'kind':[], 'center.x(m)': [], 'center.y(m)': [],
+                    'min_rect_width(m)':[], 'min_rect_length(m)':[], 'hover_area(m2)':[], 'PLA(cm2)':[],
+                    'centroid.x(m)':[], 'centroid.y(m)':[], 'long_axis(m)':[], 'short_axis(m)':[], 'orient_deg2xaxis':[],
+                    'percentile_height(m)':[]}
 
-class Plot_New(object):
+        for k in traits_in.keys():
+            number = len(traits_in[k])
+            print(f'[Pnt][Plot][get_traits] total number of kind {k} is {number}')
+            for i, seg in enumerate(traits_in[k]):
+                plant = Plant(pcd_input=seg, indices=i, ground_pcd=self.pcd_classified[-1],
+                              container_ht=container_ht, ground_ht=ground_ht)
+                if savefig and self.write_ply:
+                    if len(self.pcd_segmented_name) > 0:
+                        file_name = self.pcd_segmented_name[k][i]
+                    else:
+                        file_name = f"class[{k}]-plant{i}"
+                    plant.draw_3d_results(output_path=self.out_folder, file_name=file_name)
+                out_dict['plot'].append(self.ply_name)
+                out_dict['plant'].append(i)
+                out_dict['kind'].append(k)
+                out_dict['center.x(m)'].append(plant.center[0])
+                out_dict['center.y(m)'].append(plant.center[1])
+                out_dict['min_rect_width(m)'].append(plant.width)
+                out_dict['min_rect_length(m)'].append(plant.length)
+                out_dict['hover_area(m2)'].append(plant.hull_area)
+                out_dict['PLA(cm2)'].append(plant.pla)
+                out_dict['centroid.x(m)'].append(plant.centroid[0])
+                out_dict['centroid.y(m)'].append(plant.centroid[1])
+                out_dict['long_axis(m)'].append(plant.major_axis)
+                out_dict['short_axis(m)'].append(plant.minor_axis)
+                out_dict['orient_deg2xaxis'].append(plant.orient_degree)
+                out_dict['percentile_height(m)'].append(plant.pctl_ht)
 
-    def __init__(self):
-        pass
+        out_pd = pd.DataFrame(out_dict)
+        print(f'[Pnt][Plot][get_traits] preview of traits of first 5 of {len(out_pd)} records:')
+        print(out_pd.head())
 
+        return out_pd
 
 
 class Plant(object):
@@ -470,9 +544,9 @@ class Plant(object):
         # clip the background
         if cut_bg:
             self.clip_background()
-            print(f'[3DPhenotyping][Plant][clip_background] finished for No. {indices}')
+            # print(f'[Pnt][Plant][clip_background] finished for No. {indices}')
 
-        print(f'[3DPhenotyping][Plant][Traits] No. {indices} Calculating')
+        print(f'[Pnt][Plant][Traits] No. {indices} Calculating')
         # calculate the convex hull 2d
         self.plane_hull, self.hull_area = convex_hull2d(self.pcd)  # vertex_set (2D ndarray), m^2
 

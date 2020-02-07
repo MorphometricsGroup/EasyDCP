@@ -1,11 +1,9 @@
-<h1> Phenotypy</h1>
+<h1>Phenotypy</h1>
 A  python package for agricultural phenotype traits extraction from 3D point clouds.
-
-[TOC]
 
 # Getting Started
 ## Installing from PyPI
-In the **future** release, will add support of PyPI installation.
+In the **future** release, **will** add support of PyPI installation.
 
 ```bash
 pip install phenotypy
@@ -64,7 +62,7 @@ To be continued
 
 
 
-# API
+# APIs
 
 A wrapper for quick use
 
