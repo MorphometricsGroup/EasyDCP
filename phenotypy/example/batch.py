@@ -16,12 +16,13 @@ result_container = []
 
 for plot in plot_set:
     # show_steps=True to display output among calculation to check correct or not
-    plot_class = pnt.Plot(plot, cla)
+    plot_class = pnt.Plot(plot, cla, write_ply=True)
     # ---------- auto_segment() --------------
     plot_class.pcd_classified = plot_class.remove_noise()
-    eps, min_points = plot_class.auto_dbscan_args(eps_grids=10)
+    eps, min_points = plot_class.auto_dbscan_args(eps_grids=30, divide=100)
     seg = plot_class.dbscan_segment(eps=eps, min_points=min_points)
-    #split = plot_class.kmeans_split()  # remove this
+    if len(seg[0]) > 3:
+        split = plot_class.kmeans_split()
     reset_id = plot_class.sort_order(name_by='x', ascending=True)
     plot_class.save_segment_result(img_folder='plot_out')
     # ----------------------------------------

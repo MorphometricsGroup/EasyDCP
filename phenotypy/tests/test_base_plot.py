@@ -43,7 +43,7 @@ def test_plot_0_without_seg_save(plot_init):
 
 def test_plot_1_auto_segment_flow(plot_init):
     plot_init.pcd_classified = plot_init.remove_noise()
-    eps, min_points = plot_init.auto_dbscan_args(times=10)
+    eps, min_points = plot_init.auto_dbscan_args(eps_grids=10)
     seg = plot_init.dbscan_segment(eps=eps, min_points=min_points)
     split = plot_init.kmeans_split()
     reset_id = plot_init.sort_order(name_by='x', ascending=True)

@@ -70,7 +70,7 @@ class Classifier(object):
         self.kind_list = kind_list[0:min(path_n, kind_n)]
 
         # Build Training Array
-        self.train_data = np.empty((0, 3))
+        self.train_data = np.empty((0, 5))
         self.train_kind = np.empty(0)
         self.build_training_array()
         print('[Pnt][Classifier] Training data prepared')
@@ -98,17 +98,32 @@ class Classifier(object):
 
         return img_np
 
+    @staticmethod
+    def get_tgi(rgb_np):
+        # -0.5 * [0.19(R-G) - 0.12(R-B)]
+        tgi_np = -0.5 * (0.19 * (rgb_np[:,0] - rgb_np[:, 1]) - 0.12 * (rgb_np[:,0] - rgb_np[:, 2]))
+        return tgi_np.reshape(tgi_np.shape[0], 1)
+
     def build_training_array(self):
         for img_path, kind in zip(self.path_list, self.kind_list):
             img_np = None
             if isinstance(img_path, o3d.geometry.PointCloud):
-                img_np = np.asarray(img_path.colors)
+                img_np_rgb = np.asarray(img_path.colors)
+                img_np_z = np.asarray(img_path.points)[:, 2].reshape(img_np_rgb.shape[0], 1)
+                img_np_tgi = self.get_tgi(img_np_rgb)
+                img_np = np.hstack([img_np_rgb, img_np_z, img_np_tgi])
             elif isinstance(img_path, str):
                 if '.png' in img_path:
-                    img_np = self.read_png(img_path)
+                    img_np_rgb = self.read_png(img_path)
+                    img_np_z = np.ones((img_np_rgb.shape[0],1)) * -10000
+                    img_np_tgi = self.get_tgi(img_np_rgb)
+                    img_np = np.hstack([img_np_rgb, img_np_z, img_np_tgi])
                 elif '.ply' in img_path:
                     pcd = read_ply(img_path)
-                    img_np = np.asarray(pcd.colors)
+                    img_np_rgb = np.asarray(pcd.colors)
+                    img_np_z = np.asarray(pcd.points)[:, 2].reshape(img_np_rgb.shape[0], 1)
+                    img_np_tgi = self.get_tgi(img_np_rgb)
+                    img_np = np.hstack([img_np_rgb, img_np_z, img_np_tgi])
             else:
                 raise TypeError(f"{img_path} is not supported, please only using png and ply files")
 
@@ -116,8 +131,8 @@ class Classifier(object):
             self.train_data = np.vstack([self.train_data, img_np])
             self.train_kind = np.hstack([self.train_kind, kind_np])
 
-    def predict(self, vars):
-        return self.clf.predict(vars)
+    def predict(self, data):
+        return self.clf.predict(data)
 
 
 class Plot(object):
@@ -225,11 +240,14 @@ class Plot(object):
         self.segmented = False
         self.pcd_segmented = {}
         self.pcd_segmented_name = {}
-        self.cov_warning = 0
+        self.cov_warning = {}
 
     def classifier_apply(self, clf):
         print('[Pnt][Plot][Classifier_apply] Start Classifying')
-        pred_result = clf.predict(self.pcd_rgb)
+        pcd_z = self.pcd_xyz[:, 2].reshape(self.pcd_xyz.shape[0],1)
+        pcd_tgi = clf.get_tgi(self.pcd_rgb)
+        input_np = np.hstack([self.pcd_rgb, pcd_z, pcd_tgi])
+        pred_result = clf.predict(input_np)
 
         pcd_classified = {}
 
@@ -259,13 +277,16 @@ class Plot(object):
         print('[Pnt][Plot][remove_noise] Remove noises')
         for k in self.pcd_classified.keys():
             if k == -1:   # for background, need to apply statistical outlier removal
-                cleaned, indices = self.pcd_classified[-1].remove_statistical_outlier\
-                    (nb_neighbors=round(voxel_density), std_ratio=0.01)
-                pcd_cleaned[-1], pcd_cleaned_id[-1] = cleaned.remove_radius_outlier\
-                    (nb_points=round(voxel_density*2), radius=voxel_size)
+                cleaned, indices = self.pcd_classified[-1].remove_statistical_outlier(
+                    nb_neighbors=round(voxel_density),
+                    std_ratio=0.01)
+                pcd_cleaned[-1], pcd_cleaned_id[-1] = cleaned.remove_radius_outlier(
+                    nb_points=round(voxel_density*2),
+                    radius=voxel_size)
             else:
-                pcd_cleaned[k], pcd_cleaned_id[k] = self.pcd_classified[k].remove_radius_outlier\
-                    (nb_points=round(voxel_density), radius=voxel_size)
+                pcd_cleaned[k], pcd_cleaned_id[k] = self.pcd_classified[k].remove_radius_outlier(
+                    nb_points=round(voxel_density),
+                    radius=voxel_size)
             # save ply
             if self.write_ply:
                 o3d.io.write_point_cloud(os.path.join(self.out_folder, f'class[{k}]-rm_noise.ply'),
@@ -277,7 +298,7 @@ class Plot(object):
             print(f'[Pnt][Plot][remove_noise] Kind {k} noise removed')
 
         self.pcd_classified = pcd_cleaned
-        return pcd_cleaned   #, pcd_cleaned_id
+        return pcd_cleaned   # , pcd_cleaned_id
 
     def auto_dbscan_args(self, eps_grids=10, divide=100):
         # split the shortest axis into 100 parts
@@ -297,11 +318,11 @@ class Plot(object):
 
         seg_out = {}
         for k in seg_in.keys():
-            if k == -1: continue   # skip the background
+            if k == -1:
+                continue   # skip the background
 
             print(f'[Pnt][Plot][DBSCAN_Segment] Start segmenting class {k} Please wait...')
-            vect = seg_in[k].cluster_dbscan(eps=eps, min_points=min_points,
-                                                         print_progress=True)
+            vect = seg_in[k].cluster_dbscan(eps=eps, min_points=min_points, print_progress=True)
             vect_np = np.asarray(vect)
             seg_id = np.unique(vect_np)
 
@@ -322,7 +343,8 @@ class Plot(object):
             x = np.asarray(pcd_seg_num)
             cov = x.std() / x.mean()
             if cov >= 0.3:
-                printYellow(f'[Warning] The coefficient of variance of point numbers too large ({round(cov,3)}), may contain noises!')
+                printYellow(f'[Warning] The coefficient of variance of '
+                            f'point numbers too large ({round(cov,3)}), may contain noises!')
                 if len(pcd_seg_num) < 20:
                     printYellow(f'{pcd_seg_num}')
                 else:
@@ -344,7 +366,8 @@ class Plot(object):
 
         split_out = {}
         for k in split_in.keys():
-            if k == -1: continue
+            if k == -1:
+                continue
             characters = np.empty((0, 2))
             for pcd_seg in split_in[k]:
                 char = np.asarray([len(pcd_seg.points) ** 0.5, calculate_xyz_volume(pcd_seg)])
@@ -364,7 +387,7 @@ class Plot(object):
             else:
                 plant_id = np.where(km.labels_ == 1)[0].tolist()
 
-            split_out[k] = [split_in[k][id] for id in plant_id]
+            split_out[k] = [split_in[k][pid] for pid in plant_id]
 
         self.pcd_segmented = split_out
         return split_out
@@ -379,7 +402,8 @@ class Plot(object):
 
         reset_out = {}
         for k in reset_in.keys():
-            if k == -1: continue
+            if k == -1:
+                continue
             seg_id_list = []
             x_list = []
             y_list = []
@@ -406,7 +430,8 @@ class Plot(object):
             save_in = pcd_dict
 
         for k in save_in.keys():
-            if k == -1: continue
+            if k == -1:
+                continue
             # save ply files
             pcd_id = []
             for i, pcd in enumerate(save_in[k]):
@@ -428,7 +453,6 @@ class Plot(object):
                                   title=f'{self.ply_name}-class[{k}] ({len(save_in[k])} segments)',
                                   savepath=savepath, size=(len_xyz[0], len_xyz[1]), show_id=show_id)
             print(f'[Pnt][Plot][Save_Seg] writing image to "{savepath}"')
-
 
     def shp_segment(self, shp_dir, correct_coord=None, rename=True):
         seg_out = {}
@@ -474,7 +498,6 @@ class Plot(object):
         self.pcd_segmented_name = seg_out_name
         return seg_out
 
-
     def get_traits(self, container_ht=0, ground_ht='auto', savefig=True, pcd_dict=None):
         if pcd_dict is None:
             traits_in = self.pcd_segmented
@@ -483,10 +506,10 @@ class Plot(object):
         else:
             traits_in = pcd_dict
 
-        out_dict = {'plot': [], 'plant':[], 'kind':[], 'center.x(m)': [], 'center.y(m)': [],
-                    'min_rect_width(m)':[], 'min_rect_length(m)':[], 'hover_area(m2)':[], 'PLA(cm2)':[],
-                    'centroid.x(m)':[], 'centroid.y(m)':[], 'long_axis(m)':[], 'short_axis(m)':[], 'orient_deg2xaxis':[],
-                    'percentile_height(m)':[]}
+        out_dict = {'plot': [], 'plant': [], 'kind': [], 'center.x(m)': [], 'center.y(m)': [],
+                    'min_rect_width(m)': [], 'min_rect_length(m)': [], 'hover_area(m2)': [], 'PLA(cm2)': [],
+                    'centroid.x(m)': [], 'centroid.y(m)': [], 'long_axis(m)': [], 'short_axis(m)': [],
+                    'orient_deg2xaxis': [], 'percentile_height(m)': []}
 
         for k in traits_in.keys():
             number = len(traits_in[k])
@@ -572,7 +595,6 @@ class Plant(object):
         # voxel (todo)
         self.pcd_voxel, self.voxel_size, self.voxel_density = pcd2voxel(self.pcd)
 
-
     def clip_background(self):
         x_max = self.pcd_xyz[:, 0].max()
         x_min = self.pcd_xyz[:, 0].min()
@@ -599,24 +621,26 @@ class Plant(object):
     # | traits from 2D image |
     # -=-=-=-=-=-=-=-=-=-=-=-=
 
-    def get_region_props(self, binary, px_num_per_cm, corner):
+    @staticmethod
+    def get_region_props(binary, px_num_per_cm, corner):
         x_min, y_min = corner
         regions = regionprops(binary, coordinates='xy')
         props = regions[0]          # this is all coordinate in converted binary images
 
         # convert coordinate from binary images to real point cloud
         y0, x0 = props.centroid
-        center = ( x0 / px_num_per_cm / 100 + x_min, y0 / px_num_per_cm /100 + y_min)
+        center = (x0 / px_num_per_cm / 100 + x_min, y0 / px_num_per_cm / 100 + y_min)
 
         major_axis = props.major_axis_length / px_num_per_cm / 100
         minor_axis = props.minor_axis_length / px_num_per_cm / 100
 
         phi = props.orientation
-        angle = - phi * 180 / np.pi # included angle with x axis, clockwise, by regionprops default
+        angle = - phi * 180 / np.pi   # included angle with x axis, clockwise, by regionprops default
 
         return center, major_axis, minor_axis, angle
 
-    def get_projected_leaf_area(self, binary, px_num_per_cm):
+    @staticmethod
+    def get_projected_leaf_area(binary, px_num_per_cm):
         kind, number = np.unique(binary, return_counts=True)
         # back_num = number[0]
         fore_num = number[1]
@@ -658,8 +682,8 @@ class Plant(object):
 
         percentile_ht = plant_top - plant_base
 
-        plot_use = {'plant_top':plant_top, 'plant_base':plant_base,
-                    'top10': top10percentile, 'ground_center':ele}
+        plot_use = {'plant_top': plant_top, 'plant_base': plant_base,
+                    'top10': top10percentile, 'ground_center': ele}
 
         return percentile_ht, plot_use
 
@@ -673,7 +697,7 @@ class Plant(object):
         draw_3d_results(self, title=plant_name, savepath=f"{output_path}/{file_name}")
         
         
-class Plant_New(object):
+class PlantNew(object):
 
     def __init__(self, pcd_input, clf, container_ht=0, ground_ht='auto'):
         if isinstance(pcd_input, str):
@@ -722,24 +746,26 @@ class Plant_New(object):
     # | traits from 2D image |
     # -=-=-=-=-=-=-=-=-=-=-=-=
 
-    def get_region_props(self, binary, px_num_per_cm, corner):
+    @staticmethod
+    def get_region_props(binary, px_num_per_cm, corner):
         x_min, y_min = corner
         regions = regionprops(binary, coordinates='xy')
         props = regions[0]          # this is all coordinate in converted binary images
 
         # convert coordinate from binary images to real point cloud
         y0, x0 = props.centroid
-        center = ( x0 / px_num_per_cm / 100 + x_min, y0 / px_num_per_cm /100 + y_min)
+        center = (x0 / px_num_per_cm / 100 + x_min, y0 / px_num_per_cm / 100 + y_min)
 
         major_axis = props.major_axis_length / px_num_per_cm / 100
         minor_axis = props.minor_axis_length / px_num_per_cm / 100
 
         phi = props.orientation
-        angle = - phi * 180 / np.pi # included angle with x axis, clockwise, by regionprops default
+        angle = - phi * 180 / np.pi   # included angle with x axis, clockwise, by regionprops default
 
         return center, major_axis, minor_axis, angle
 
-    def get_projected_leaf_area(self, binary, px_num_per_cm):
+    @staticmethod
+    def get_projected_leaf_area(binary, px_num_per_cm):
         kind, number = np.unique(binary, return_counts=True)
         # back_num = number[0]
         fore_num = number[1]
@@ -781,11 +807,11 @@ class Plant_New(object):
 
         percentile_ht = plant_top - plant_base
 
-        plot_use = {'plant_top':plant_top, 'plant_base':plant_base,
-                    'top10': top10percentile, 'ground_center':ele}
+        plot_use = {'plant_top': plant_top, 'plant_base': plant_base,
+                    'top10': top10percentile, 'ground_center': ele}
 
         return percentile_ht, plot_use
 
     def draw_3d_results(self, plant_name, output_path='.', ):
-        file_name = f'{plant_name}.png'
+        # file_name = f'{plant_name}.png'
         draw_3d_results(self, title=plant_name, savepath=f"{output_path}/{plant_name}")
