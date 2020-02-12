@@ -198,7 +198,7 @@ class Plot(object):
                 self.pcd_segmented
     """
 
-    def __init__(self, ply_path, clf, unit='m', output_path='.', write_ply=False):
+    def __init__(self, ply_path, clf, unit='m', output_path='.', write_ply=True):
         self.ply_path = ply_path
         self.write_ply = write_ply
 
