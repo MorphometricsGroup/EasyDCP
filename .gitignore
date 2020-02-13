@@ -11,3 +11,4 @@ alex_*
 *.backup.py
 test_temp.py
 phenotypy/wheels/*
+phenotypy/docs/build/
