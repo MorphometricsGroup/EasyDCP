@@ -2,7 +2,7 @@
 # modified from: scripts on Agisoft forums by Alexey Pasumansky
 # by Alex Feldman - UTokyo Field Phenomics Lab
 
-# updated 2020.02.03
+# updated 2020.02.12
 # compatibility Metashape Pro 1.6.1
 ## Incompatible Metashape Pro 1.5.x and below
 # compatible with one level of nested folders (see readme)
@@ -11,6 +11,7 @@
 #! Agisoft errors will break the script. 
 #>>TODO: Jump to next folder on error
 #>>TODO: write info to log file (failed folders, etc)
+#>>TODO: integrate boundbox code into pipeline 
 
 import os, Metashape, math #for auto_ctrl
 
@@ -18,13 +19,13 @@ import os, Metashape, math #for auto_ctrl
 
 ##USER DEFINED VARIABLES
 path_folders = 'T:/2020agisoft/191227pheno/' #enter full path to folders root (no nested folders!)
-project_filename = '-v050-all-nocross-high'#' - 00000 - ALLSTEPS-v28-med'
+project_filename = '-v051-all-nocross-high-med'#' - 00000 - ALLSTEPS-v28-med'
 #variables regarding nested folders (see readme)
 select_nested = False #set to True if you want to only use selected nested folders
 nested_folders = ['1','2'] #put the first character of the folder names you want to use here
 #agisoft variables
 agisoft_quality = 0 #choose a number: 0:Custom, 1:Highest, 2:High, 3:Medium, 4:Low, 5:Lowest
-blur_threshold = 0.5 #set this to the minimum acceptable image quality rating provided by Agisoft. default = 0.5
+blur_threshold = 0.3 #set this to the minimum acceptable image quality rating provided by Agisoft. default = 0.5
 detect_targets = True #set to True if you used Agisoft coded targets
 target_tolerance = 100
 detect_markers = False #set to True if you used non-coded (cross) markers
@@ -37,24 +38,24 @@ build_dem = False #set to True if you want to build and export DEM as .TIF file
 build_ortho = False #set to True if you want to build and export orthomosaic as .TIF file
 
 #These variables correspond to agisoft_quality variable above
-if agisoft_quality = 0: #Custom: Set your desired parameters here and change agisoft_quality to 0 to use
+if agisoft_quality == 0: #Custom: Set your desired parameters here and change agisoft_quality to 0 to use
     match_downscale = 1 #Highest=0,High=1,Medium=2,Low=4,Lowest=8
     depth_downscale = 4 #Ultra=1,  High=2,Medium=4,Low=8,Lowest=16
 
 #Do not change these variables
-elif agisoft_quality = 1: #Highest
+elif agisoft_quality == 1: #Highest
     match_downscale = 0
     depth_downscale = 1
-elif agisoft_quality = 2: #High
+elif agisoft_quality == 2: #High
     match_downscale = 1
     depth_downscale = 2
-elif agisoft_quality = 3: #Medium
+elif agisoft_quality == 3: #Medium
     match_downscale = 2
     depth_downscale = 4
-elif agisoft_quality = 4: #Low
+elif agisoft_quality == 4: #Low
     match_downscale = 4
     depth_downscale = 8
-elif agisoft_quality = 5: #Lowest
+elif agisoft_quality == 5: #Lowest
     match_downscale = 8
     depth_downscale = 16
 
