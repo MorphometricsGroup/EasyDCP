@@ -218,13 +218,18 @@ class Plot(object):
                 raise EOFError(f'[{ply_path}] has no ply file')
             self.pcd = read_plys(ply_list, unit=unit)
             self.folder = os.path.abspath(ply_path)
-            self.ply_name = os.path.basename(ply_path)
+            if ply_path[-1] in ['/', '\\']:
+                self.ply_name = os.path.basename(ply_path[:-1])
+            else:
+                self.ply_name = os.path.basename(ply_path)
         else:
             raise TypeError(f'[{ply_path}] is neither a ply file or folder')
 
         print(f'[Pnt][Plot][__init__] Ply file "{self.ply_path}" loaded')
 
         if self.write_ply:
+            if self.ply_name == '':
+                raise IOError('Empty ply_name variable')
             self.out_folder = os.path.join(output_path, self.ply_name)
             make_dir(self.out_folder, clean=True)
             print(f'[Pnt][Plot][__init__] Setting output folder "{os.path.abspath(self.out_folder)}"')
