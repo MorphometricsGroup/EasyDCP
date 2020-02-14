@@ -231,8 +231,8 @@ class Plot(object):
             if self.ply_name == '':
                 raise IOError('Empty ply_name variable')
             self.out_folder = os.path.join(output_path, self.ply_name)
-            make_dir(self.out_folder, clean=True)
             print(f'[Pnt][Plot][__init__] Setting output folder "{os.path.abspath(self.out_folder)}"')
+            make_dir(self.out_folder, clean=True)
         else:
             self.out_folder = output_path
             print(f'[Pnt][Plot][__init__] Mode "write_ply" == False, output folder creating ignored')
