@@ -12,3 +12,5 @@ alex_*
 test_temp.py
 phenotypy/wheels/*
 phenotypy/docs/build/
+phenotypy/example/csv*
+phenotypy/example/out*
