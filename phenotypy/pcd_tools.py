@@ -200,28 +200,34 @@ def pcd2binary(pcd, dpi=10):
 
     return out_img, px_num_per_cm, left_top_corner
 
-def pcd2voxel(pcd, part=100):
+def pcd2voxel(pcd, part=100, voxel_size=None):
     pcd_xyz = np.asarray(pcd.points)
     points_num = pcd_xyz.shape[0]  # get the size of this plot
+    if voxel_size is None:
+        x_max = pcd_xyz[:, 0].max()
+        x_min = pcd_xyz[:, 0].min()
+        x_len = x_max - x_min
 
-    x_max = pcd_xyz[:, 0].max()
-    x_min = pcd_xyz[:, 0].min()
-    x_len = x_max - x_min
+        y_max = pcd_xyz[:, 1].max()
+        y_min = pcd_xyz[:, 1].min()
+        y_len = y_max - y_min
 
-    y_max = pcd_xyz[:, 1].max()
-    y_min = pcd_xyz[:, 1].min()
-    y_len = y_max - y_min
+        z_max = pcd_xyz[:, 2].max()
+        z_min = pcd_xyz[:, 2].min()
+        z_len = z_max - z_min
 
-    z_max = pcd_xyz[:, 2].max()
-    z_min = pcd_xyz[:, 2].min()
-    z_len = z_max - z_min
-    
-    # param part: how many part of the shortest axis will be split?
-    voxel_size = min(x_len, y_len, z_len) / part
+        # param part: how many part of the shortest axis will be split?
+        vs = min(x_len, y_len, z_len) / part  # Voxel Size (VS)
+    else:
+        vs = voxel_size
     # convert point cloud to voxel
-    pcd_voxel = o3d.geometry.VoxelGrid().create_from_point_cloud(pcd, voxel_size=voxel_size)
+    # !! Doesn't work in Open3D 0.9.0.0 !!
+    # > pcd_voxel = o3d.geometry.VoxelGrid().create_from_point_cloud(pcd, voxel_size=vs)
+    # > voxel_num = len(pcd_voxel.voxels)
+    pcd_voxel = o3d.geometry.VoxelGrid().create_from_point_cloud(pcd, voxel_size=vs)
 
-    voxel_num = len(pcd_voxel.voxels)
+    pcd_vx = pcd.voxel_down_sample(voxel_size=vs) # 63012
+    voxel_num = np.asarray(pcd_vx.points).shape[0]
     voxel_density = points_num / voxel_num
 
-    return pcd_voxel, voxel_size, voxel_density
+    return pcd_voxel, vs, voxel_density

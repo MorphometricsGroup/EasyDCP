@@ -28,6 +28,12 @@ def test_pcd_read_ply_unit():
             print('\n', excinfo.value)
         assert "as unit, please only tape m, cm, mm, or km." in str(excinfo.value)
 
+def test_pcd_read_planteye_wrong_unit():
+    ply = pnt.read_ply('data/down_sample/down_sample_M.ply', unit='m')
+
+def test_pcd_read_planteye_right_unit():
+    ply = pnt.read_ply('data/down_sample/down_sample_M.ply', unit='mm')
+
 
 @pytest.fixture(scope="session", autouse=True)
 def shp_config():

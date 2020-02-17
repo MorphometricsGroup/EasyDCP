@@ -32,7 +32,7 @@ class Classifier(object):
         skln clf
     """
 
-    def __init__(self, path_list, kind_list, core='dtc'):
+    def __init__(self, path_list, kind_list, core='dtc', unit='m'):
         """
         :param path_list: the list training png path
             e.g. path_list = ['fore.png', 'back.png']
@@ -72,6 +72,7 @@ class Classifier(object):
         # Build Training Array
         self.train_data = np.empty((0, 5))
         self.train_kind = np.empty(0)
+        self.unit = unit
         self.build_training_array()
         print('[Pnt][Classifier] Training data prepared')
 
@@ -119,7 +120,7 @@ class Classifier(object):
                     img_np_tgi = self.get_tgi(img_np_rgb)
                     img_np = np.hstack([img_np_rgb, img_np_z, img_np_tgi])
                 elif '.ply' in img_path:
-                    pcd = read_ply(img_path)
+                    pcd = read_ply(img_path, unit=self.unit)
                     img_np_rgb = np.asarray(pcd.colors)
                     img_np_z = np.asarray(pcd.points)[:, 2].reshape(img_np_rgb.shape[0], 1)
                     img_np_tgi = self.get_tgi(img_np_rgb)
@@ -198,7 +199,7 @@ class Plot(object):
                 self.pcd_segmented
     """
 
-    def __init__(self, ply_path, clf, unit='m', output_path='.', write_ply=False):
+    def __init__(self, ply_path, clf, unit='m', output_path='.', write_ply=False, down_sample=True):
         self.ply_path = ply_path
         self.write_ply = write_ply
 
@@ -226,6 +227,10 @@ class Plot(object):
             raise TypeError(f'[{ply_path}] is neither a ply file or folder')
 
         print(f'[Pnt][Plot][__init__] Ply file "{self.ply_path}" loaded')
+
+        # down sample check
+        if down_sample:
+            self.pcd = self.down_sample(self.pcd, part=100)
 
         if self.write_ply:
             if self.ply_name == '':
@@ -314,6 +319,20 @@ class Plot(object):
         min_points = round(voxel_density)
         print(f'[Pnt][Plot][DBSCAN_Args] Recommend use eps={eps}, min_points={min_points} based on point density.')
         return eps, min_points
+
+    def down_sample(self, pcd, part):
+        # check whether need down-sampling
+        _, voxel_size, voxel_density = pcd2voxel(pcd, part=part)
+        min_points = round(voxel_density)
+        if min_points > 20:
+            print(f'[Pnt][Plot][Down_Sample] Point cloud {self.ply_name} has average point counts [{min_points}] '
+                  f'in the cube whose size={round(voxel_size*1000, 2)}mm.')
+            pcd_down = pcd.voxel_down_sample(voxel_size=voxel_size/5)   # 2^3=8, 3^3=27, 2.7^3=19.68
+            _, voxel_size_down, voxel_density_down = pcd2voxel(pcd_down, voxel_size=voxel_size)
+            print(f'                        |--- Down sample to average counts [{round(voxel_density_down)}] ')
+            return pcd_down
+        else:
+            return pcd
 
     def dbscan_segment(self, eps, min_points, pcd_dict=None):
         if pcd_dict is None:

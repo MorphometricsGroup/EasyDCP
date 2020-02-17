@@ -1,5 +1,6 @@
 import open3d as o3d
 import numpy as np
+from warnings import warn
 from plyfile import PlyData
 from phenotypy.pcd_tools import merge_pcd
 
@@ -40,6 +41,13 @@ def read_ply(file_path, unit='m'):
 
     pcd.points = o3d.utility.Vector3dVector(np.asarray(pcd.points) / divider)  # cm to m
     pcd.estimate_normals()
+
+    # check units
+    pcd_xyz = np.asarray(pcd.points)
+    len_xyz = pcd_xyz.max(axis=0) - pcd_xyz.min(axis=0)
+    short = len_xyz.min()
+    if short > 100:
+        warn(f'The shortest axis is {round(short)} m, please check if the unit is wrong! (current use [{unit}])')
 
     return pcd
 

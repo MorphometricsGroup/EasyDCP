@@ -4,7 +4,7 @@ import phenotypy as pnt
 
 cla = pnt.Classifier(path_list=['training_data/02/fore_rm_r.png',
                             'training_data/02/back.png'],
-                 kind_list=[0, -1], core='dtc')
+                 kind_list=[0, -1], core='dtc', unit='m')
 
 # batch processing
 ## HZ setting
@@ -16,7 +16,7 @@ result_container = []
 
 for plot in plot_set:
     # show_steps=True to display output among calculation to check correct or not
-    plot_class = pnt.Plot(plot, cla, write_ply=True)
+    plot_class = pnt.Plot(plot, cla, write_ply=True, unit='m', down_sample=True)
     # ---------- auto_segment() --------------
     plot_class.pcd_classified = plot_class.remove_noise()
     eps, min_points = plot_class.auto_dbscan_args(eps_grids=30, divide=100)

@@ -24,7 +24,7 @@ pip install phenotypy
    import phenotypy as pnt
    ```
 
-### Installation Errors
+### Shapely Installation Errors
 Please note, if meet `shapely` errors on windows platform:
 
 ```bash
@@ -49,6 +49,20 @@ please download shapely wheel from [http://www.lfd.uci.edu/~gohlke/pythonlibs/#s
 ```bash
 pip install "phenotypy/wheels/Shapely-1.6.4.post2-cp36-cp36m-win_amd64.whl"
 ```
+
+### Open3d import errors
+
+```python
+Traceback (most recent call last):
+	File "", line 1, in
+	File "C:\Python37\lib\site-packages\open3d_init_.py", line 28, in
+	from .open3d import * # py2 py3 compatible
+ImportError: DLL load failed: The specified module could not be found.
+```
+
+Please refer this link to solve this problem:https://github.com/intel-isl/Open3D/issues/979
+
+The author solve this by installing `Microsoft Visual C++ Redistributable for Visual Studio 2015, 2017 and 2019`  followed by previous link. Quick download links: https://support.microsoft.com/en-us/help/2977003/the-latest-supported-visual-c-downloads
 
 # Tutorial
 
