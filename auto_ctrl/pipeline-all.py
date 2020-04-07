@@ -18,22 +18,22 @@ import os, Metashape, math #for auto_ctrl
 ###Begin Agisoft auto_ctrl 3D reconstruction portion
 
 ##USER DEFINED VARIABLES
-path_folders = 'T:/2020agisoft/191227pheno/' #enter full path to folders root (no nested folders!)
-project_filename = '-v052-all-nocross-high-med'#' - 00000 - ALLSTEPS-v28-med'
+path_folders = 'T:/2020agisoft/strawberry2020test/' #enter full path to folders root (no nested folders!)
+project_filename = '-v053-all-nocross-high-med'#' - 00000 - ALLSTEPS-v28-med'
 #variables regarding nested folders (see readme)
 select_nested = False #set to True if you want to only use selected nested folders
 nested_folders = ['1','2'] #put the first character of the folder names you want to use here
 #agisoft variables
 agisoft_quality = 0 #choose a number: 0:Custom, 1:Highest, 2:High, 3:Medium, 4:Low, 5:Lowest
-blur_threshold = 0.3 #set this to the minimum acceptable image quality rating provided by Agisoft. default = 0.5
+blur_threshold = 0.0 #set this to the minimum acceptable image quality rating provided by Agisoft. default = 0.5
 detect_targets = True #set to True if you used Agisoft coded targets
-target_tolerance = 100
+target_tolerance = 70
 detect_markers = False #set to True if you used non-coded (cross) markers
 cross_tolerance = 50
-crop_by_targets = True #set to True if you want to crop the point cloud using coded targets
+crop_by_targets = False #set to True if you want to crop the point cloud using coded targets
 ignore_gps = True #set to True if photos have bad GPS info, such as RGB handheld camera with GPS at short range
-use_scalebars = True #set to True if you used coded-target scalebars and have provided scalebars.csv file 
-align_ground = True #set to True if you want to use the scalebars to align the ground plane
+use_scalebars = False #set to True if you used coded-target scalebars and have provided scalebars.csv file 
+align_ground = False #set to True if you want to use the scalebars to align the ground plane
 export_cloud = True #set to True if you want to export the point cloud to .PLY file
 build_dem = False #set to True if you want to build and export DEM as .TIF file
 build_ortho = False #set to True if you want to build and export orthomosaic as .TIF file
@@ -321,7 +321,8 @@ for j in range(folder_count): #run the following code for each folder
     #match, align
     print(banner1,'Matching and Aligning cameras...')
     # Change agisoft_quality variable to set downscale parameter
-    chunk.matchPhotos(downscale=match_downscale, generic_preselection=True, reference_preselection=False)#defaults: True,False
+    #chunk.matchPhotos(downscale=match_downscale, generic_preselection=True, reference_preselection=False)#defaults: True,False
+    chunk.matchPhotos(downscale=match_downscale, generic_preselection=False, reference_preselection=True, reference_preselection_mode=ReferencePreselectionSequential)#defaults: True,False
     chunk.alignCameras()
 
     #DEBUG
