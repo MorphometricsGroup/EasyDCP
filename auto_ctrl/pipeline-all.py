@@ -322,7 +322,7 @@ for j in range(folder_count): #run the following code for each folder
     print(banner1,'Matching and Aligning cameras...')
     # Change agisoft_quality variable to set downscale parameter
     #chunk.matchPhotos(downscale=match_downscale, generic_preselection=True, reference_preselection=False)#defaults: True,False
-    chunk.matchPhotos(downscale=match_downscale, generic_preselection=False, reference_preselection=True, reference_preselection_mode=ReferencePreselectionSequential)#defaults: True,False
+    chunk.matchPhotos(downscale=match_downscale, generic_preselection=False, reference_preselection=True, reference_preselection_mode=Metashape.ReferencePreselectionSequential)#defaults: True,False
     chunk.alignCameras()
 
     #DEBUG
@@ -332,7 +332,7 @@ for j in range(folder_count): #run the following code for each folder
     continue #only use if you want the script to stop here for each folder
     '''
     
-
+    ###? Load scalebars BEFORE align cameras??!
     #import scalebars from .csv
     if use_scalebars:
         print(banner1,'Importing scalebars data from .csv...')
