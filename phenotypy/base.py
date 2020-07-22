@@ -572,7 +572,7 @@ class Plot(object):
 
 class Plant(object):
 
-    def __init__(self, pcd_input, indices, ground_pcd, cut_bg=True, container_ht=0, ground_ht='auto'):
+    def __init__(self, pcd_input, ground_pcd, indices, cut_bg=True, container_ht=0, ground_ht='auto'):
         if isinstance(pcd_input, str):
             self.pcd = read_ply(pcd_input)
         else:
@@ -676,9 +676,9 @@ class Plant(object):
     # -=-=-=-=-=-=-=-=-=-=-=-=-
     # | traits from 3D points |
     # -=-=-=-=-=-=-=-=-=-=-=-=-
-    def get_percentile_height(self, container_ht=0, ground_ht='auto'):
+    def get_percentile_height(self, container_ht=0, ground_ht='mean'):
         z = self.pcd_xyz[:, 2]
-        if ground_ht == 'auto':
+        if ground_ht == 'mean':
             ground_z = np.asarray(self.ground_pcd.points)[:, 2]
             ground_z = ground_z[ground_z < np.percentile(z, 5)]
 
@@ -689,12 +689,12 @@ class Plant(object):
                                           ground_z > np.percentile(ground_z, 5))]
             ele = np.median(ground_z)
             """
-            ele_ht_fine = np.linspace(ground_z.min(), ground_z.max(), 1000)
-            ele_kernel = gaussian_kde(ground_z)
-            ele_hist_num = ele_kernel(ele_ht_fine)
+            # ele_ht_fine = np.linspace(ground_z.min(), ground_z.max(), 1000)
+            # ele_kernel = gaussian_kde(ground_z)
+            # ele_hist_num = ele_kernel(ele_ht_fine)
 
             ele = np.median(ground_z)
-            # to be continued
+            # [todo] find the largest first peaks for ground height?
         else:
             ele = ground_ht
 
@@ -719,123 +719,3 @@ class Plant(object):
 
         file_name = f'{plant_name}.png'
         draw_3d_results(self, title=plant_name, savepath=f"{output_path}/{file_name}")
-        
-        
-class PlantNew(object):
-
-    def __init__(self, pcd_input, clf, container_ht=0, ground_ht='auto'):
-        if isinstance(pcd_input, str):
-            pcd_all = read_ply(pcd_input)
-        else:
-            pcd_all = pcd_input
-            
-        pred_result = clf.predict(np.asarray(pcd_all.colors))
-        idx_bg = np.where(pred_result == -1)[0].tolist()
-        idx_fg = np.where(pred_result == 0)[0].tolist()
-        
-        self.pcd = pcd_all.select_down_sample(indices=idx_fg)
-        self.ground_pcd = pcd_all.select_down_sample(indices=idx_bg)
-        
-        self.center = self.pcd.get_center()
-
-        self.pcd_xyz = np.asarray(self.pcd.points)
-        self.pcd_rgb = np.asarray(self.pcd.colors)
-
-        # calculate the convex hull 2d
-        self.plane_hull, self.hull_area = convex_hull2d(self.pcd)  # vertex_set (2D ndarray), m^2
-
-        # calculate min_area_bounding_rectangle,
-        # rect_res = (rot_angle, area, width, length, center_point, corner_points)
-        self.rect_res = min_bounding_rect(self.plane_hull)
-        self.width = self.rect_res[2]   # unit is m
-        self.length = self.rect_res[3]   # unit is m
-
-        # calculate the projected 2D image (X-Y)
-        binary, px_num_per_cm, corner = pcd2binary(self.pcd)
-        # calculate region props
-        self.centroid, self.major_axis, self.minor_axis, self.orient_degree = self.get_region_props(binary,
-                                                                                                    px_num_per_cm,
-                                                                                                    corner)
-        # calculate projected leaf area
-        self.pla_img = binary
-        self.pla = self.get_projected_leaf_area(binary, px_num_per_cm)
-
-        # calcuate percentile height
-        self.pctl_ht, self.pctl_ht_plot = self.get_percentile_height(container_ht, ground_ht)
-
-        # voxel (todo)
-        self.pcd_voxel, self.voxel_size, self.voxel_density = pcd2voxel(self.pcd)
-
-    # -=-=-=-=-=-=-=-=-=-=-=-=
-    # | traits from 2D image |
-    # -=-=-=-=-=-=-=-=-=-=-=-=
-
-    @staticmethod
-    def get_region_props(binary, px_num_per_cm, corner):
-        x_min, y_min = corner
-        regions = regionprops(binary, coordinates='xy')
-        props = regions[0]          # this is all coordinate in converted binary images
-
-        # convert coordinate from binary images to real point cloud
-        y0, x0 = props.centroid
-        center = (x0 / px_num_per_cm / 100 + x_min, y0 / px_num_per_cm / 100 + y_min)
-
-        major_axis = props.major_axis_length / px_num_per_cm / 100
-        minor_axis = props.minor_axis_length / px_num_per_cm / 100
-
-        phi = props.orientation
-        angle = - phi * 180 / np.pi   # included angle with x axis, clockwise, by regionprops default
-
-        return center, major_axis, minor_axis, angle
-
-    @staticmethod
-    def get_projected_leaf_area(binary, px_num_per_cm):
-        kind, number = np.unique(binary, return_counts=True)
-        # back_num = number[0]
-        fore_num = number[1]
-
-        pixel_size = (1 / px_num_per_cm) ** 2   # unit is cm2
-
-        return fore_num * pixel_size
-
-    # -=-=-=-=-=-=-=-=-=-=-=-=-
-    # | traits from 3D points |
-    # -=-=-=-=-=-=-=-=-=-=-=-=-
-    def get_percentile_height(self, container_ht=0, ground_ht='auto'):
-        z = self.pcd_xyz[:, 2]
-        if ground_ht == 'auto':
-            ground_z = np.asarray(self.ground_pcd.points)[:, 2]
-            ground_z = ground_z[ground_z < np.percentile(z, 5)]
-
-            # calculate the ground center of Z, by mean of [per5 - per 90],
-            # to avoid the effects of elevation and noises in upper part
-            """
-            ele = ground_z[np.logical_and(ground_z < np.percentile(ground_z, 80),
-                                          ground_z > np.percentile(ground_z, 5))]
-            ele = np.median(ground_z)
-            """
-            ele_ht_fine = np.linspace(ground_z.min(), ground_z.max(), 1000)
-            ele_kernel = gaussian_kde(ground_z)
-            ele_hist_num = ele_kernel(ele_ht_fine)
-
-            ele = np.median(ground_z)
-            # to be continued
-        else:
-            ele = ground_ht
-
-        plant_base = ele + container_ht
-
-        ele_z = z[z > plant_base]
-        top10percentile = np.percentile(ele_z, 90)
-        plant_top = ele_z[ele_z > top10percentile].mean()
-
-        percentile_ht = plant_top - plant_base
-
-        plot_use = {'plant_top': plant_top, 'plant_base': plant_base,
-                    'top10': top10percentile, 'ground_center': ele}
-
-        return percentile_ht, plot_use
-
-    def draw_3d_results(self, plant_name, output_path='.', ):
-        # file_name = f'{plant_name}.png'
-        draw_3d_results(self, title=plant_name, savepath=f"{output_path}/{plant_name}")
