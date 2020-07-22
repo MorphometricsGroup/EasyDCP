@@ -11,6 +11,6 @@ alex_*
 *.backup.py
 test_temp.py
 easypcp/wheels/*
-easypcp/docs/build/
+easypcp/docs/build/*
 easypcp/example/csv*
 easypcp/example/out*
