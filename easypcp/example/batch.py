@@ -1,8 +1,8 @@
 import __init__
 import pandas as pd
-import phenotypy as pnt
+import easypcp as pcp
 
-cla = pnt.Classifier(path_list=['training_data/02/fore_rm_r.png',
+cla = pcp.Classifier(path_list=['training_data/02/fore_rm_r.png',
                             'training_data/02/back.png'],
                  kind_list=[0, -1], core='dtc', unit='m')
 
@@ -16,10 +16,10 @@ result_container = []
 
 for plot in plot_set:
     # show_steps=True to display output among calculation to check correct or not
-    plot_class = pnt.Plot(plot, cla, write_ply=True, unit='m', down_sample=True)
+    plot_class = pcp.Plot(plot, cla, write_ply=True, unit='m', down_sample=True)
     # ---------- auto_segment() --------------
     plot_class.pcd_classified = plot_class.remove_noise()
-    eps, min_points = plot_class.auto_dbscan_args(eps_grids=30, divide=100)
+    eps, min_points = plot_class.auto_dbscan_args(eps_grids=13, divide=100)
     seg = plot_class.dbscan_segment(eps=eps, min_points=min_points)
     if len(seg[0]) > 3:
         split = plot_class.kmeans_split()
