@@ -47,6 +47,17 @@ pip install easypcp
 
    `(YourEnv) D:\Program\easypcp\> pip install -r requirements.txt`
 
+   For **China Mainland** user, some packages via pip may very slow, and possible got HTTP network error:
+
+   ```bash
+       raise ReadTimeoutError(self._pool, None, "Read timed out.")
+   pip._vendor.urllib3.exceptions.ReadTimeoutError: HTTPSConnectionPool(port=443): Read timed out.
+   ```
+
+   Please keep trying reinstall **or use Tsinghua pip mirror** to accelerate the installation:
+
+   `(YourEnv) D:\Program\easypcp\> pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple`  
+
 3. Before the line containing `import easypcp` in your code, you need to write the following code in front: *(see `example/batch.py` for example)*
 
    ```python
@@ -60,7 +71,7 @@ pip install easypcp
 
 ### Shapely
 
-Please note, if meet `shapely` errors on windows platform:
+Please note, if meet `shapely` errors on windows platform (**solved in shapely >= 1.7.0**):
 
 ```bash
 Collecting Shapely
@@ -79,7 +90,7 @@ Collecting Shapely
 Command "python setup.py egg_info" failed with error code 1 in C:\Users\
 ```
 
-please download shapely wheel from [http://www.lfd.uci.edu/~gohlke/pythonlibs/#shapely](http://www.lfd.uci.edu/~gohlke/pythonlibs/#shapely) and then using command line to install:
+please download shapely wheel from [http://www.lfd.uci.edu/~gohlke/pythonlibs/#shapely](http://www.lfd.uci.edu/~gohlke/pythonlibs/#shapely) and then using command line to install (**or higher version**):
 
 ```bash
 pip install "easypcp/wheels/Shapely-1.6.4.post2-cp36-cp36m-win_amd64.whl"
