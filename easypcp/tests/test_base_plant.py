@@ -1,10 +1,10 @@
 import __init__
 import pytest
-import phenotypy as pnt
+import easypcp as pcp
 
 @pytest.fixture(scope="session", autouse=True)
 def plant_init():
-    plant = pnt.Plant('data/weed.plant0.ply', indices=0, ground_pcd='data/weed.cleanedbg.ply',
+    plant = pcp.Plant('data/weed.plant0.ply', indices=0, ground_pcd='data/weed.cleanedbg.ply',
                       cut_bg=True, container_ht=0.06)
     return plant
 

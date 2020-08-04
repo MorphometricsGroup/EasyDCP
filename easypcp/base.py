@@ -695,9 +695,14 @@ class Plant(object):
 
             ele = np.median(ground_z)
             # [todo] find the largest first peaks for ground height?
+        elif ground_ht=='auto':
+            ground_z = np.asarray(self.ground_pcd.points)[:, 2]
+            ground_z = ground_z[ground_z < np.percentile(z, 5)]
+            ele = ground_z.min()
         else:
             ele = ground_ht
 
+        print(ele, container_ht)
         plant_base = ele + container_ht
 
         ele_z = z[z > plant_base]

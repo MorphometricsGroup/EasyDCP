@@ -23,7 +23,7 @@ A wrapper for quick use
 
 
 
-# pnt.pcd_tools
+# pcp.pcd_tools
 
 **Functions**
 
@@ -40,7 +40,7 @@ A wrapper for quick use
 | `round2val`            |             |
 
 
-# pnt.io
+# pcp.io
 
 **functions**
 
@@ -53,7 +53,7 @@ A wrapper for quick use
 | `shp.read_shps` |             |
 | `shp.read_xyz`  |             |
 
-<h4 id="read_ply">pnt.io.pcd.read_ply(args)</h4>
+<h4 id="read_ply">pcp.io.pcd.read_ply(args)</h4>
 Function to read point cloud ply file
 
 > Parameters
@@ -66,9 +66,9 @@ Function to read point cloud ply file
 
 
 
-# pnt.plotting
+# pcp.plotting
 
 
 
-# pnt.geometry
+# pcp.geometry
 
