@@ -46,5 +46,28 @@ Metashape.app.activated still `False`.
 
 
 
+`FileNotFoundError: [Errno 2] No such file or directory: 'plot_out\\s2g1-v054-all-nocross-high-med816-class[0].png'`
+
+caused by plot_out folder not existing in location where easypcp is being run
+
+**HZ: Can you modify easypcp to create the plot_out folder if it does not exist?**
 
 
+
+`[Pnt][Plant][Traits] No. 0 Calculating
+Traceback (most recent call last):
+  File "example\alex_batch3.py", line 53, in <module>
+    if not planteye: traits = plot_class.get_traits(container_ht=0.06)#, ground_ht =g_ht)
+  File "C:\Users\Alex\Documents\GitHub\3Dphenotyping\easypcp\base.py", line 543, in get_traits
+    container_ht=container_ht, ground_ht=ground_ht)
+  File "C:\Users\Alex\Documents\GitHub\3Dphenotyping\easypcp\base.py", line 611, in __init__
+    corner)
+  File "C:\Users\Alex\Documents\GitHub\3Dphenotyping\easypcp\base.py", line 651, in get_region_props
+    regions = regionprops(binary, coordinates='xy')
+  File "C:\Users\Alex\.conda\envs\easypcp37\lib\site-packages\skimage\measure\_regionprops.py", line 881, in regionprops
+    raise ValueError(msg)
+ValueError: Values other than "rc" for the "coordinates" argument to skimage.measure.regionprops are no longer supported. You should update your code to use "rc" coordinates and stop using the "coordinates" argument, or use skimage version 0.15.x or earlier.`
+
+solved by uninstalling scikit-image and reinstalling 0.15.0 
+
+updated requirements.txt 

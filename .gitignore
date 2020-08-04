@@ -3,8 +3,9 @@
 easypcp/example/S*
 easypcp/tests/output/*
 easypcp/tests/easypcc/*
-easypcp/example/plot_out/*
+*plot_out/*
 __pycache__
+*_agi.csv
 *.ply
 alex_*
 *.backup.py
@@ -13,3 +14,4 @@ easypcp/wheels/*
 easypcp/docs/build/*
 easypcp/example/csv*
 easypcp/example/out*
+*.png
