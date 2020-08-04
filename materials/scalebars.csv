@@ -1,0 +1,12 @@
+target 1,target 2,0.085,0.001
+target 1,target 3,0.126,0.001
+target 1,target 4,0.154,0.001
+target 2,target 3,0.154,0.001
+target 2,target 4,0.126,0.001
+target 3,target 4,0.085,0.001
+target 5,target 6,0.085,0.001
+target 5,target 7,0.126,0.001
+target 5,target 8,0.154,0.001
+target 6,target 7,0.154,0.001
+target 6,target 8,0.126,0.001
+target 7,target 8,0.085,0.001

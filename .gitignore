@@ -6,7 +6,6 @@ easypcp/tests/easypcc/*
 easypcp/example/plot_out/*
 __pycache__
 *.ply
-*.csv
 alex_*
 *.backup.py
 test_temp.py
