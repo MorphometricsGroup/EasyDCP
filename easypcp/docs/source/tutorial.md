@@ -41,7 +41,12 @@ CloudCompare
 
 1. Edit pipeline-all.py user-defined variables:
 
+Navigate to `easypcp/creation`
+
 open pipeline-all.py
+
+-set `agisoft_quality` to 5 (lowest) for initial run. change later
+
 -change`path_folders`to the path containing the folders of images
 -change `blur_threshold` to desired value. Pipeline will disable all images with Agisoft image quality below the `blur_threshold`.
 -set `ignore_gps`, `align_ground`, and `use_scalebars ` as needed
