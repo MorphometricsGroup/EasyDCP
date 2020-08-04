@@ -264,7 +264,7 @@ class Plot(object):
         for k in clf.kind_set:
             print(f'[Pnt][Plot][Classifier_apply] |-- classify class {k}')
             indices = np.where(pred_result == k)[0].tolist()
-            pcd_classified[k] = self.pcd.select_down_sample(indices=indices)
+            pcd_classified[k] = self.pcd.select_by_index(indices=indices)
             # save ply
             if self.write_ply:
                 o3d.io.write_point_cloud(os.path.join(self.out_folder, f'class[{k}].ply'),
@@ -355,7 +355,7 @@ class Plot(object):
             pcd_seg_num = []
             for i, seg in enumerate(seg_id):
                 indices = np.where(vect_np == seg)[0].tolist()
-                pcd_seg = seg_in[k].select_down_sample(indices)
+                pcd_seg = seg_in[k].select_by_index(indices)
                 pcd_seg_list.append(pcd_seg)
                 pcd_seg_num.append(len(indices))
 
