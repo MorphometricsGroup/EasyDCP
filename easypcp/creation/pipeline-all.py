@@ -12,13 +12,18 @@
 #>>TODO: Jump to next folder on error
 #>>TODO: write info to log file (failed folders, etc)
 
-import os, Metashape, math #for auto_ctrl
+print('start')
+agisoft_LICENSE = 'C:\Program Files\Agisoft\Metashape Pro'
+print('import metashape')
+import Metashape #for auto_ctrl
+print('import os,math')
+import os, math
 
 ###Begin point cloud creation (3D reconstruction) portion
 
 ##USER DEFINED VARIABLES
 path_folders = 'D:/agisoft/191227pheno/'#'T:/2020agisoft/strawberry2020test/' #enter full path to folders root (no nested folders!)
-project_filename = '-v054-all-nocross-high-med'#' - 00000 - ALLSTEPS-v28-med'
+project_filename = '-v0541-all-nocross-'#' - 00000 - ALLSTEPS-v28-med'
 #variables regarding nested folders (see readme)
 select_nested = False #set to True if you want to only use selected nested folders
 nested_folders = ['1','2'] #put the first character of the folder names you want to use here (only needed when select_nested = TRUE)
