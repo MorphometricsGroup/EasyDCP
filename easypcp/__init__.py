@@ -1,21 +1,21 @@
-from phenotypy.base import (
+from easypcp.base import (
     Classifier,
     Plot,
     Plant
 )
 
-from phenotypy.pcd_tools import (
+from easypcp.pcd_tools import (
     merge_pcd,
     pcd2dxm,
     pcd2binary
 )
 
-from phenotypy.io.pcd import (
+from easypcp.io.pcd import (
     read_ply,
     read_plys
 )
 
-from phenotypy.io.shp import (
+from easypcp.io.shp import (
     read_shp,
     read_shps,
     read_xyz
