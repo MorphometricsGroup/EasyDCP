@@ -2,7 +2,7 @@
 # modified from: scripts on Agisoft forums by Alexey Pasumansky
 # by Alex Feldman - UTokyo Field Phenomics Lab
 
-# updated 2020.02.12
+# updated 2020.08.03
 # compatibility Metashape Pro 1.6.1
 ## Incompatible Metashape Pro 1.5.x and below
 # compatible with one level of nested folders (see readme)
@@ -11,29 +11,28 @@
 #! Agisoft errors will break the script. 
 #>>TODO: Jump to next folder on error
 #>>TODO: write info to log file (failed folders, etc)
-#>>TODO: integrate boundbox code into pipeline 
 
 import os, Metashape, math #for auto_ctrl
 
-###Begin Agisoft auto_ctrl 3D reconstruction portion
+###Begin point cloud creation (3D reconstruction) portion
 
 ##USER DEFINED VARIABLES
-path_folders = 'T:/2020agisoft/strawberry2020test/' #enter full path to folders root (no nested folders!)
-project_filename = '-v053-all-nocross-high-med'#' - 00000 - ALLSTEPS-v28-med'
+path_folders = 'D:/agisoft/191227pheno/'#'T:/2020agisoft/strawberry2020test/' #enter full path to folders root (no nested folders!)
+project_filename = '-v054-all-nocross-high-med'#' - 00000 - ALLSTEPS-v28-med'
 #variables regarding nested folders (see readme)
 select_nested = False #set to True if you want to only use selected nested folders
-nested_folders = ['1','2'] #put the first character of the folder names you want to use here
+nested_folders = ['1','2'] #put the first character of the folder names you want to use here (only needed when select_nested = TRUE)
 #agisoft variables
-agisoft_quality = 0 #choose a number: 0:Custom, 1:Highest, 2:High, 3:Medium, 4:Low, 5:Lowest
+agisoft_quality = 5 #choose a number: 0:Custom, 1:Highest, 2:High, 3:Medium, 4:Low, 5:Lowest
 blur_threshold = 0.0 #set this to the minimum acceptable image quality rating provided by Agisoft. default = 0.5
 detect_targets = True #set to True if you used Agisoft coded targets
 target_tolerance = 70
 detect_markers = False #set to True if you used non-coded (cross) markers
 cross_tolerance = 50
-crop_by_targets = False #set to True if you want to crop the point cloud using coded targets
+crop_by_targets = True #set to True if you want to crop the point cloud using coded targets
 ignore_gps = True #set to True if photos have bad GPS info, such as RGB handheld camera with GPS at short range
-use_scalebars = False #set to True if you used coded-target scalebars and have provided scalebars.csv file 
-align_ground = False #set to True if you want to use the scalebars to align the ground plane
+use_scalebars = True #set to True if you used coded-target scalebars and have provided scalebars.csv file 
+align_ground = True #set to True if you want to use the scalebars to align the ground plane
 export_cloud = True #set to True if you want to export the point cloud to .PLY file
 build_dem = False #set to True if you want to build and export DEM as .TIF file
 build_ortho = False #set to True if you want to build and export orthomosaic as .TIF file
@@ -61,8 +60,9 @@ elif agisoft_quality == 5: #Lowest
     depth_downscale = 16
 
 #User does not need to change these variables
-banner1 = '\n[3Dphenotyping][auto_ctrl]'
+banner1 = '\n[EasyPCP][Point Cloud Creation]'
 doc = Metashape.app.document
+project_filename = project_filename + str(match_downscale) + str(depth_downscale)
 
 ##FUNCTIONS
 def vect(a, b):
@@ -532,6 +532,6 @@ for j in range(folder_count): #run the following code for each folder
     '''
     '''
     #begin pcd_processing portion
-    print('\n-----------------------\n~~~~start pcd_processing~~~~\n') 
+    print('\n-----------------------\n[Ready to start EasyPCP Point Cloud Analysis!]\n') 
    
 print('Finished!')
