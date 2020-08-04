@@ -2,7 +2,7 @@ import open3d as o3d
 import numpy as np
 from warnings import warn
 from plyfile import PlyData
-from phenotypy.pcd_tools import merge_pcd
+from easypcp.pcd_tools import merge_pcd
 
 def read_ply(file_path, unit='m'):
     """
