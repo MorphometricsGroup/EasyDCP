@@ -50,7 +50,7 @@ Metashape.app.activated still `False`.
 
 caused by plot_out folder not existing in location where easypcp is being run
 
-**HZ: Can you modify easypcp to create the plot_out folder if it does not exist?**
+**Tried modifying easypcp to create the plot_out folder if it does not exist. Now need error catching for when the folder does exist, or comment that line out.**
 
 
 
