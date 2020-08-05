@@ -14,11 +14,13 @@ num_plants = 3 #use 0 to force kmeans_split
 #os.mkdir(os.getcwd()+'\\data_out')
 
 if not planteye: 
-    #cla = pcp.Classifier(path_list=['easypcp/example/training_data/01/fore_rm_y.png', 'easypcp/example/training_data/01/back.png'], kind_list=[0, -1], core='dtc', unit='m') #PNG
-    cla = pcp.Classifier(path_list=['easypcp/example/training_data/02/fore_rm_r.png', 'easypcp/example/training_data/02/back.png'], kind_list=[0, -1], core='dtc', unit='m') #PNG
-    plot_path = 'D:/easypcp/1227/'
+    #cla = pcp.Classifier(path_list=['example/training_data/01/fore_rm_y.png', 'example/training_data/01/back.png'], kind_list=[0, -1], core='dtc', unit='m') #PNG
+    cla = pcp.Classifier(path_list=['example/training_data/02/fore_rm_r.png', 'example/training_data/02/back.png'], kind_list=[0, -1], core='dtc', unit='m') #PNG
+    plot_path = 'T:/ply/1227/v051-boundbox8/'
+    #plot_path = 'D:/easypcp/1227/'
     file_list = [(plot_path + k) for k in os.listdir(plot_path) if ('.ply' in k) and (group in k)]
     plot_set = file_list
+    print(plot_set)
     filename = 'easypcp-test'
 else:
     cla = pcp.Classifier(path_list=['training_data/02/fore_sp3.ply', 'training_data/02/back2.ply'], kind_list=[0, -1], core='dtc', unit='mm') #PLY
