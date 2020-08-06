@@ -9,8 +9,9 @@
 '''#! files in folders root will break the script
 #! Non-agisoft nested folder in photos folder will break script'''
 #! Agisoft errors will break the script. 
-#>>TODO: Jump to next folder on error
-#>>TODO: write info to log file (failed folders, etc)
+#>>TODO: Jump to next folder on error (catch exception)
+#>>TODO: write report to log file (failed folders, successful, etc)
+#>>todo: update script for 1.6 API [export disabled]
 
 print('start')
 agisoft_LICENSE = 'C:\Program Files\Agisoft\Metashape Pro'
@@ -23,13 +24,13 @@ import os, math
 
 ##USER DEFINED VARIABLES
 path_folders = 'D:/agisoft/191227pheno/'#'T:/2020agisoft/strawberry2020test/' #enter full path to folders root (no nested folders!)
-project_filename = '-v0541-all-nocross-'#' - 00000 - ALLSTEPS-v28-med'
+project_filename = '-v055-all'#' - 00000 - ALLSTEPS-v28-med'
 #variables regarding nested folders (see readme)
 select_nested = False #set to True if you want to only use selected nested folders
 nested_folders = ['1','2'] #put the first character of the folder names you want to use here (only needed when select_nested = TRUE)
 #agisoft variables
 agisoft_quality = 5 #choose a number: 0:Custom, 1:Highest, 2:High, 3:Medium, 4:Low, 5:Lowest
-blur_threshold = 0.0 #set this to the minimum acceptable image quality rating provided by Agisoft. default = 0.5
+blur_threshold = 0.0 #set this to the minimum acceptable image quality rating provided by Agisoft. recommended: 0.5
 detect_targets = True #set to True if you used Agisoft coded targets
 target_tolerance = 70
 detect_markers = False #set to True if you used non-coded (cross) markers
@@ -67,7 +68,7 @@ elif agisoft_quality == 5: #Lowest
 #User does not need to change these variables
 banner1 = '\n[EasyPCP][Point Cloud Creation]'
 doc = Metashape.app.document
-project_filename = project_filename + str(match_downscale) + str(depth_downscale)
+project_filename = project_filename + '_' + str(match_downscale) + '_' + str(depth_downscale)
 
 ##FUNCTIONS
 def vect(a, b):
@@ -189,7 +190,7 @@ def update_boundbox():
 
     print ("Bounding box should be aligned now")
 
-print('\n----',banner1,'----\n~~~~start auto_ctrl~~~~\n')    
+print('\n----',banner1,'\nStart\n')    
 
 #populate folder list
 folder_list = os.listdir(path_folders) 
@@ -424,7 +425,7 @@ for j in range(folder_count): #run the following code for each folder
         region = chunk.region
         '''vertical = ["target 9", "target 3"] 
         horizontal = ["target 9", "target 1"]'''
-        
+        #!delete these below comments, they are specific to 0618 data
         horizontal = ["target 1", "target 3"]#["target 9", "target 16"]
         vertical = ["target 1", "target 4"]#["target 9", "target 3"] #fails on S08, S12
         #vertical = ["target 2", "target 15"] #run for all?
@@ -485,7 +486,7 @@ for j in range(folder_count): #run the following code for each folder
     #build depth map, dense cloud
     print(banner1,'Building depth maps and dense cloud...')
     # Change agisoft_quality variable to set downscale parameter
-    chunk.buildDepthMaps(downscale=depth_downscale, filter_mode=Metashape.MildFiltering)#defaults: MildFiltering
+    chunk.buildDepthMaps(downscale=depth_downscale, filter_mode=Metashape.MildFiltering)#default: MildFiltering
     doc.save()
     chunk.buildDenseCloud(point_conﬁdence=True) 
     #export dense cloud

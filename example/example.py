@@ -42,7 +42,7 @@ for plot in plot_set:
     # ---------- auto_segment() --------------
     if not planteye: plot_class.pcd_classified = plot_class.remove_noise()
     #-- different eps value for tricky cases
-    if plot_count == 4: eps, min_points = plot_class.auto_dbscan_args(eps_grids=13, divide=100)
+    if plot_count == 4: eps, min_points = plot_class.auto_dbscan_args(eps_grids=13, divide=100) #this is case-specific override for 4th set
     else: eps, min_points = plot_class.auto_dbscan_args(eps_grids=10, divide=100)
     seg = plot_class.dbscan_segment(eps=eps, min_points=min_points)
     #--
