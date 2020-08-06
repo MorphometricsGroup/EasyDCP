@@ -27,7 +27,7 @@ This script handles multiple sets of images taken in same environment, e.g. time
 
 ## Resources
 
-To be continued
+*What information should go here?*
 
 # Getting Started
 
@@ -41,13 +41,13 @@ pip install easypcp
 
 ## Installing from source code
 
-1. Download and unzip easypcp folders to any paths, e.g. `D:\Program\easypcp`
+1. Download and unzip easypcp folders to any path, e.g. `D:\Program\easypcp`
 
-2. Open your environment or python IDE, install the `requirements.txt` in **Administrator permission** by:
+2. Open your python 3.7 environment (recommend creating new environment using Anaconda or similar) or python IDE, install the `requirements.txt` in **Administrator permission** by:
 
    `(YourEnv) D:\Program\easypcp\> pip install -r requirements.txt`
 
-   For **China Mainland** user, some packages via pip may very slow, and possible got HTTP network error:
+   **Note**: For **China Mainland** user, some packages via pip may very slow, and possible got HTTP network error:
 
    ```bash
        raise ReadTimeoutError(self._pool, None, "Read timed out.")
@@ -58,7 +58,18 @@ pip install easypcp
 
    `(YourEnv) D:\Program\easypcp\> pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple`  
 
-3. Before the line containing `import easypcp` in your code, you need to write the following code in front: *(see `example/batch.py` for example)*
+3. Install Agisoft Metashape Professional. Activate using 30-day trial or paid license. 
+
+   - Note: EasyPCP currently supports metashape.exe control via python script. In fugure, will update to use python Wheels package: https://pip.pypa.io/en/latest/user_guide/#installing-from-wheels
+
+4. Before the line containing `import easypcp` in your code, you need to write the following code in front: *(see `example/batch.py` for example)* 
+
+   ```python
+   import __init__
+   import easypcp as pcp
+   ```
+
+   No longer needed: (replaced by `__init__`)
 
    ```python
    import sys

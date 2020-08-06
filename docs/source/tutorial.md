@@ -6,7 +6,7 @@ Image below: Draft version. Update later.
 
 # Point cloud creation
 
-## Image acquisition/capturing (manual init.)
+## (a) Image acquisition/capturing (manual init.)
 
 Materials : 
 
@@ -29,7 +29,7 @@ Printed attached .pdf file `easypcp\materials\targets.pdf`, first 2 pages. [easy
 
 *To be continued?*
 
-## Point cloud creation
+## (b) Point cloud creation
 
 Materials: 
 
@@ -59,7 +59,7 @@ Ensure folder structure matches intended format
 
 3. Find output .psx and .ply files in each corresponding folder. **change output to single folder?** Verify successful 3D reconstruction with Agisoft and CloudCompare, respectively.
 
-# Point cloud analysis
+# (c) Point cloud analysis
 
 Materials: 
 
@@ -97,7 +97,7 @@ Run batch.py
 
 *To be continued?*
 
-## Data visualization [maybe not necessary]
+## Data visualization [not necessary?]
 
 ~~Materials:~~ 
 
