@@ -17,8 +17,11 @@ print('start')
 agisoft_LICENSE = 'C:\Program Files\Agisoft\Metashape Pro'
 print('import metashape')
 import Metashape #for auto_ctrl
-print('import os,math')
-import os, math
+print('import os,math, datetime')
+import os, math, datetime
+
+now = datetime.datetime.now()
+start_time = now
 
 ###Begin point cloud creation (3D reconstruction) portion
 
@@ -540,4 +543,21 @@ for j in range(folder_count): #run the following code for each folder
     #begin pcd_processing portion
     print('\n-----------------------\n[Ready to start EasyPCP Point Cloud Analysis!]\n') 
    
+
+now = datetime.datetime.now()
+finish_time = now
+
+'''
+open file creation_log.txt
+if file does not exist, create file
+create new line, append all vars and params
+'''
+L=[]
+L.append("\n---------","\nEasyPCP creation log")
+L.append("\nstart_time: ",start_time,"\n finish time: ",finish_time, "\noperation folder: ",path_folders)
+L.append("\nagisoft_quality: ",agisoft_quality, "\nblur_threshold: ",blur_threshold]
+file1 = open('example/images/skip/creation_log.txt',"a")
+file1.writelines(L)
+file1.close()
+
 print('Finished!')
