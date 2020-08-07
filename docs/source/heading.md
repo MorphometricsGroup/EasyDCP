@@ -25,15 +25,29 @@ This script handles multiple sets of images taken in same environment, e.g. time
 * [ ] Plant width, length, and height calculation
 * [ ] Plant projected leaf area calculation
 
-## Resources
-
-*What information should go here?*
-
 # Getting Started
+
+## Requirements
+
+16GB RAM minimum, 32+GB recommended. 8GB may be usable depending on the case.
+
+Agisoft Metashape Professional 1.6.3 
+
+​	https://www.agisoft.com/downloads/installer/
+
+​	https://www.agisoft.com/downloads/system-requirements/
+
+Python 3.7 environment (Anaconda, etc)
+
+​	https://www.anaconda.com/products/individual#Downloads
+
+CloudCompare (optional, recommended)
+
+​	http://www.danielgm.net/cc/release/
 
 ## Installing from PyPI [currently not supported]
 
-In the **future** release, **will** add support of PyPI installation.
+In the **future** release, **will** add support of PyPI installation via `pip`.
 
 ```bash
 pip install easypcp
@@ -41,26 +55,26 @@ pip install easypcp
 
 ## Installing from source code
 
-1. Download and unzip easypcp folders to any path, e.g. `D:\Program\easypcp`
+1. Clone 3dphenotyping folder to any path, e.g. `D:\Program\3dphenotyping`
 
 2. Open your python 3.7 environment (recommend creating new environment using Anaconda or similar) or python IDE, install the `requirements.txt` in **Administrator permission** by:
 
-   `(YourEnv) D:\Program\easypcp\> pip install -r requirements.txt`
+   `(YourEnv) D:\Program\3dphenotyping\> pip install -r requirements.txt`
 
-   **Note**: For **China Mainland** user, some packages via pip may very slow, and possible got HTTP network error:
+   **Note**: For **China Mainland** user, some packages via pip may be very slow, and may get HTTP network error:
 
    ```bash
        raise ReadTimeoutError(self._pool, None, "Read timed out.")
    pip._vendor.urllib3.exceptions.ReadTimeoutError: HTTPSConnectionPool(port=443): Read timed out.
    ```
 
-   Please keep trying reinstall **or use Tsinghua pip mirror** to accelerate the installation:
+   Please keep trying to reinstall **or use Tsinghua pip mirror** to accelerate the installation:
 
-   `(YourEnv) D:\Program\easypcp\> pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple`  
+   `(YourEnv) D:\Program\3dphenotyping\> pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple`  
 
-3. Install Agisoft Metashape Professional. Activate using 30-day trial or paid license. 
+3. Ensure Agisoft Metashape Professional is installed and activated using 30-day trial or paid license. 
 
-   - Note: EasyPCP currently supports metashape.exe control via python script. In fugure, will update to use python Wheels package: https://pip.pypa.io/en/latest/user_guide/#installing-from-wheels
+   - Note: EasyPCP currently supports metashape.exe control via python script. In future, will update to use python Wheels package: https://pip.pypa.io/en/latest/user_guide/#installing-from-wheels
 
 4. Before the line containing `import easypcp` in your code, you need to write the following code in front: *(see `example/batch.py` for example)* 
 
@@ -77,6 +91,8 @@ pip install easypcp
    # then you can import easypcp for use
    import easypcp as pcp
    ```
+
+5. See tutorial.md for how to use EasyPCP.
 
 ## Installation Errors
 

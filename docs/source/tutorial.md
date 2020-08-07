@@ -1,6 +1,6 @@
 **See heading.md for installation instructions.**
 
-Image below: Draft version. Update later.
+Overview of EasyPCP workflow:
 
 # <img src="flow.png" style="zoom:33%;" />
 
@@ -10,24 +10,23 @@ Image below: Draft version. Update later.
 
 Materials : 
 
-Container plants
+Floor area minimum 1 m x 2 m
 
-floor covering (black or other non-plant color)
+Container plants. Avoid using green-colored container.
+
+floor covering (black or other non-plant color) (optional)
 
 RGB camera
 
 Printed attached .pdf file `easypcp\materials\targets.pdf`, first 2 pages. [easypcp requires 4 targets per page. i used 6mm radius .] Attach to clipboard or other rigid backing.
 
-0. The height of plant container is needed by EasyPCP, so be sure to measure and record the height of the container.
-
-1. If using floor covering, place in desired area to be used for image acquisition. If not using floor covering, ensure area is free of any materials that may be similar to plant color (e.g. weeds)
-2. Define measurement area by placing the two printed target sheets at opposite corners. [see figure]
-3. Arrange a group of container plants within the measurement area, by placing them in a single row, or 2 rows using triangular spacing [see image]. Ensure adequate gap between all plants. *Note: The number of plants per group is only limited by the size of the measurement area and the size of the plants.*
-4. Photograph in one or more rows parallel to plant row. Recommend 5cm spacing . e.g., 20 images per each meter of plant row.
-5. Repeat steps 3 and 4 for all remaining plants.
-6. Organize photos into folders by group. One folder per one group of plants.
-
-*To be continued?*
+1. The height of plant container is needed by EasyPCP, so be sure to measure and record the height of the container.
+2. If using floor covering, place on desired area to be used for image acquisition. If not using floor covering, ensure floor area is free of any materials that may be similar to plant color (e.g. weeds)
+3. Define measurement area by placing the two printed target sheets at opposite corners. [see figure]
+4. Arrange a group of container plants within the measurement area, by placing them in a single row, or 2 rows using triangular spacing [see image]. Ensure adequate gap between all plants. *Note: The number of plants per group is only limited by the size of the measurement area and the size of the plants.*
+5. Photograph in one or more rows parallel to plant row. Recommend 5cm spacing . e.g., 20 images per each meter of plant row.
+6. Repeat steps 3 and 4 for all remaining plants.
+7. Organize photos into folders by group. One folder per one group of plants. (See example/images)
 
 ## (b) Point cloud creation
 
@@ -35,29 +34,23 @@ Materials:
 
 Photos from image acquisition step, organized into folders by group as described above.
 
-Agisoft Metashape Professional 1.6.x (0 or higher?)
+Agisoft Metashape Professional 1.6.3
 
 CloudCompare
 
 1. Edit pipeline-all.py user-defined variables:
-
-Navigate to `easypcp/creation`
-
-open pipeline-all.py
-
--set `agisoft_quality` to 5 (lowest) for initial run. change later
-
--change`path_folders`to the path containing the folders of images
--change `blur_threshold` to desired value. Pipeline will disable all images with Agisoft image quality below the `blur_threshold`.
--set `ignore_gps`, `align_ground`, and `use_scalebars ` as needed
-
-Ensure folder structure matches intended format
-- only folders in root folder (path_folders), no files in root
-- 'skip' folder contains scalebars.csv if needed **Default scalebars.csv provided to match targets.pdf**
-
-2. Run pipeline-all.bat **update program to use agisoft package?? update installation?**
-
-3. Find output .psx and .ply files in each corresponding folder. **change output to single folder?** Verify successful 3D reconstruction with Agisoft and CloudCompare, respectively.
+   - Navigate to `easypcp/creation
+   - open pipeline-all.py
+   - set `agisoft_quality` to 5 (lowest) for initial run. change later
+   - change`path_folders`to the path containing the folders of images
+   - change `blur_threshold` to desired value. Pipeline will disable all images with Agisoft image quality below the `blur_threshold`.
+   - set `ignore_gps`, `align_ground`, and `use_scalebars ` as needed
+2. Ensure folder structure matches intended format
+   - only folders in root folder (path_folders), no files in root
+   - 'skip' folder contains scalebars.csv if needed 
+     - **Default scalebars.csv provided in 3dphenotyping\materials to match targets.pdf. Copy to [path_folders]\skip directory.**
+3. Run pipeline-all.bat **[dev] update program to use agisoft package. update installation for .whl.**
+   - Find output .psx and .ply files in each corresponding folder. **[dev] change output to single folder?** Verify successful 3D reconstruction with Agisoft and CloudCompare, respectively.
 
 # (c) Point cloud analysis
 
@@ -87,15 +80,30 @@ Materials: GIMP or equivalent software.
 
 ## PCD analysis
 
-See docs/api.md 
+Materials:
 
-Arrange point clouds into folder
+- Folder containing .ply point cloud files output by previous step, (b) EasyPCP point cloud creation
+- training data
 
-Ensure batch.py points to correct training data and point cloud folder. Also ensure `container_ht` is correctly set. If unknown, set to 0.
+Control EasyPCP via API using python script in your python 3.7 environment as described in Installation documentation (heading.md). Several .py files are provided in /example/ as examples of simple scripts to control EasyPCP. See documentation (api.md) for details on controlling EasyPCP via python.
 
-Run batch.py
+Configure EasyPCP before launching:
 
-*To be continued?*
+- Ensure your .py script points to correct training data and point cloud folder. *Ensure `container_ht` is correctly set.* 
+
+- Default `eps_points = 10`. Higher value may be used if segmentation fails, such as one plant being wrongly divided in two segments. Recommend trying 13. Higher `eps_points` value may dramatically increase CPU processing time. 
+
+Execute your.py file using python , using 3Dphenotyping root folder as working directory:
+
+`(easypcp37) C:\Users\Alex\Documents\GitHub\3Dphenotyping>python example\example.py`
+
+Output will be created in working directory. A folder will be created for each .ply file processed by EasyPCP. It contains several .ply files for classification and segmentation steps. Also, a .png file is output per each 'plant' output by segmentation step. The .png file contains phenotypic traits:
+
+- Ellipse long and short axis
+
+- etc
+
+Finally, a .csv file is created in /data_out/ containing per-plant traits and metadata. This file can be read as is, or imported into R for analysis. **Include sample R file?**
 
 ## Data visualization [not necessary?]
 
