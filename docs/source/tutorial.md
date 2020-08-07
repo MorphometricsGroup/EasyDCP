@@ -93,15 +93,16 @@ Configure EasyPCP before launching:
 
 - Default `eps_points = 10`. Higher value may be used if segmentation fails, such as one plant being wrongly divided in two segments. Recommend trying 13. Higher `eps_points` value may dramatically increase CPU processing time. 
 
-Execute your.py file using python , using 3Dphenotyping root folder as working directory:
+**Execute your.py file using python , using 3Dphenotyping root folder as working directory:**
 
 `(easypcp37) C:\Users\Alex\Documents\GitHub\3Dphenotyping>python example\example.py`
 
 Output will be created in working directory. A folder will be created for each .ply file processed by EasyPCP. It contains several .ply files for classification and segmentation steps. Also, a .png file is output per each 'plant' output by segmentation step. The .png file contains phenotypic traits:
 
 - Ellipse long and short axis
-
-- etc
+- Plant height, absolute or percentile (average of points above 90th percentile)
+- Projected leaf area
+- etc.
 
 Finally, a .csv file is created in /data_out/ containing per-plant traits and metadata. This file can be read as is, or imported into R for analysis. **Include sample R file?**
 
