@@ -39,8 +39,8 @@ Agisoft Metashape Professional 1.6.3
 CloudCompare
 
 1. Edit pipeline-all.py user-defined variables:
-   - Navigate to `easypcp/creation
-   - open pipeline-all.py
+   - Navigate to `easypcp/creation/`
+   - open creation.py in text editor 
    - set `agisoft_quality` to 5 (lowest) for initial run. change later
    - change`path_folders`to the path containing the folders of images
    - change `blur_threshold` to desired value. Pipeline will disable all images with Agisoft image quality below the `blur_threshold`.
@@ -49,7 +49,7 @@ CloudCompare
    - only folders in root folder (path_folders), no files in root
    - 'skip' folder contains scalebars.csv if needed 
      - **Default scalebars.csv provided in 3dphenotyping\materials to match targets.pdf. Copy to [path_folders]\skip directory.**
-3. Run pipeline-all.bat **[dev] update program to use agisoft package. update installation for .whl.**
+3. Run example\creation.bat **[dev] update program to use agisoft package. update installation for .whl.**
    - Find output .psx and .ply files in each corresponding folder. **[dev] change output to single folder?** Verify successful 3D reconstruction with Agisoft and CloudCompare, respectively.
 
 # (c) Point cloud analysis
