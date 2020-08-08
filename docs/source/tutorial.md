@@ -49,7 +49,8 @@ CloudCompare
    - only folders in root folder (path_folders), no files in root
    - 'skip' folder contains scalebars.csv if needed 
      - **Default scalebars.csv provided in 3dphenotyping\materials to match targets.pdf. Copy to [path_folders]\skip directory.**
-3. Run example\creation.bat **[dev] update program to use agisoft package. update installation for .whl.**
+3. Open example\creation.bat in text editor, and change to the full path to your 'easypcp/creation' folder.
+4. Run example\creation.bat **[dev] update program to use agisoft package. update installation for .whl.**
    - Find output .psx and .ply files in each corresponding folder. **[dev] change output to single folder?** Verify successful 3D reconstruction with Agisoft and CloudCompare, respectively.
 
 # (c) Point cloud analysis
@@ -83,7 +84,7 @@ Materials: GIMP or equivalent software.
 Materials:
 
 - Folder containing .ply point cloud files output by previous step, (b) EasyPCP point cloud creation
-- training data
+- training data created in previous step "Setup for PCD analysis"
 
 Control EasyPCP via API using python script in your python 3.7 environment as described in Installation documentation (heading.md). Several .py files are provided in /example/ as examples of simple scripts to control EasyPCP. See documentation (api.md) for details on controlling EasyPCP via python.
 
