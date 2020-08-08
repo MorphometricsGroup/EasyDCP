@@ -27,7 +27,7 @@ start_time = now
 
 ##USER DEFINED VARIABLES
 path_folders = 'c:/users/alex/documents/github/3dphenotyping/example/images/'#'T:/2020agisoft/strawberry2020test/' #enter full path to folders root (no nested folders!)
-project_filename = '-v055-all'#' - 00000 - ALLSTEPS-v28-med'
+project_filename = '-v056-all'#' - 00000 - ALLSTEPS-v28-med'
 #variables regarding nested folders (see readme)
 select_nested = False #set to True if you want to only use selected nested folders
 nested_folders = ['1','2'] #put the first character of the folder names you want to use here (only needed when select_nested = TRUE)
@@ -552,12 +552,13 @@ open file creation_log.txt
 if file does not exist, create file
 create new line, append all vars and params
 '''
+'''the below code is not ready yet
 L=[]
 L.append("\n---------","\nEasyPCP creation log")
 L.append("\nstart_time: ",start_time,"\n finish time: ",finish_time, "\noperation folder: ",path_folders)
-L.append("\nagisoft_quality: ",agisoft_quality, "\nblur_threshold: ",blur_threshold]
+L.append("\nagisoft_quality: ",agisoft_quality, "\nblur_threshold: ",blur_threshold)
 file1 = open('example/images/skip/creation_log.txt',"a")
 file1.writelines(L)
 file1.close()
-
+'''
 print('Finished!')
