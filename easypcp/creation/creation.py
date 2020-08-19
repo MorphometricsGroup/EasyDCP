@@ -27,15 +27,15 @@ start_time = now
 
 ##USER DEFINED VARIABLES
 path_folders = 'T:/2020agisoft/191227pheno/' #enter full path to folders root (no nested folders!)
-project_filename = '-v057-all'#' - 00000 - ALLSTEPS-v28-med'
+project_filename = '-v058-all'#' - 00000 - ALLSTEPS-v28-med'
 #variables regarding nested folders (see readme)
 select_nested = False #set to True if you want to only use selected nested folders
 nested_folders = ['1','2'] #put the first character of the folder names you want to use here (only needed when select_nested = TRUE)
 #agisoft variables
 agisoft_quality = 0 #choose a number: 0:Custom, 1:Highest, 2:High, 3:Medium, 4:Low, 5:Lowest
-blur_threshold = 0.0 #set this to the minimum acceptable image quality rating provided by Agisoft. recommended: 0.5
+blur_threshold = 0.4 #set this to the minimum acceptable image quality rating provided by Agisoft. recommended: 0.5
 detect_targets = True #set to True if you used Agisoft coded targets
-target_tolerance = 100
+target_tolerance = 90
 detect_markers = False #set to True if you used non-coded (cross) markers
 cross_tolerance = 50
 crop_by_targets = True #set to True if you want to crop the point cloud using coded targets
