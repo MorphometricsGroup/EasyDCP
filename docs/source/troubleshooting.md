@@ -1,13 +1,15 @@
-`[EasyPCP][Point Cloud Creation] Analyze and Disable blurry photos...
-AnalyzePhotos
-analyzing photos... ******************************************************Traceback (most recent call last):
-  File "pipeline-all.py", line 315, in <module>
-    disable_below_threshold(blur_threshold)
-  File "pipeline-all.py", line 95, in disable_below_threshold
-    chunk.analyzePhotos()
-MemoryError: bad allocation`
+`MemoryError: bad allocation`
 
+**Unresolved**
+
+- conditions: match - high, depth - medium 
 - Solved by re-running `pipeline-all.bat`
+- Move successfully processed folders to /skip before re-running
+- **Not solved by re-running for 1227-canon-species4-group1**
+  - Solution: changed v057 to v058, not exactly sure what fixed it... blur_threshold changed from 0 to 0.4 and target tolerance changed from 100 to 90.
+    - this worked for s4-g1 but then failed on another case. ran with log, memory usage skyrockets and gpu fails . [see slack notes]
+  - solution: change agisoft settings (match) to medium
+    - this also failed on some cases
 
 ---
 
