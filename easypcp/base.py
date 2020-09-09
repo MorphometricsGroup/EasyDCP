@@ -11,10 +11,10 @@ from skimage.measure import regionprops
 from scipy.stats import gaussian_kde
 
 from easypcp.pcd_tools import (pcd2binary,
-                                 pcd2voxel,
-                                 calculate_xyz_volume,
-                                 convex_hull2d,
-                                 build_cut_boundary)
+                               pcd2voxel,
+                               calculate_xyz_volume,
+                               get_convex_hull,
+                               build_cut_boundary)
 from easypcp.geometry.min_bounding_rect import min_bounding_rect
 from easypcp.io.cprint import printYellow
 from easypcp.io.folder import make_dir
@@ -280,7 +280,8 @@ class Plot(object):
         # # suitable for sfm -> single plants, which has large point numbers, delete some of them doesn't
         #            effect too much;
         # not suitable for plot level, each plant only have few points, may loss too much information
-        pcd_voxel, voxel_size, voxel_density = pcd2voxel(self.pcd, part=divide)
+        pcd_voxel, voxel_params = pcd2voxel(self.pcd, part=divide)
+        voxel_size, voxel_density = voxel_params['voxel_size'], voxel_params['voxel_density']
 
         pcd_cleaned = {}
         pcd_cleaned_id = {}
@@ -314,7 +315,8 @@ class Plot(object):
         # split the shortest axis into 100 parts
         # the dbscan eps is the length of 10 grids
         # the min_points is the mean points of each grids (voxels)
-        pcd_voxel, voxel_size, voxel_density = pcd2voxel(self.pcd, part=divide)
+        pcd_voxel, voxel_params = pcd2voxel(self.pcd, part=divide)
+        voxel_size, voxel_density = voxel_params['voxel_size'], voxel_params['voxel_density']
         eps = voxel_size * eps_grids
         min_points = round(voxel_density)
         print(f'[Pnt][Plot][DBSCAN_Args] Recommend use eps={eps}, min_points={min_points} based on point density.')
@@ -322,13 +324,15 @@ class Plot(object):
 
     def down_sample(self, pcd, part):
         # check whether need down-sampling
-        _, voxel_size, voxel_density = pcd2voxel(pcd, part=part)
+        _, voxel_params = pcd2voxel(pcd, part=part)
+        voxel_size, voxel_density = voxel_params['voxel_size'], voxel_params['voxel_density']
         min_points = round(voxel_density)
         if min_points > 20:
             print(f'[Pnt][Plot][Down_Sample] Point cloud {self.ply_name} has average point counts [{min_points}] '
                   f'in the cube whose size={round(voxel_size*1000, 2)}mm.')
             pcd_down = pcd.voxel_down_sample(voxel_size=voxel_size/5)   # 2^3=8, 3^3=27, 2.7^3=19.68
-            _, voxel_size_down, voxel_density_down = pcd2voxel(pcd_down, voxel_size=voxel_size)
+            _, voxel_params_down = pcd2voxel(pcd_down, voxel_size=voxel_size)
+            voxel_size_down, voxel_density_down = voxel_params_down['voxel_size'], voxel_params_down['voxel_density']
             print(f'                        |--- Down sample to average counts [{round(voxel_density_down)}] ')
             return pcd_down
         else:
@@ -533,7 +537,7 @@ class Plot(object):
         out_dict = {'plot': [], 'plant': [], 'kind': [], 'center.x(m)': [], 'center.y(m)': [],
                     'min_rect_width(m)': [], 'min_rect_length(m)': [], 'hover_area(m2)': [], 'PLA(cm2)': [],
                     'centroid.x(m)': [], 'centroid.y(m)': [], 'long_axis(m)': [], 'short_axis(m)': [],
-                    'orient_deg2xaxis': [], 'percentile_height(m)': []}
+                    'orient_deg2xaxis': [], 'percentile_height(m)': [], 'voxel_volume(m3)':[], 'hull3d_volume(m3)':[]}
 
         for k in traits_in.keys():
             number = len(traits_in[k])
@@ -562,6 +566,8 @@ class Plot(object):
                 out_dict['short_axis(m)'].append(plant.minor_axis)
                 out_dict['orient_deg2xaxis'].append(plant.orient_degree)
                 out_dict['percentile_height(m)'].append(plant.pctl_ht)
+                out_dict['voxel_volume(m3)'].append(plant.voxel_volume)
+                out_dict['hull3d_volume(m3)'].append(plant.hull3d_volume)
 
         out_pd = pd.DataFrame(out_dict)
         print(f'[Pnt][Plot][get_traits] preview of traits of first 5 of {len(out_pd)} records:')
@@ -595,7 +601,7 @@ class Plant(object):
 
         print(f'[Pnt][Plant][Traits] No. {indices} Calculating')
         # calculate the convex hull 2d
-        self.plane_hull, self.hull_area = convex_hull2d(self.pcd)  # vertex_set (2D ndarray), m^2
+        self.plane_hull, self.hull_area = get_convex_hull(self.pcd, dim='2d')  # vertex_set (2D ndarray), m^2
 
         # calculate min_area_bounding_rectangle,
         # rect_res = (rot_angle, area, width, length, center_point, corner_points)
@@ -617,7 +623,9 @@ class Plant(object):
         self.pctl_ht, self.pctl_ht_plot = self.get_percentile_height(container_ht, ground_ht)
 
         # voxel (todo)
-        self.pcd_voxel, self.voxel_size, self.voxel_density = pcd2voxel(self.pcd)
+        self.pcd_voxel, self.voxel_params = pcd2voxel(self.pcd)
+        self.voxel_volume = self.voxel_params['voxel_number'] * (self.voxel_params['voxel_size'] ** 3)
+        self.convex_hull3d, self.hull3d_volume = get_convex_hull(self.pcd, dim='3d')
 
     def clip_background(self):
         x_max = self.pcd_xyz[:, 0].max()
