@@ -6,7 +6,7 @@ from mpl_toolkits.mplot3d import Axes3D
 import mpl_toolkits.mplot3d.art3d as art3d
 from scipy.stats import gaussian_kde
 
-from easypcp.pcd_tools import convex_hull2d
+from easypcp.pcd_tools import get_convex_hull
 
 def draw_plot_seg_results(pcd_seg_list, selected_id_list, title, savepath, show_id=True, size=(9, 6), dpi=300):
     """
@@ -46,7 +46,7 @@ def draw_plot_seg_results(pcd_seg_list, selected_id_list, title, savepath, show_
     center_container = []
     text_container = []
     for i, sid in enumerate(selected_id_list):
-        plane_hull, _ = convex_hull2d(pcd_seg_list[sid])
+        plane_hull, _ = get_convex_hull(pcd_seg_list[sid], dim='2d')
         convex_hull = np.vstack([plane_hull, plane_hull[0, :]])
 
         convex_container.append(convex_hull)

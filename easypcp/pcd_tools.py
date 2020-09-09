@@ -51,7 +51,7 @@ def build_cut_boundary(polygon, z_range):
 def clip_pcd(pcd, boundary):
     pass
 
-def convex_hull2d(pcd):
+def get_convex_hull(pcd, dim='2d'):
     # in scipy, 2D hull.area is perimeter, hull.volume is area
     # https://stackoverflow.com/questions/35664675/in-scipys-convexhull-what-does-area-measure
     #
@@ -73,8 +73,13 @@ def convex_hull2d(pcd):
     # >>> hull.volume
     # 8.0
     pcd_xyz = np.asarray(pcd.points)
-    xy = pcd_xyz[:, 0:2]
-    hull = ConvexHull(xy)
+    if dim == '2d' or dim == '2D':
+        xy = pcd_xyz[:, 0:2]
+        hull = ConvexHull(xy)
+    elif dim == '3d' or dim == '3D':
+        hull = ConvexHull(xyz)
+    else:
+        raise KeyError('Only "2d" and "3d" or "2D" and "3D" are acceptable for dim parameters')
     hull_volume = hull.volume
     hull_xy = xy[hull.vertices, :]
     return hull_xy, hull_volume
@@ -125,7 +130,7 @@ def pcd2dxm(pcd, dens=1, interp=True):
     
     if interp:
         # find the boundary of point clouds
-        plane_hull, _ = convex_hull2d(pcd)
+        plane_hull, _ = get_convex_hull(pcd, dim='2d')
         plane_hull = np.vstack([plane_hull, plane_hull[0, :]])
         plane_hull = round2val(plane_hull, res) / res
         plane_hull = np.int_(plane_hull)
@@ -230,4 +235,6 @@ def pcd2voxel(pcd, part=100, voxel_size=None):
     voxel_num = np.asarray(pcd_vx.points).shape[0]
     voxel_density = points_num / voxel_num
 
-    return pcd_voxel, vs, voxel_density
+    voxel_params = {'voxel_size':vs, 'voxel_density': voxel_density, 'voxel_number': voxel_num}
+
+    return pcd_voxel, voxel_params
