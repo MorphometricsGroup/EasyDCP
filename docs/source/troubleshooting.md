@@ -13,6 +13,12 @@
 
 ---
 
+easypcp_Creation
+error - 'document saving disabled in read-only mode'
+solution: delete 'lock' file in [project id].files folder, or delete project .psx and .files 
+
+---
+
 `(easypcp) C:\Users\Alex\Documents\GitHub\3Dphenotyping\easypcp>python example/alex_batch3.py
 [Pnt][__init__]Append "C:\Users\Alex\Documents\GitHub\3Dphenotyping\easypcp" to system.path
 Traceback (most recent call last):
