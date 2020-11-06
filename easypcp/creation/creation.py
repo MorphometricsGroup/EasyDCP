@@ -26,31 +26,33 @@ start_time = now
 ###Begin point cloud creation (3D reconstruction) portion
 
 ##USER DEFINED VARIABLES
-path_folders = 'T:/2020agisoft/strawberry2020test/' #enter full path to folders root (no nested folders!)
-project_filename = '-v060-all'
+path_folders = 'T:/2020agisoft/2020strawberrynest/' #enter full path to folders root (no nested folders!)
+project_filename = '-v0716'
 #variables regarding nested folders (see readme)
-select_nested = False #set to True if you want to only use selected nested folders
+select_nested = True #set to True if you want to only use selected nested folders
 nested_folders = ['1','2'] #put the first character of the folder names you want to use here (only needed when select_nested = TRUE)
 #agisoft variables
 agisoft_quality = 3 #choose a number: 0:Custom, 1:Highest, 2:High, 3:Medium, 4:Low, 5:Lowest
+disable_by_iq = False
 blur_threshold = 0.4 #set this to the minimum acceptable image quality rating provided by Agisoft. recommended: 0.5
-detect_targets = True #set to True if you used Agisoft coded targets
+align_times = 2 #default 1, set to 2 if not all photos are aligning 
+detect_coded_targets = True #set to True if you used Agisoft coded targets
 target_tolerance = 100
-detect_markers = False #set to True if you used non-coded (cross) markers
-cross_tolerance = 50
+detect_noncoded_targets = False #set to True if you used non-coded (cross) markers
+noncoded_tolerance = 50
 crop_by_targets = False #set to True if you want to crop the point cloud using coded targets
 ignore_gps = True #set to True if photos have bad GPS info, such as RGB handheld camera with GPS at short range
-use_scalebars = False #set to True if you used coded-target scalebars and have provided scalebars.csv file 
-align_ground = False #set to True if you want to use the scalebars to align the ground plane
+use_scalebars = True #set to True if you used coded-target scalebars and have provided scalebars.csv file 
+align_ground = True #set to True if you want to use the scalebars to align the ground plane
 export_cloud = True #set to True if you want to export the point cloud to .PLY file
 build_dem = False #set to True if you want to build and export DEM as .TIF file
 build_ortho = False #set to True if you want to build and export orthomosaic as .TIF file
 
-#These variables correspond to agisoft_quality variable above
-if agisoft_quality == 0: #Custom: Set your desired parameters here and change agisoft_quality to 0 to use
-    match_downscale = 1 #Highest=0,High=1,Medium=2,Low=4,Lowest=8
+##These variables correspond to agisoft_quality variable above
+#Custom: Set your desired parameters here and change agisoft_quality to 0 to use
+if agisoft_quality == 0: 
+    match_downscale = 4 #Highest=0,High=1,Medium=2,Low=4,Lowest=8
     depth_downscale = 4 #Ultra=1,  High=2,Medium=4,Low=8,Lowest=16
-
 #Do not change these variables
 elif agisoft_quality == 1: #Highest
     match_downscale = 0
@@ -69,7 +71,7 @@ elif agisoft_quality == 5: #Lowest
     depth_downscale = 16
 
 #User does not need to change these variables
-banner1 = '\n[EasyPCP][Point Cloud Creation]'
+banner1 = '\n[EasyPCP_Creation]'
 doc = Metashape.app.document
 project_filename = project_filename + '_' + str(match_downscale) + '_' + str(depth_downscale)
 
@@ -113,13 +115,17 @@ def detect_noncoded_marker(tol):
     chunk.detectMarkers(target_type=Metashape.CrossTarget,tolerance=tol) #todo: update to support cross and circle noncoded
 
 def update_boundbox():
-
     doc = Metashape.app.document
     chunk = doc.chunk     # This points to the first chunk!
 
+    print(banner1,"Updating boundbox using markers...")
+
     #ground targets for finding horizontal center
+    '''p0 = "target 1"  
+    p1 = "target 8"  '''
+    #below: special case for strawberry
     p0 = "target 1"  
-    p1 = "target 8"  
+    p1 = "target 19"  
 
     fp0 = fp1 = 0
 
@@ -172,12 +178,12 @@ def update_boundbox():
     
     print('lengths:',box_X_length,box_Y_length)
     
-    if box_Y_length > box_X_length:
+    '''if box_Y_length > box_X_length:
         swap_length = box_X_length
         box_X_length = box_Y_length
-        box_Y_length = swap_length
+        box_Y_length = swap_length''' #disabled for strawberry
     
-    box_Z_length = box_Y_length#chunk.markers[c2].position[2] - chunk.markers[c1].position[2] #z-axis. same as Y length
+    box_Z_length = box_Y_length #same as Y length #chunk.markers[c2].position[2] - chunk.markers[c1].position[2] #z-axis 
 
     print('lengths:',box_X_length,box_Y_length,box_Z_length)
 
@@ -189,9 +195,17 @@ def update_boundbox():
     newregion.size = Metashape.Vector([box_X_length, box_Y_length, box_Z_length * Z_ratio]) #my way
 
     chunk.region = newregion
-    chunk.updateTransform()
+    chunk.updateTransform() #disabled for strawberry
 
     print ("Bounding box should be aligned now")
+
+def scale_by_cameras(cam_1,cam_2,cam_dist):
+    print("Create scalebars from cameras")
+    scalebar = chunk.addScalebar(chunk.cameras[cam_1],chunk.cameras[cam_2])
+    scalebar.reference.distance = cam_dist
+    chunk.updateTransform()
+    Metashape.app.update()
+    print("Script finished")
 
 print('\n----',banner1,'\nStart\n')    
 
@@ -310,7 +324,7 @@ for j in range(folder_count): #run the following code for each folder
     chunk = doc.chunk #this line is only necessary after the first save when defining path
     
     #DEBUG
-    #continue
+    #continue #only use if you want the script to stop here for each folder
     
     #clear GPS data
     if ignore_gps:
@@ -321,27 +335,15 @@ for j in range(folder_count): #run the following code for each folder
             camera_gps.reference.enabled = False
     
     #estimate image quality and disable below threshold
-    disable_below_threshold(blur_threshold)
+    if disable_by_iq: disable_below_threshold(blur_threshold)
      
     #detect circular coded targets
-    if detect_targets: chunk.detectMarkers(target_type=Metashape.CircularTarget12bit,tolerance=target_tolerance)
+    if detect_coded_targets: chunk.detectMarkers(target_type=Metashape.CircularTarget12bit,tolerance=target_tolerance)
 
-    
-    #match, align
-    print(banner1,'Matching and Aligning cameras...')
-    # Change agisoft_quality variable to set downscale parameter
-    #chunk.matchPhotos(downscale=match_downscale, generic_preselection=True, reference_preselection=False)#defaults: True,False
-    chunk.matchPhotos(downscale=match_downscale, generic_preselection=False, reference_preselection=True, reference_preselection_mode=Metashape.ReferencePreselectionSequential)#defaults: True,False
-    chunk.alignCameras()
-
-    #DEBUG
     doc.save()  
 
-    '''
-    continue #only use if you want the script to stop here for each folder
-    '''
-    
-    ###? Load scalebars BEFORE align cameras??!
+    #continue #only use if you want the script to stop here for each folder
+     
     #import scalebars from .csv
     if use_scalebars:
         print(banner1,'Importing scalebars data from .csv...')
@@ -395,58 +397,53 @@ for j in range(folder_count): #run the following code for each folder
         Metashape.app.update()
         print("Scalebars script finished")
 
+    #match, align !!! Move back to AFTER importing scalebars!
+    for i in range(align_times):
+        print(banner1,'Matching and Aligning cameras... pass #',i+1,'of',align_times)
+        # Change agisoft_quality variable to set downscale parameter
+        #chunk.matchPhotos(downscale=match_downscale, generic_preselection=True, reference_preselection=False)#defaults: True,False
+        chunk.matchPhotos(downscale=match_downscale, generic_preselection=False, reference_preselection=True, reference_preselection_mode=Metashape.ReferencePreselectionSequential)#defaults: True,False,Metashape.ReferencePreselection[Sequential? ]
+        chunk.alignCameras()   
+
     #save project
     doc.save()
     
-    '''#optional continue to check result
-    continue #only use if you want the script to stop here for each folder
-    '''
+    #optional continue to check result
+    #continue #only use if you want the script to stop here for each folder
+    
     
     #align ground plane with markers
     if align_ground:
         print(banner1,'Aligning ground (XY) plane with coded targets...')
-        '''
-        def vect(a, b):
-            """
-            Normalized vector product for two vectors
-            """
 
-            result = Metashape.Vector([a.y*b.z - a.z*b.y, a.z*b.x - a.x*b.z, a.x*b.y - a.y *b.x])
-            return result.normalized()
-
-        def get_marker(label, chunk):
-            """
-            Returns marker instance from chunk based on the label correspondence
-            """
-            
-            for marker in chunk.markers:
-                if label == marker.label:
-                    return marker
-            print("Marker not found! " + label)
-            return False
-'''
         region = chunk.region
-        '''vertical = ["target 9", "target 3"] 
-        horizontal = ["target 9", "target 1"]'''
-        #!delete these below comments, they are specific to 0618 data
+        horiz = ["target 13", "target 19"] #!special for strawberry
+        vert = ["target 1", "target 13"] 
+        '''#! these below comments, they are specific to 0618 data
         horizontal = ["target 1", "target 3"]#["target 9", "target 16"]
-        vertical = ["target 1", "target 4"]#["target 9", "target 3"] #fails on S08, S12
+        vertical = ["target 1", "target 4"]#["target 9", "target 3"] #fails on S08, S12'''
         #vertical = ["target 2", "target 15"] #run for all?
         
-        print('H0: ',get_marker(horizontal[0], chunk).position)
-        print('H1: ',get_marker(horizontal[1], chunk).position)
-        print('V0: ',get_marker(vertical[0], chunk).position)
-        print('V1: ',get_marker(vertical[1], chunk).position)
+        print('H0: ',get_marker(horiz[0], chunk).position)
+        print('H1: ',get_marker(horiz[1], chunk).position)
+        #!disabled for strawberry print('V0: ',get_marker(vert[0], chunk).position)
+        #!disabled for strawberry print('V1: ',get_marker(vert[1], chunk).position)
                
-        horizontal = get_marker(horizontal[0], chunk).position - get_marker(horizontal[1], chunk).position
-        vertical = get_marker(vertical[0], chunk).position - get_marker(vertical[1], chunk).position
+        
+        horizontal = get_marker(horiz[0], chunk).position - get_marker(horiz[1], chunk).position
+        #!disabled for strawberry vertical = get_marker(vert[0], chunk).position - get_marker(vert[1], chunk).position
+        #!special for strawberry
+        normal = get_marker(horiz[0], chunk).position
+        normal[2] = normal[2] + 1
 
         '''normal = vect(horizontal, vertical)
         vertical = - vertical.normalized()
         horizontal = vect(vertical, normal)'''
-        normal = vect(horizontal, vertical)
+        #!disabled for strawberry normal = vect(horizontal, vertical)
+        vertical = vect(horizontal, normal)
         horizontal = - horizontal.normalized()
-        vertical = - vect(horizontal, normal)
+        #!disabled for strawberry vertical = - vect(horizontal, normal)
+        normal = - vect(horizontal, vertical)
 
         R = Metashape.Matrix ([horizontal, vertical, normal]) #horizontal = X, vertical = Y, normal = Z
 
@@ -465,12 +462,12 @@ for j in range(folder_count): #run the following code for each folder
         T = Metashape.Matrix( [[R[0,0], R[0,1], R[0,2], C[0]], [R[1,0], R[1,1], R[1,2], C[1]], [R[2,0], R[2,1], R[2,2], C[2]], [0, 0, 0, 1]])
         chunk.transform.matrix = S * T.inv()        #resulting chunk transformation matrix        
 
-        chunk.resetRegion()
-
         print(filename_list[j]," Ground alignment finished")
+
+    chunk.resetRegion()
     
     #detect non-coded targets
-    if detect_markers: detect_noncoded_marker(cross_tolerance)
+    if detect_noncoded_targets: detect_noncoded_marker(noncoded_tolerance)
 
     #optimize cameras
     chunk.optimizeCameras()
@@ -481,10 +478,7 @@ for j in range(folder_count): #run the following code for each folder
     #save project
     doc.save()
     
-    #break
-    '''#optional continue to check result
-    continue #only use if you want the script to stop here for each folder
-    '''
+    #continue #only use if you want the script to stop here for each folder
     
     #build depth map, dense cloud
     print(banner1,'Building depth maps and dense cloud...')
@@ -498,6 +492,8 @@ for j in range(folder_count): #run the following code for each folder
     '''#optional continue to check result
     continue #only use if you want the script to stop here for each folder
     '''
+    
+    #scale_by_cameras(40,140,1.1) #only use this if you want to scale the model based on known camera distance
     
     #build DEM and export to TIF at standard resolution 0.001 m/px
     if build_dem:
@@ -537,11 +533,11 @@ for j in range(folder_count): #run the following code for each folder
     print('path to cloud: ',cloud)
     if build_dem: print('path to DEM: ',dem)
     if build_ortho: print('path to orthomosaic: ',ortho)
-    print (banner1,'auto_ctrl portion complete for ',savepath)
+    print (banner1,'complete for ',savepath)
     '''
     '''
     #begin pcd_processing portion
-    print('\n-----------------------\n[Ready to start EasyPCP Point Cloud Analysis!]\n') 
+    print('\n-----------------------\n[Ready to start EasyPCP_Analysis!]\n') 
    
 
 now = datetime.datetime.now()
