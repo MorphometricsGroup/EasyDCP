@@ -338,6 +338,75 @@ class Plot(object):
         else:
             return pcd
 
+    def xaxis_segment(self, num_segs=3, pcd_dict = None):
+        if pcd_dict is None:
+            seg_in = self.pcd_classified
+        else:
+            seg_in = pcd_dict
+        
+        seg_out = {}
+        for k in seg_in.keys():
+            if k == -1:
+                continue   # skip the background
+                
+            print(f'[Pnt][Plot][Xaxis_Segment] Start segmenting class {k} Please wait...')
+                   
+            #show input point cloud
+            #o3d.visualization.draw_geometries([seg_in[k]],width=1200, height=800)
+            
+            pcd_min = seg_in[k].get_min_bound()
+            print('min', pcd_min)
+            pcd_max = seg_in[k].get_max_bound()
+            print('max', pcd_max)
+            pcd_bound_size = pcd_max - pcd_min
+            print('point cloud axis lengths:',pcd_bound_size)
+            
+            pcd_width = pcd_bound_size[0]
+            seg_width = pcd_width / num_segs
+            
+            pcd_xyz = np.asarray(seg_in[k].points)
+            pcd_rgb = np.asarray(seg_in[k].colors)
+            pcd_nml = np.asarray(seg_in[k].normals)
+            # pcd_xyz and pcd_rgb are nx3 ndarray
+
+            # clip_x_min = 0.2
+            # clip_x_max = 1.2
+            # idx = np.logical_and(pcd_xyz[:,0]>=clip_x_min, pcd_xyz[:,0]<=clip_x_max)
+            # # returns a boolean n, where true means select, false mean ignore
+            
+            pcd_seg_list = []
+            pcd_seg_num = []
+            for i in range(num_segs):                         
+                clip_x_min = pcd_min[0] + seg_width * i
+                clip_x_max = clip_x_min + seg_width
+                idx = np.logical_and(pcd_xyz[:,0]>=clip_x_min, pcd_xyz[:,0]<=clip_x_max)
+                # returns a boolean n, where true means select, false mean ignore
+                
+                #find flagged points
+                pcd_xyz_select = pcd_xyz[idx, :]
+                pcd_rgb_select = pcd_rgb[idx, :]
+                pcd_nml_select = pcd_nml[idx, :]
+                #print('\n---pcd_xyz_select---\n',len(pcd_xyz_select),pcd_xyz_select)
+                
+                #create new clipped point cloud 
+                clip_pcd = o3d.geometry.PointCloud()  
+                #fill new clipped point cloud 
+                clip_pcd.points = o3d.utility.Vector3dVector(pcd_xyz_select)
+                clip_pcd.colors = o3d.utility.Vector3dVector(pcd_rgb_select)
+                clip_pcd.normals = o3d.utility.Vector3dVector(pcd_nml_select)
+                #o3d.visualization.draw_geometries([clip_pcd],width=1200, height=800)
+                
+                pcd_seg_list.append(clip_pcd)
+                print ('-------\n',i, clip_pcd,'\n',pcd_seg_list)
+                
+            seg_out[k] = pcd_seg_list
+        
+        #end for loop
+        
+        self.segmented = True
+        self.pcd_segmented = seg_out
+        return seg_out 
+
     def dbscan_segment(self, eps, min_points, pcd_dict=None):
         if pcd_dict is None:
             seg_in = self.pcd_classified
@@ -362,7 +431,7 @@ class Plot(object):
                 pcd_seg = seg_in[k].select_by_index(indices)
                 pcd_seg_list.append(pcd_seg)
                 pcd_seg_num.append(len(indices))
-
+                print (i, pcd_seg)
             seg_out[k] = pcd_seg_list
 
             # coefficient of variance check to judge if need KMeans remove noise
@@ -617,7 +686,7 @@ class Plant(object):
                                                                                                     corner)
         # calculate projected leaf area
         self.pla_img = binary
-        self.pla = self.get_projected_leaf_area(binary, px_num_per_cm)
+        self.pla = self.get_projected_leaf_area(binary, px_num_per_cm) #unit is cm^2
 
         # calcuate percentile height
         self.pctl_ht, self.pctl_ht_plot = self.get_percentile_height(container_ht, ground_ht)
