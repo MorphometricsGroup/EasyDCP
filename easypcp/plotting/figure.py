@@ -102,15 +102,17 @@ def draw_3d_results(plant, title, savepath, dpi=300):
     maj_y = np.sin(np.deg2rad(phi)) * 0.5 * plant.major_axis
     min_x = np.sin(np.deg2rad(phi)) * 0.5 * plant.minor_axis
     min_y = np.cos(np.deg2rad(phi)) * 0.5 * plant.minor_axis
+    
+    plant_vs = plant.voxel_params['voxel_size']
 
-    downpcd = plant.pcd.voxel_down_sample(voxel_size=plant.voxel_size)
+    downpcd = plant.pcd.voxel_down_sample(voxel_size=plant_vs)
     downpcd_xyz = np.asarray(downpcd.points)
     down_color = np.asarray(downpcd.colors)
     down_x = downpcd_xyz[:, 0]
     down_y = downpcd_xyz[:, 1]
     down_z = downpcd_xyz[:, 2]
 
-    ground_pcd = plant.ground_pcd.voxel_down_sample(voxel_size=plant.voxel_size * 5)
+    ground_pcd = plant.ground_pcd.voxel_down_sample(voxel_size=plant_vs * 5)
     ground_pcd_xyz = np.asarray(ground_pcd.points)
     ground_x = ground_pcd_xyz[:, 0]
     ground_y = ground_pcd_xyz[:, 1]
