@@ -77,7 +77,8 @@ def get_convex_hull(pcd, dim='2d'):
         xy = pcd_xyz[:, 0:2]
         hull = ConvexHull(xy)
     elif dim == '3d' or dim == '3D':
-        hull = ConvexHull(xyz)
+        xy = pcd_xyz[:, 0:2]
+        hull = ConvexHull(pcd_xyz)
     else:
         raise KeyError('Only "2d" and "3d" or "2D" and "3D" are acceptable for dim parameters')
     hull_volume = hull.volume
