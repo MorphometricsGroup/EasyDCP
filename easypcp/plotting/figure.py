@@ -131,7 +131,7 @@ def draw_3d_results(plant, title, savepath, dpi=300):
 
     pctl_ht, pctl_ht_plot = plant.pctl_ht, plant.pctl_ht_plot
 
-    # perpare for gasussian kde histgramme
+    # prepare for gaussian kde histogram
     ele_ht = z[z > pctl_ht_plot['plant_base']]
     ele_ht_fine = np.linspace(ele_ht.min(), ele_ht.max(), 1000)
     ele_kernel = gaussian_kde(ele_ht)
@@ -167,7 +167,7 @@ def draw_3d_results(plant, title, savepath, dpi=300):
                color='C7', linewidth=0, marker='.', alpha=0.3)
 
     # zorder 7
-    # plot convex hull convet
+    # plot convex hull convert
     ax.scatter(convex_hull[:, 0], convex_hull[:, 1], color='C3', linewidth=0,
                zdir='z', zs=z_axis_min, alpha=1,
                label='convex vertex')
@@ -200,7 +200,7 @@ def draw_3d_results(plant, title, savepath, dpi=300):
     ## container height != 0
     if pctl_ht_plot['ground_center'] != pctl_ht_plot['plant_base']:
         container_ht = round((pctl_ht_plot['plant_base'] - pctl_ht_plot['ground_center']) * 100, 1)  # unit is cm
-        # draw gorund height
+        # draw ground height
         ax.plot((y_axis_min, y_axis_max),
                 (pctl_ht_plot['ground_center'], pctl_ht_plot['ground_center']), '--',
                 zs=x_axis_max, zdir='x', color='C1', label='ground height', zorder=7.5)
