@@ -397,7 +397,7 @@ class Plot(object):
                 #o3d.visualization.draw_geometries([clip_pcd],width=1200, height=800)
                 
                 pcd_seg_list.append(clip_pcd)
-                print ('-------\n',i, clip_pcd,'\n',pcd_seg_list)
+                print (i, clip_pcd)
                 
             seg_out[k] = pcd_seg_list
         
@@ -753,7 +753,7 @@ class Plant(object):
     # -=-=-=-=-=-=-=-=-=-=-=-=-
     # | traits from 3D points |
     # -=-=-=-=-=-=-=-=-=-=-=-=-
-    def get_percentile_height(self, container_ht=0, ground_ht='mean'):
+    def get_percentile_height(self, container_ht=0, ground_ht='mean',percentile=90):
         z = self.pcd_xyz[:, 2]
         if ground_ht == 'mean':
             ground_z = np.asarray(self.ground_pcd.points)[:, 2]
@@ -783,13 +783,13 @@ class Plant(object):
         plant_base = ele + container_ht
 
         ele_z = z[z > plant_base]
-        top10percentile = np.percentile(ele_z, 90)
-        plant_top = ele_z[ele_z > top10percentile].mean()
+        top_percentile = np.percentile(ele_z, percentile)
+        plant_top = ele_z[ele_z > top_percentile].mean()
 
         percentile_ht = plant_top - plant_base
 
         plot_use = {'plant_top': plant_top, 'plant_base': plant_base,
-                    'top10': top10percentile, 'ground_center': ele}
+                    'top_percentile': top_percentile, 'ground_center': ele}
 
         return percentile_ht, plot_use
 
