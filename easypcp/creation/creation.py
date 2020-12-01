@@ -2,80 +2,80 @@
 # using scripts on Agisoft forums by Alexey Pasumansky
 # by Alex Feldman - UTokyo Field Phenomics Lab
 
-# updated 2020.08.03
-# compatibility Metashape Pro 1.6.1
+# updated 2020.11.17
+# compatibility Metashape Pro 1.6.5
 ## Incompatible Metashape Pro 1.5.x and below
 # compatible with one level of nested folders (see readme)
 '''#! files in folders root will break the script
-#! Non-agisoft nested folder in photos folder will break script'''
-#! Agisoft errors will break the script. 
+#! Non-agisoft nested folder in photos folder will break script
+ - Actually, it means any nested folder without '.' in the name will break the script'''
+#! Metashape errors will break the script. 
 #>>TODO: Jump to next folder on error (catch exception)
 #>>TODO: write report to log file (failed folders, successful, etc)
-#>>todo: update script for 1.6 API [export disabled]
+#>>todo: update export DEM/orthomosaic for 1.6 API [export disabled now]
 
-print('start')
 agisoft_LICENSE = 'C:\Program Files\Agisoft\Metashape Pro'
-print('import metashape')
-import Metashape #for auto_ctrl
-print('import os,math, datetime')
+import Metashape 
 import os, math, datetime
 
+banner1 = '\n[EasyPCP_Creation]'
 now = datetime.datetime.now()
 start_time = now
-
-###Begin point cloud creation (3D reconstruction) portion
+print(banner1,'Started at',start_time)
 
 ##USER DEFINED VARIABLES
-path_folders = 'T:/2020agisoft/2020strawberrynest/' #enter full path to folders root (no nested folders!)
-project_filename = '-v0716'
+
+path_folders = 'T:/2020agisoft/20191227pheno/' #'T:/2020agisoft/2020strawberrynest/' #enter full path to folders root (no nested folders!)
+project_filename = '-v0801'
 #variables regarding nested folders (see readme)
 select_nested = True #set to True if you want to only use selected nested folders
 nested_folders = ['1','2'] #put the first character of the folder names you want to use here (only needed when select_nested = TRUE)
-#agisoft variables
-agisoft_quality = 3 #choose a number: 0:Custom, 1:Highest, 2:High, 3:Medium, 4:Low, 5:Lowest
+#Metashape variables
+metashape_quality = 0 #choose a number: 0:Custom, 1:Highest, 2:High, 3:Medium, 4:Low, 5:Lowest
 disable_by_iq = False
-blur_threshold = 0.4 #set this to the minimum acceptable image quality rating provided by Agisoft. recommended: 0.5
+blur_threshold = 0.4 #set this to the minimum acceptable image quality rating provided by Metashape. try 0.4 or 0.5
 align_times = 2 #default 1, set to 2 if not all photos are aligning 
-detect_coded_targets = True #set to True if you used Agisoft coded targets
+detect_coded_targets = True #set to True if you used Metashape coded targets
 target_tolerance = 100
 detect_noncoded_targets = False #set to True if you used non-coded (cross) markers
 noncoded_tolerance = 50
 crop_by_targets = False #set to True if you want to crop the point cloud using coded targets
-ignore_gps = True #set to True if photos have bad GPS info, such as RGB handheld camera with GPS at short range
-use_scalebars = True #set to True if you used coded-target scalebars and have provided scalebars.csv file 
-align_ground = True #set to True if you want to use the scalebars to align the ground plane
+ignore_gps_exif = True #set to True if photos have bad GPS info, such as handheld camera with GPS at short range
+use_scalebars = False #set to True if you used coded-target scalebars and have provided scalebars.csv file 
+align_ground_with_targets = False #set to True if you want to use the scalebars to align the ground plane
 export_cloud = True #set to True if you want to export the point cloud to .PLY file
-build_dem = False #set to True if you want to build and export DEM as .TIF file
-build_ortho = False #set to True if you want to build and export orthomosaic as .TIF file
+build_dem = False #set to True if you want to build DEM (digital elevation model)
+build_ortho = False #set to True if you want to build orthomosaic (requires DEM)
 
-##These variables correspond to agisoft_quality variable above
-#Custom: Set your desired parameters here and change agisoft_quality to 0 to use
-if agisoft_quality == 0: 
+##These variables correspond to metashape_quality variable above
+#Custom: Set your desired parameters here and change metashape_quality to 0 to use
+if metashape_quality == 0: 
     match_downscale = 4 #Highest=0,High=1,Medium=2,Low=4,Lowest=8
     depth_downscale = 4 #Ultra=1,  High=2,Medium=4,Low=8,Lowest=16
+    
 #Do not change these variables
-elif agisoft_quality == 1: #Highest
+elif metashape_quality == 1: #Highest
     match_downscale = 0
     depth_downscale = 1
-elif agisoft_quality == 2: #High
+elif metashape_quality == 2: #High
     match_downscale = 1
     depth_downscale = 2
-elif agisoft_quality == 3: #Medium
+elif metashape_quality == 3: #Medium
     match_downscale = 2
     depth_downscale = 4
-elif agisoft_quality == 4: #Low
+elif metashape_quality == 4: #Low
     match_downscale = 4
     depth_downscale = 8
-elif agisoft_quality == 5: #Lowest
+elif metashape_quality == 5: #Lowest
     match_downscale = 8
     depth_downscale = 16
 
 #User does not need to change these variables
-banner1 = '\n[EasyPCP_Creation]'
 doc = Metashape.app.document
 project_filename = project_filename + '_' + str(match_downscale) + '_' + str(depth_downscale)
 
 ##FUNCTIONS
+
 def vect(a, b):
     """
     Normalized vector product for two vectors
@@ -101,7 +101,7 @@ def append_by_type(filename, filepath):
     if type in  ["jpg", "jpeg", "png"]:#, "tif", "tiff"]: #! change 1 to -1 and test with folder in photos folder
         photo_list.append("/".join([filepath, filename]))
         
-def disable_below_threshold(threshold):
+def disable_below_threshold(threshold=0.4):
     print(banner1,'Analyze and Disable blurry photos...')
     chunk.analyzePhotos() 
     print('--- Disabling Cameras below',threshold)
@@ -111,9 +111,136 @@ def disable_below_threshold(threshold):
             image.enabled = False
             print ('DISABLE %s' %(image))
 
-def detect_noncoded_marker(tol):
+def detect_cross_target(tol):
     chunk.detectMarkers(target_type=Metashape.CrossTarget,tolerance=tol) #todo: update to support cross and circle noncoded
 
+def scale_by_cameras(cam_1,cam_2,cam_dist):
+    print("Create scalebars from cameras")
+    scalebar = chunk.addScalebar(chunk.cameras[cam_1],chunk.cameras[cam_2])
+    scalebar.reference.distance = cam_dist
+    chunk.updateTransform()
+    Metashape.app.update()
+    print("Script finished")
+
+def ignore_gps():
+    print(banner1,"Ignoring photo GPS metadata")
+    chunk.crs = None
+    #chunk.transform.matrix = None
+    for camera_gps in chunk.cameras:
+        camera_gps.reference.enabled = False
+    
+def import_scalebars():
+    print(banner1,'Importing scalebars data from .csv...')
+    path = path_folders+'skip/scalebars.csv'
+    print ('path: ',path)
+    file = open(path, "rt")
+
+    eof = False
+    line = file.readline()
+
+    while not eof:
+     #split the line and load into variables
+     point1, point2, dist, acc = line.split(",")
+
+     #iterate through chunk markers and see if there is a match for point 1
+     if (len(chunk.markers) > 0):
+         for marker in chunk.markers:
+             if (marker.label == point1):
+                 scale1 = marker
+                 #iterate through chunk markers and see if there is a match for point 2
+                 for marker in chunk.markers:
+                     if (marker.label == point2):
+                         scale2 = marker
+
+                         #create a new scale bar between points if they exist and set distance
+                         scalebar = chunk.addScalebar(scale1,scale2)
+                         scalebar.reference.distance = float(dist)
+                         nopair = 0
+                     else:
+                         nopair = 1
+             else:
+                 nopair = 0
+             
+         if nopair:
+             print(banner1,"Missing one or other end of point!")
+     else:
+         print(banner1,"no markers!")
+
+     print (len(line), line)
+     #reading the next line in input file
+     line = file.readline()
+     print ("line length: ",len(line), line)
+     if len(line) == 0:
+         eof = True
+         print ('End of file:', eof)
+     else:
+         print ('End of file:',eof)
+
+    file.close()
+    Metashape.app.update()
+    print(banner1,"Scalebars script finished")
+    
+def align_cameras(reps=1, preselection_mode='generic'):
+    for i in range(reps):
+        print(banner1,'Matching and Aligning cameras... pass #',i+1,'of',reps)
+        # Change metashape_quality variable to set downscale parameter
+        if preselection_mode == 'generic':
+            chunk.matchPhotos(downscale=match_downscale, generic_preselection=True, reference_preselection=False)
+        elif preselection_mode == 'reference':
+            chunk.matchPhotos(downscale=match_downscale, generic_preselection=False, reference_preselection=True, reference_preselection_mode=Metashape.ReferencePreselectionSequential)
+        chunk.alignCameras()   
+    
+def align_ground():
+    print(banner1,'Aligning ground (XY) plane with coded targets...')
+
+    region = chunk.region
+    horiz = ["target 13", "target 19"] #!special for strawberry
+    vert = ["target 13", "target 1"] 
+    '''#! these below comments, they are specific to 0618 data
+    horizontal = ["target 1", "target 3"]#["target 9", "target 16"]
+    vertical = ["target 1", "target 4"]#["target 9", "target 3"] #fails on S08, S12'''
+    #vertical = ["target 2", "target 15"] #run for all?
+    
+    print('H0: ',get_marker(horiz[0], chunk).position)
+    print('H1: ',get_marker(horiz[1], chunk).position)
+    #!disabled for strawberry print('V0: ',get_marker(vert[0], chunk).position)
+    #!disabled for strawberry print('V1: ',get_marker(vert[1], chunk).position)
+           
+    
+    horizontal = get_marker(horiz[0], chunk).position - get_marker(horiz[1], chunk).position
+    #!disabled for strawberry vertical = get_marker(vert[0], chunk).position - get_marker(vert[1], chunk).position
+    #!special for strawberry
+    normal = get_marker(horiz[0], chunk).position
+    normal[2] = normal[2] + 1
+
+    '''normal = vect(horizontal, vertical)
+    vertical = vertical.normalized()
+    horizontal = vect(vertical, normal)'''
+    #!disabled for strawberry normal = vect(horizontal, vertical)
+    vertical = - vect(horizontal, normal)
+    horizontal = - horizontal.normalized()
+    #!disabled for strawberry vertical = - vect(horizontal, normal)
+    normal = - vect(horizontal, vertical)
+
+    R = Metashape.Matrix ([horizontal, vertical, normal]) #horizontal = X, vertical = Y, normal = Z
+
+    print(R.det())
+    region.rot = R.t()
+    chunk.region = region
+    R = chunk.region.rot        #Bounding box rotation matrix
+    C = chunk.region.center        #Bounding box center vector
+
+    if chunk.transform.matrix:
+        T = chunk.transform.matrix
+        s = math.sqrt(T[0,0] ** 2 + T[0,1] ** 2 + T[0,2] ** 2)         #scaling # T.scale()
+        S = Metashape.Matrix().Diag([s, s, s, 1]) #scale matrix
+    else:
+        S = Metashape.Matrix().Diag([1, 1, 1, 1])
+    T = Metashape.Matrix( [[R[0,0], R[0,1], R[0,2], C[0]], [R[1,0], R[1,1], R[1,2], C[1]], [R[2,0], R[2,1], R[2,2], C[2]], [0, 0, 0, 1]])
+    chunk.transform.matrix = S * T.inv()        #resulting chunk transformation matrix        
+
+    print(filename_list[j]," Ground alignment finished")
+    
 def update_boundbox():
     doc = Metashape.app.document
     chunk = doc.chunk     # This points to the first chunk!
@@ -199,13 +326,28 @@ def update_boundbox():
 
     print ("Bounding box should be aligned now")
 
-def scale_by_cameras(cam_1,cam_2,cam_dist):
-    print("Create scalebars from cameras")
-    scalebar = chunk.addScalebar(chunk.cameras[cam_1],chunk.cameras[cam_2])
-    scalebar.reference.distance = cam_dist
-    chunk.updateTransform()
-    Metashape.app.update()
-    print("Script finished")
+def build_dense_cloud(savepath,export_cloud=True):
+    print(banner1,'Building depth maps and dense cloud...')
+    # Change metashape_quality variable to set downscale parameter
+    chunk.buildDepthMaps(downscale=depth_downscale, filter_mode=Metashape.MildFiltering)#default: MildFiltering
+    chunk.buildDenseCloud(point_conﬁdence=True) 
+    #export dense cloud
+    if export_cloud: chunk.exportPoints(path = savepath+'.ply')  
+    
+def build_dem_and_orthomosaic(dem,ortho,export_dem=False,export_ortho=False):
+    if dem or ortho:
+        print(banner1,'Building DEM...')
+        chunk.buildDem()
+        print('todo: update script for 1.6 API [export disabled]')
+        #if export_dem: chunk.exportRaster(???) exportDem(path=savepath+'-DEM.tif',dx=0.001, dy=0.001)
+        if ortho:
+            print(banner1,'Building orthomosaic...')
+            chunk.buildOrthomosaic(fill_holes=False) 
+            print('todo: update script for 1.6 API [export disabled]')
+            #if export_ortho: chunk.exportRaster(???) exportOrthomosaic(path=savepath+'-orthomosaic.tif',dx=0.001, dy=0.001) #!todo update for 1.6 API
+        
+        
+### --- Begin EasyPCP_Creation ---
 
 print('\n----',banner1,'\nStart\n')    
 
@@ -229,9 +371,9 @@ for i in range(folder_count):
         print("folder_list",i,folder_list[i])
     else: folder_count = folder_count - 1
     
-for j in range(folder_count): #run the following code for each folder    
+for j in range(folder_count): #MAIN BODY. run the following code for each folder (image set)    
     
-    #ensure photo list and agisoft document are empty
+    #ensure photo list and Metashape document are empty
     photo_list.clear()
     nest_list.clear()
     doc.clear()  
@@ -243,9 +385,7 @@ for j in range(folder_count): #run the following code for each folder
     print("\n-----------------------------------")
     print(banner1,"Looking for photos...")
     print("folder_list",j,folder_list[j])
-    if folder_list[j] != 'skip': path_photos = path_folders+folder_list[j]
-    '''
-    '''
+
     file_list = os.listdir(path_photos)
     print(len(file_list),'files')
     print(str(j)+':','path_photos',path_photos)
@@ -259,8 +399,6 @@ for j in range(folder_count): #run the following code for each folder
             print('nestpath:',nestpath)
             nest_list.append(nestpath)
         else: append_by_type(item, path_photos)
-        '''
-        '''
 
     photo_count = len(photo_list)
     print('\nphoto count:',photo_count) 
@@ -322,17 +460,9 @@ for j in range(folder_count): #run the following code for each folder
     savepath = filename_list[j]+project_filename
     doc.save(path = savepath+'.psx')
     chunk = doc.chunk #this line is only necessary after the first save when defining path
-    
-    #DEBUG
-    #continue #only use if you want the script to stop here for each folder
-    
+       
     #clear GPS data
-    if ignore_gps:
-        print(banner1,"Ignoring photo GPS metadata")
-        chunk.crs = None
-        #chunk.transform.matrix = None
-        for camera_gps in chunk.cameras:
-            camera_gps.reference.enabled = False
+    if ignore_gps_exif: ignore_gps()
     
     #estimate image quality and disable below threshold
     if disable_by_iq: disable_below_threshold(blur_threshold)
@@ -345,129 +475,23 @@ for j in range(folder_count): #run the following code for each folder
     #continue #only use if you want the script to stop here for each folder
      
     #import scalebars from .csv
-    if use_scalebars:
-        print(banner1,'Importing scalebars data from .csv...')
-        path = path_folders+'skip/scalebars.csv'
-        print ('path: ',path)
-        file = open(path, "rt")
+    if use_scalebars: import_scalebars()
 
-        eof = False
-        line = file.readline()
+    #match, align
+    align_cameras(reps=align_times,preselection_mode='reference')
 
-        while not eof:
-         #split the line and load into variables
-         point1, point2, dist, acc = line.split(",")
-
-         #iterate through chunk markers and see if there is a match for point 1
-         if (len(chunk.markers) > 0):
-             for marker in chunk.markers:
-                 if (marker.label == point1):
-                     scale1 = marker
-                     #iterate through chunk markers and see if there is a match for point 2
-                     for marker in chunk.markers:
-                         if (marker.label == point2):
-                             scale2 = marker
-
-                             #create a new scale bar between points if they exist and set distance
-                             scalebar = chunk.addScalebar(scale1,scale2)
-                             scalebar.reference.distance = float(dist)
-                             nopair = 0
-                         else:
-                             nopair = 1
-                 else:
-                     nopair = 0
-                 
-             if nopair:
-                 print("Missing one or other end of point")
-
-         else:
-             print("no markers")
-
-         print (len(line), line)
-         #reading the next line in input file
-         line = file.readline()
-         print (">",len(line), line)
-         if len(line) == 0:
-             eof = True
-             print (eof)
-         else:
-             print ("x",eof)
-
-        file.close()
-        Metashape.app.update()
-        print("Scalebars script finished")
-
-    #match, align !!! Move back to AFTER importing scalebars!
-    for i in range(align_times):
-        print(banner1,'Matching and Aligning cameras... pass #',i+1,'of',align_times)
-        # Change agisoft_quality variable to set downscale parameter
-        #chunk.matchPhotos(downscale=match_downscale, generic_preselection=True, reference_preselection=False)#defaults: True,False
-        chunk.matchPhotos(downscale=match_downscale, generic_preselection=False, reference_preselection=True, reference_preselection_mode=Metashape.ReferencePreselectionSequential)#defaults: True,False,Metashape.ReferencePreselection[Sequential? ]
-        chunk.alignCameras()   
-
-    #save project
-    doc.save()
-    
-    #optional continue to check result
-    #continue #only use if you want the script to stop here for each folder
-    
-    
     #align ground plane with markers
-    if align_ground:
-        print(banner1,'Aligning ground (XY) plane with coded targets...')
-
-        region = chunk.region
-        horiz = ["target 13", "target 19"] #!special for strawberry
-        vert = ["target 1", "target 13"] 
-        '''#! these below comments, they are specific to 0618 data
-        horizontal = ["target 1", "target 3"]#["target 9", "target 16"]
-        vertical = ["target 1", "target 4"]#["target 9", "target 3"] #fails on S08, S12'''
-        #vertical = ["target 2", "target 15"] #run for all?
-        
-        print('H0: ',get_marker(horiz[0], chunk).position)
-        print('H1: ',get_marker(horiz[1], chunk).position)
-        #!disabled for strawberry print('V0: ',get_marker(vert[0], chunk).position)
-        #!disabled for strawberry print('V1: ',get_marker(vert[1], chunk).position)
-               
-        
-        horizontal = get_marker(horiz[0], chunk).position - get_marker(horiz[1], chunk).position
-        #!disabled for strawberry vertical = get_marker(vert[0], chunk).position - get_marker(vert[1], chunk).position
-        #!special for strawberry
-        normal = get_marker(horiz[0], chunk).position
-        normal[2] = normal[2] + 1
-
-        '''normal = vect(horizontal, vertical)
-        vertical = - vertical.normalized()
-        horizontal = vect(vertical, normal)'''
-        #!disabled for strawberry normal = vect(horizontal, vertical)
-        vertical = vect(horizontal, normal)
-        horizontal = - horizontal.normalized()
-        #!disabled for strawberry vertical = - vect(horizontal, normal)
-        normal = - vect(horizontal, vertical)
-
-        R = Metashape.Matrix ([horizontal, vertical, normal]) #horizontal = X, vertical = Y, normal = Z
-
-        print(R.det())
-        region.rot = R.t()
-        chunk.region = region
-        R = chunk.region.rot        #Bounding box rotation matrix
-        C = chunk.region.center        #Bounding box center vector
-
-        if chunk.transform.matrix:
-            T = chunk.transform.matrix
-            s = math.sqrt(T[0,0] ** 2 + T[0,1] ** 2 + T[0,2] ** 2)         #scaling # T.scale()
-            S = Metashape.Matrix().Diag([s, s, s, 1]) #scale matrix
-        else:
-            S = Metashape.Matrix().Diag([1, 1, 1, 1])
-        T = Metashape.Matrix( [[R[0,0], R[0,1], R[0,2], C[0]], [R[1,0], R[1,1], R[1,2], C[1]], [R[2,0], R[2,1], R[2,2], C[2]], [0, 0, 0, 1]])
-        chunk.transform.matrix = S * T.inv()        #resulting chunk transformation matrix        
-
-        print(filename_list[j]," Ground alignment finished")
+    if align_ground_with_targets: align_ground()
 
     chunk.resetRegion()
     
+    #save project
+    doc.save()
+    
+    #continue #only use if you want the script to stop here for each folder 
+    
     #detect non-coded targets
-    if detect_noncoded_targets: detect_noncoded_marker(noncoded_tolerance)
+    if detect_noncoded_targets: detect_cross_target(noncoded_tolerance)
 
     #optimize cameras
     chunk.optimizeCameras()
@@ -481,80 +505,41 @@ for j in range(folder_count): #run the following code for each folder
     #continue #only use if you want the script to stop here for each folder
     
     #build depth map, dense cloud
-    print(banner1,'Building depth maps and dense cloud...')
-    # Change agisoft_quality variable to set downscale parameter
-    chunk.buildDepthMaps(downscale=depth_downscale, filter_mode=Metashape.MildFiltering)#default: MildFiltering
-    doc.save()
-    chunk.buildDenseCloud(point_conﬁdence=True) 
-    #export dense cloud
-    if export_cloud: chunk.exportPoints(path = savepath+'.ply')   
-    
-    '''#optional continue to check result
-    continue #only use if you want the script to stop here for each folder
-    '''
-    
-    #scale_by_cameras(40,140,1.1) #only use this if you want to scale the model based on known camera distance
-    
-    #build DEM and export to TIF at standard resolution 0.001 m/px
-    if build_dem:
-        doc.save()
-        print(banner1,'Building DEM...')
-        chunk.buildDem()
-        print('todo: update script for 1.6 API [export disabled]')
-        #chunk.exportRaster(???) exportDem(path=savepath+'-DEM.tif',dx=0.001, dy=0.001)
-    
-    '''#optional continue to check result
-    continue #only use if you want the script to stop here for each folder
-    '''
-    
-    #build Orthomosaic and export to TIF at standard resolution 0.001 m/px
-    if build_ortho:
-        print(banner1,'Building orthomosaic...')
-        doc.save()
-        chunk.buildOrthomosaic(fill_holes=False) 
-        print('todo: update script for 1.6 API [export disabled]')
-        #chunk.exportRaster(???) exportOrthomosaic(path=savepath+'-orthomosaic.tif',dx=0.001, dy=0.001)   
-    
+    build_dense_cloud(export_cloud = export_cloud, savepath = savepath)
     #save project
     doc.save()
     
-    '''#optional continue to check result
-    continue #only use if you want the script to stop here for each folder
-    '''
+    #continue #only use if you want the script to stop here for each folder
+    
+    #scale_by_cameras(40,140,1.1) #only use this if you want to scale the model based on known camera distance
+    
+    #build DEM and orthomosaic and export to TIF at standard resolution 0.001 m/px
+    if build_dem or build_ortho: build_dem_and_orthomosaic(dem=build_dem,ortho=build_ortho)
+   
+    #save project
+    doc.save()
+    
+    #continue #only use if you want the script to stop here for each folder
     
     #generate report to .pdf
     chunk.exportReport(path = savepath+'-report.pdf')
 
-    #variables to pass to pcd_processing portion
-    cloud = savepath+'-MetashapeDenseCloud.ply'
-    dem = savepath+'-DEM.tif'
-    ortho = savepath+'-orthomosaic.tif'
+    #variables to pass to EasyPCP_Analysis
+    cloud_path = savepath+'-MetashapeDenseCloud.ply'
+    dem_path = savepath+'-DEM.tif'
+    ortho_path = savepath+'-orthomosaic.tif'
     #print variables
-    print('path to cloud: ',cloud)
-    if build_dem: print('path to DEM: ',dem)
-    if build_ortho: print('path to orthomosaic: ',ortho)
-    print (banner1,'complete for ',savepath)
-    '''
-    '''
-    #begin pcd_processing portion
-    print('\n-----------------------\n[Ready to start EasyPCP_Analysis!]\n') 
+    print('path to point cloud: ',cloud_path)
+    if build_dem: print('path to DEM: ',dem_path)
+    if build_ortho: print('path to orthomosaic: ',ortho_path)
+
+    #begin EasyPCP_Analysis
+    print('\n-----')
+    print(banner1,'complete for ',folder_list[j])
+    print('[Ready to start EasyPCP_Analysis!]') 
+    break #only use if you want the script to stop after running the first folder
    
 
 now = datetime.datetime.now()
 finish_time = now
-
-'''
-open file creation_log.txt
-if file does not exist, create file
-create new line, append all vars and params
-'''
-'''the below code is not ready yet
-L=[]
-L.append("\n---------","\nEasyPCP creation log")
-L.append("\nstart_time: ",start_time,"\n finish time: ",finish_time, "\noperation folder: ",path_folders)
-L.append("\nagisoft_quality: ",agisoft_quality, "\nblur_threshold: ",blur_threshold)
-file1 = open('example/images/skip/creation_log.txt',"a")
-file1.writelines(L)
-file1.close()
-'''
-print('Finished!')
+print (banner1,'finished at',finish_time)
