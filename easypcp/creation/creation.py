@@ -2,7 +2,7 @@
 # using scripts on Agisoft forums by Alexey Pasumansky
 # by Alex Feldman - UTokyo Field Phenomics Lab
 
-# updated 2020.11.17
+# updated 2020.12.2
 # compatibility Metashape Pro 1.6.5
 ## Incompatible Metashape Pro 1.5.x and below
 # compatible with one level of nested folders (see readme)
@@ -16,7 +16,7 @@
 
 agisoft_LICENSE = 'C:\Program Files\Agisoft\Metashape Pro'
 import Metashape 
-import os, math, datetime
+import os, math, datetime, configparser
 
 banner1 = '\n[EasyPCP_Creation]'
 now = datetime.datetime.now()
@@ -25,13 +25,15 @@ print(banner1,'Started at',start_time)
 
 ##USER DEFINED VARIABLES
 
+# config = configparser.ConfigParser()
+
 path_folders = 'T:/2020agisoft/20191227pheno/' #'T:/2020agisoft/2020strawberrynest/' #enter full path to folders root (no nested folders!)
-project_filename = '-v0801'
+project_filename = '-v0810'
 #variables regarding nested folders (see readme)
 select_nested = True #set to True if you want to only use selected nested folders
-nested_folders = ['1','2'] #put the first character of the folder names you want to use here (only needed when select_nested = TRUE)
+nested_folders = ['1','2','3','4'] #put the first character of the folder names you want to use here (only needed when select_nested = TRUE)
 #Metashape variables
-metashape_quality = 0 #choose a number: 0:Custom, 1:Highest, 2:High, 3:Medium, 4:Low, 5:Lowest
+metashape_quality = 4 #choose a number: 0:Custom, 1:Highest, 2:High, 3:Medium, 4:Low, 5:Lowest
 disable_by_iq = False
 blur_threshold = 0.4 #set this to the minimum acceptable image quality rating provided by Metashape. try 0.4 or 0.5
 align_times = 2 #default 1, set to 2 if not all photos are aligning 
@@ -39,10 +41,10 @@ detect_coded_targets = True #set to True if you used Metashape coded targets
 target_tolerance = 100
 detect_noncoded_targets = False #set to True if you used non-coded (cross) markers
 noncoded_tolerance = 50
-crop_by_targets = False #set to True if you want to crop the point cloud using coded targets
+crop_by_targets = True #set to True if you want to crop the point cloud using coded targets
 ignore_gps_exif = True #set to True if photos have bad GPS info, such as handheld camera with GPS at short range
-use_scalebars = False #set to True if you used coded-target scalebars and have provided scalebars.csv file 
-align_ground_with_targets = False #set to True if you want to use the scalebars to align the ground plane
+use_scalebars = True #set to True if you used coded-target scalebars and have provided scalebars.csv file 
+align_ground_with_targets = True #set to True if you want to use the scalebars to align the ground plane
 export_cloud = True #set to True if you want to export the point cloud to .PLY file
 build_dem = False #set to True if you want to build DEM (digital elevation model)
 build_ortho = False #set to True if you want to build orthomosaic (requires DEM)
@@ -129,9 +131,9 @@ def ignore_gps():
     for camera_gps in chunk.cameras:
         camera_gps.reference.enabled = False
     
-def import_scalebars():
+def import_scalebars(path):
     print(banner1,'Importing scalebars data from .csv...')
-    path = path_folders+'skip/scalebars.csv'
+    path = path + 'skip/scalebars.csv'
     print ('path: ',path)
     file = open(path, "rt")
 
@@ -173,58 +175,96 @@ def import_scalebars():
      if len(line) == 0:
          eof = True
          print ('End of file:', eof)
-     else:
-         print ('End of file:',eof)
+     # else:
+         # print ('End of file:',eof)
 
     file.close()
     Metashape.app.update()
     print(banner1,"Scalebars script finished")
-    
+   
 def align_cameras(reps=1, preselection_mode='generic'):
     for i in range(reps):
         print(banner1,'Matching and Aligning cameras... pass #',i+1,'of',reps)
         # Change metashape_quality variable to set downscale parameter
         if preselection_mode == 'generic':
+            print('generic')
             chunk.matchPhotos(downscale=match_downscale, generic_preselection=True, reference_preselection=False)
         elif preselection_mode == 'reference':
+            print('reference')
             chunk.matchPhotos(downscale=match_downscale, generic_preselection=False, reference_preselection=True, reference_preselection_mode=Metashape.ReferencePreselectionSequential)
         chunk.alignCameras()   
-    
-def align_ground():
+ 
+def align_ground(path):
     print(banner1,'Aligning ground (XY) plane with coded targets...')
 
     region = chunk.region
-    horiz = ["target 13", "target 19"] #!special for strawberry
-    vert = ["target 13", "target 1"] 
-    '''#! these below comments, they are specific to 0618 data
-    horizontal = ["target 1", "target 3"]#["target 9", "target 16"]
-    vertical = ["target 1", "target 4"]#["target 9", "target 3"] #fails on S08, S12'''
-    #vertical = ["target 2", "target 15"] #run for all?
     
-    print('H0: ',get_marker(horiz[0], chunk).position)
-    print('H1: ',get_marker(horiz[1], chunk).position)
-    #!disabled for strawberry print('V0: ',get_marker(vert[0], chunk).position)
-    #!disabled for strawberry print('V1: ',get_marker(vert[1], chunk).position)
+    path = path + 'skip/orientation.ini'
+    print ('path: ',path)
+    
+    config = configparser.ConfigParser()
+    config.read(path)
+    # print(config.sections())
+        
+    horiz0 = config['DEFAULT']['horiz0']
+    horiz1 = config['DEFAULT']['horiz1']
+    vert0 = config['DEFAULT']['vert0']
+    vert1 = config['DEFAULT']['vert1']
+    
+    print('x-axis:',horiz0,'to',horiz1)
+    print('y-axis:',vert0,'to',vert1)
+    
+    """
+    #! for EasyPCP_Creation imaging area
+    horiz = ["target 1", "target 3"] 
+    vert  = ["target 1", "target 2"] 
+    '''#! special for strawberry
+    horiz = ["target 13", "target 19"] 
+    vert  = ["target 13", "target 1"] '''
+    ''' #! special for 0618 data
+    horiz = ["target 1", "target 3"]#["target 9", "target 16"]
+    vert  = ["target 1", "target 4"]#["target 9", "target 3"] #fails on S08, S12
+    #vert = ["target 2", "target 15"] #run for all?'''
+    """
+    
+    H0_pos = get_marker(horiz0,chunk).position
+    H1_pos = get_marker(horiz1,chunk).position
+    V0_pos = get_marker(vert0,chunk).position
+    V1_pos = get_marker(vert1,chunk).position
+    
+    print('H0: ',H0_pos)
+    print('H1: ',H1_pos)
+    
+    #!disabled for strawberry 
+    print('V0: ',V0_pos)
+    print('V1: ',V1_pos)
            
     
-    horizontal = get_marker(horiz[0], chunk).position - get_marker(horiz[1], chunk).position
-    #!disabled for strawberry vertical = get_marker(vert[0], chunk).position - get_marker(vert[1], chunk).position
-    #!special for strawberry
+    horizontal = H1_pos - H0_pos
+    #!disabled for strawberry 
+    vertical = V1_pos - V0_pos
+    
+    '''#!special for strawberry
     normal = get_marker(horiz[0], chunk).position
-    normal[2] = normal[2] + 1
+    normal[2] = normal[2] + 1'''
 
-    '''normal = vect(horizontal, vertical)
+    ''' old version (!Delete?)
+    normal = vect(horizontal, vertical)
     vertical = vertical.normalized()
     horizontal = vect(vertical, normal)'''
-    #!disabled for strawberry normal = vect(horizontal, vertical)
+    #!disabled for strawberry 
+    normal = vect(horizontal, vertical)
     vertical = - vect(horizontal, normal)
-    horizontal = - horizontal.normalized()
-    #!disabled for strawberry vertical = - vect(horizontal, normal)
-    normal = - vect(horizontal, vertical)
+    horizontal = horizontal.normalized()
+    '''#!disabled for strawberry 
+    vertical = - vect(horizontal, normal)'''
+    
+    '''#!special for strawberry
+    normal = - vect(horizontal, vertical)'''
 
     R = Metashape.Matrix ([horizontal, vertical, normal]) #horizontal = X, vertical = Y, normal = Z
 
-    print(R.det())
+    print(R.det()) #should be 1.0
     region.rot = R.t()
     chunk.region = region
     R = chunk.region.rot        #Bounding box rotation matrix
@@ -239,22 +279,34 @@ def align_ground():
     T = Metashape.Matrix( [[R[0,0], R[0,1], R[0,2], C[0]], [R[1,0], R[1,1], R[1,2], C[1]], [R[2,0], R[2,1], R[2,2], C[2]], [0, 0, 0, 1]])
     chunk.transform.matrix = S * T.inv()        #resulting chunk transformation matrix        
 
-    print(filename_list[j]," Ground alignment finished")
+    print("\nGround alignment finished\n")
     
-def update_boundbox():
+def update_boundbox_by_markers(path,section='DEFAULT'):
     doc = Metashape.app.document
     chunk = doc.chunk     # This points to the first chunk!
 
     print(banner1,"Updating boundbox using markers...")
 
     #ground targets for finding horizontal center
-    '''p0 = "target 1"  
-    p1 = "target 8"  '''
-    #below: special case for strawberry
+    path = path + 'skip/orientation.ini'
+    print ('path: ',path)
+    config = configparser.ConfigParser()
+    config.read(path)
+    p0 = config[section]['p0']
+    p1 = config[section]['p1']
+    
+    print('p0:',p0,'p1:',p1)
+    
+    """
+    #normal for EasyPCP_Creation
     p0 = "target 1"  
-    p1 = "target 19"  
+    p1 = "target 8" 
+    
+    #below: special case for strawberry
+    '''p0 = "target 1"  
+    p1 = "target 19"  '''"""
 
-    fp0 = fp1 = 0
+    fp0 = fp1 = 0 #initialize binary values for finding the markers to 0
 
     #setting for Y up, Z forward -> needed for mixamo/unity
 
@@ -264,7 +316,7 @@ def update_boundbox():
     c1=0
     c2=0
 
-    print (p0,p1)
+    # print (p0,p1)
     for m in chunk.markers:
         if m.label == p0:
             c1=c
@@ -384,19 +436,23 @@ for j in range(folder_count): #MAIN BODY. run the following code for each folder
     #populate file list
     print("\n-----------------------------------")
     print(banner1,"Looking for photos...")
-    print("folder_list",j,folder_list[j])
+    this_folder = folder_list[j]
+    print("current folder:",j+1,'of',folder_count,this_folder)
 
+    path_photos = path_folders + this_folder
     file_list = os.listdir(path_photos)
     print(len(file_list),'files')
-    print(str(j)+':','path_photos',path_photos)
-    print('file list:',file_list)
+    print(str(j)+':',path_photos)
+    # print('file list:',file_list)
+    
+    ## nested folder operations
     #look for nested folders
     for item in file_list: 
         if "." not in item: #check if folder
             print(item,"is a nested folder!")
             has_nested = True
             nestpath = "/".join([path_photos,item])
-            print('nestpath:',nestpath)
+            # print('nestpath:',nestpath)
             nest_list.append(nestpath)
         else: append_by_type(item, path_photos)
 
@@ -404,47 +460,45 @@ for j in range(folder_count): #MAIN BODY. run the following code for each folder
     print('\nphoto count:',photo_count) 
     #print('photo list:',photo_list)
     
-    #populate file list from nested folders
-    if has_nested:
+    if has_nested:    #populate file list from nested folders
+
         print(banner1,"Checking nested folders...\n")
-        print('nest list: ',nest_list)
+        print('nested folder list: ',nest_list)
         for item in nest_list:
             print('item:',item)
-            folder_name = item.rsplit("/",1)[-1].lower()
-            char0 = folder_name[0]
-            #print('folder name:',folder_name,'char0:',char0)#
             if select_nested:
+                print('checking if this nested folder is selected by user')
+                folder_name = item.rsplit("/",1)[-1].lower()
+                char0 = folder_name[0]
+                #print('folder name:',folder_name,'char0:',char0)#
                 for m in range(len(nested_folders)):
                     if nested_folders[m] == char0:
                         print('selected nested folder found!')
-                        '''
-                        '''
                         file_list = os.listdir(item)
                         print(len(file_list),'files')
-                        #print ('\nFL:',file_list)
+                        # print ('\nFile list:',file_list)
                         for file in file_list:
                             if "." not in file:
                                 print(file,"is a nested folder! Ignoring!!")
                             else: 
                                 append_by_type(file, item)
-                                '''
-                                '''
             else: 
-                '''
-                '''
+                print("using all nested folders")
                 file_list = os.listdir(item)
                 print(len(file_list),'files')
-                #print ('\nFL:',file_list)
+                #print ('\nFile list:',file_list)
                 for file in file_list:
                     if "." not in file:
                         print(file,"is a nested folder! Ignoring!!")
                     else: 
                         append_by_type(file, item)
-                        '''
-                        '''
         photo_count = len(photo_list)
         print('\nphoto count:',photo_count) 
         #print('photo list:',photo_list)
+    
+    #!debug only
+    # break 
+    # continue 
     
     #import photos
     if photo_count > 0:
@@ -453,7 +507,7 @@ for j in range(folder_count): #MAIN BODY. run the following code for each folder
         chunk.addPhotos(photo_list)
     else:
         print('no photos found! moving to next folder...')
-        continue #skip the rest of the loop because no photos were found.
+        continue #skip the rest of the for loop contents (for the current folder) because no photos were found.
     print(j,'save path:',filename_list[j])
     
     #save project - first save
@@ -475,18 +529,19 @@ for j in range(folder_count): #MAIN BODY. run the following code for each folder
     #continue #only use if you want the script to stop here for each folder
      
     #import scalebars from .csv
-    if use_scalebars: import_scalebars()
+    if use_scalebars: import_scalebars(path=path_folders)
 
     #match, align
-    align_cameras(reps=align_times,preselection_mode='reference')
-
+    align_cameras(reps=align_times,preselection_mode='generic')
+    
+    doc.save()
+    
     #align ground plane with markers
-    if align_ground_with_targets: align_ground()
+    if align_ground_with_targets: align_ground(path=path_folders)
 
     chunk.resetRegion()
     
-    #save project
-    doc.save()
+    doc.save()    #save project
     
     #continue #only use if you want the script to stop here for each folder 
     
@@ -497,19 +552,20 @@ for j in range(folder_count): #MAIN BODY. run the following code for each folder
     chunk.optimizeCameras()
     
     #update bounding box 
-    if crop_by_targets: update_boundbox()
+    if crop_by_targets: update_boundbox_by_markers(path=path_folders)
     
     #save project
     doc.save()
     
+    # break #only use if you want the script to stop after running the first folder
     #continue #only use if you want the script to stop here for each folder
     
     #build depth map, dense cloud
     build_dense_cloud(export_cloud = export_cloud, savepath = savepath)
-    #save project
-    doc.save()
     
-    #continue #only use if you want the script to stop here for each folder
+    doc.save()    #save project
+
+    # continue #only use if you want the script to stop here for each folder
     
     #scale_by_cameras(40,140,1.1) #only use this if you want to scale the model based on known camera distance
     
@@ -535,9 +591,10 @@ for j in range(folder_count): #MAIN BODY. run the following code for each folder
 
     #begin EasyPCP_Analysis
     print('\n-----')
-    print(banner1,'complete for ',folder_list[j])
+    print(banner1,'complete for',this_folder)
     print('[Ready to start EasyPCP_Analysis!]') 
-    break #only use if you want the script to stop after running the first folder
+    
+    # break #only use if you want the script to stop after running the first folder
    
 
 now = datetime.datetime.now()
