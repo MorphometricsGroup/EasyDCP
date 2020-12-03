@@ -28,12 +28,12 @@ print(banner1,'Started at',start_time)
 # config = configparser.ConfigParser()
 
 path_folders = 'T:/2020agisoft/20191227pheno/' #'T:/2020agisoft/2020strawberrynest/' #enter full path to folders root (no nested folders!)
-project_filename = '-v0810'
+project_filename = '-v0812'
 #variables regarding nested folders (see readme)
 select_nested = True #set to True if you want to only use selected nested folders
 nested_folders = ['1','2','3','4'] #put the first character of the folder names you want to use here (only needed when select_nested = TRUE)
 #Metashape variables
-metashape_quality = 4 #choose a number: 0:Custom, 1:Highest, 2:High, 3:Medium, 4:Low, 5:Lowest
+metashape_quality = 3 #choose a number: 0:Custom, 1:Highest, 2:High, 3:Medium, 4:Low, 5:Lowest
 disable_by_iq = False
 blur_threshold = 0.4 #set this to the minimum acceptable image quality rating provided by Metashape. try 0.4 or 0.5
 align_times = 2 #default 1, set to 2 if not all photos are aligning 
@@ -357,10 +357,11 @@ def update_boundbox_by_markers(path,section='DEFAULT'):
     
     print('lengths:',box_X_length,box_Y_length)
     
-    '''if box_Y_length > box_X_length:
+    if box_Y_length > box_X_length:
         swap_length = box_X_length
         box_X_length = box_Y_length
-        box_Y_length = swap_length''' #disabled for strawberry
+        box_Y_length = swap_length
+        del swap_length #!disabled for strawberry
     
     box_Z_length = box_Y_length #same as Y length #chunk.markers[c2].position[2] - chunk.markers[c1].position[2] #z-axis 
 
@@ -423,6 +424,7 @@ for i in range(folder_count):
         print("folder_list",i,folder_list[i])
     else: folder_count = folder_count - 1
     
+#! for j in range(2): #MAIN BODY. run the following code for each folder (image set)    
 for j in range(folder_count): #MAIN BODY. run the following code for each folder (image set)    
     
     #ensure photo list and Metashape document are empty
@@ -527,13 +529,12 @@ for j in range(folder_count): #MAIN BODY. run the following code for each folder
     doc.save()  
 
     #continue #only use if you want the script to stop here for each folder
-     
+    
+    #match, align cameras (images)
+    align_cameras(reps=align_times,preselection_mode='generic')
+        
     #import scalebars from .csv
     if use_scalebars: import_scalebars(path=path_folders)
-
-    #match, align
-    align_cameras(reps=align_times,preselection_mode='generic')
-    
     doc.save()
     
     #align ground plane with markers
