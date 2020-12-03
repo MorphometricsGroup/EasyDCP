@@ -14,7 +14,7 @@
 #>>TODO: write report to log file (failed folders, successful, etc)
 #>>todo: update export DEM/orthomosaic for 1.6 API [export disabled now]
 
-agisoft_LICENSE = 'C:\Program Files\Agisoft\Metashape Pro'
+# agisoft_LICENSE = 'C:\Program Files\Agisoft\Metashape Pro'
 import Metashape 
 import os, math, datetime 
 import configparser, json 
@@ -27,12 +27,8 @@ print(banner1,'Started at',start_time)
 ##USER DEFINED VARIABLES
 
 config = configparser.ConfigParser()
-
-print ('x',os.getcwd())
-
-params_path = os.getcwd() + '\params.ini'
-print ('loaded parameters from:',params_path)
-
+params_path = os.getcwd() + '/params.ini'
+print ('loading parameters from:',params_path)
 config.read(params_path)
 
 path_folders = config['DEFAULT']['path_folders']
@@ -41,21 +37,21 @@ select_nested = config['DEFAULT'].getboolean('select_nested')
 nested_folders = config['DEFAULT']['nested_folders']
 # nested_folders = json.loads(config.get('DEFAULT','nested_folders'))
 
-metashape_quality = config['DEFAULT'].getint('metashape_quality')
-disable_by_iq = config['DEFAULT'].getboolean('disable_by_iq')
-blur_threshold = config['DEFAULT'].getfloat('blur_threshold')
-align_times = config['DEFAULT'].getint('align_times')
-detect_coded_targets = config['DEFAULT'].getboolean('detect_coded_targets')
-target_tolerance = config['DEFAULT'].getint('target_tolerance')
-detect_noncoded_targets = config['DEFAULT'].getboolean('detect_noncoded_targets')
-noncoded_tolerance = config['DEFAULT'].getint('noncoded_tolerance')
-crop_by_targets = config['DEFAULT'].getboolean('crop_by_targets')
-ignore_gps_exif = config['DEFAULT'].getboolean('ignore_gps_exif')
-use_scalebars = config['DEFAULT'].getboolean('use_scalebars')
-align_ground_with_targets = config['DEFAULT'].getboolean('align_ground_with_targets')
-export_cloud = config['DEFAULT'].getboolean('export_cloud')
-build_dem = config['DEFAULT'].getboolean('build_dem')
-build_ortho = config['DEFAULT'].getboolean('build_ortho')
+metashape_quality           = config['DEFAULT'].getint('metashape_quality')
+disable_by_iq               = config['DEFAULT'].getboolean('disable_by_iq')
+blur_threshold              = config['DEFAULT'].getfloat('blur_threshold')
+align_times                 = config['DEFAULT'].getint('align_times')
+detect_coded_targets        = config['DEFAULT'].getboolean('detect_coded_targets')
+target_tolerance            = config['DEFAULT'].getint('target_tolerance')
+detect_noncoded_targets     = config['DEFAULT'].getboolean('detect_noncoded_targets')
+noncoded_tolerance          = config['DEFAULT'].getint('noncoded_tolerance')
+crop_by_targets             = config['DEFAULT'].getboolean('crop_by_targets')
+ignore_gps_exif             = config['DEFAULT'].getboolean('ignore_gps_exif')
+use_scalebars               = config['DEFAULT'].getboolean('use_scalebars')
+align_ground_with_targets   = config['DEFAULT'].getboolean('align_ground_with_targets')
+export_cloud                = config['DEFAULT'].getboolean('export_cloud')
+build_dem                   = config['DEFAULT'].getboolean('build_dem')
+build_ortho                 = config['DEFAULT'].getboolean('build_ortho')
 
 del config
 
@@ -228,19 +224,6 @@ def align_ground(path):
     
     print('x-axis:',horiz0,'to',horiz1)
     print('y-axis:',vert0,'to',vert1)
-    
-    """
-    #! for EasyPCP_Creation imaging area
-    horiz = ["target 1", "target 3"] 
-    vert  = ["target 1", "target 2"] 
-    '''#! special for strawberry
-    horiz = ["target 13", "target 19"] 
-    vert  = ["target 13", "target 1"] '''
-    ''' #! special for 0618 data
-    horiz = ["target 1", "target 3"]#["target 9", "target 16"]
-    vert  = ["target 1", "target 4"]#["target 9", "target 3"] #fails on S08, S12
-    #vert = ["target 2", "target 15"] #run for all?'''
-    """
     
     H0_pos = get_marker(horiz0,chunk).position
     H1_pos = get_marker(horiz1,chunk).position
