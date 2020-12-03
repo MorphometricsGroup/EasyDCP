@@ -2,7 +2,7 @@
 # using scripts on Agisoft forums by Alexey Pasumansky
 # by Alex Feldman - UTokyo Field Phenomics Lab
 
-# updated 2020.12.2
+# updated 2020.12.3
 # compatibility Metashape Pro 1.6.5
 ## Incompatible Metashape Pro 1.5.x and below
 # compatible with one level of nested folders (see readme)
@@ -16,7 +16,8 @@
 
 agisoft_LICENSE = 'C:\Program Files\Agisoft\Metashape Pro'
 import Metashape 
-import os, math, datetime, configparser
+import os, math, datetime 
+import configparser, json 
 
 banner1 = '\n[EasyPCP_Creation]'
 now = datetime.datetime.now()
@@ -25,32 +26,47 @@ print(banner1,'Started at',start_time)
 
 ##USER DEFINED VARIABLES
 
-# config = configparser.ConfigParser()
+config = configparser.ConfigParser()
 
-path_folders = 'T:/2020agisoft/20191227pheno/' #'T:/2020agisoft/2020strawberrynest/' #enter full path to folders root (no nested folders!)
-project_filename = '-v0812'
-#variables regarding nested folders (see readme)
-select_nested = True #set to True if you want to only use selected nested folders
-nested_folders = ['1','2','3','4'] #put the first character of the folder names you want to use here (only needed when select_nested = TRUE)
-#Metashape variables
-metashape_quality = 3 #choose a number: 0:Custom, 1:Highest, 2:High, 3:Medium, 4:Low, 5:Lowest
-disable_by_iq = False
-blur_threshold = 0.4 #set this to the minimum acceptable image quality rating provided by Metashape. try 0.4 or 0.5
-align_times = 2 #default 1, set to 2 if not all photos are aligning 
-detect_coded_targets = True #set to True if you used Metashape coded targets
-target_tolerance = 100
-detect_noncoded_targets = False #set to True if you used non-coded (cross) markers
-noncoded_tolerance = 50
-crop_by_targets = True #set to True if you want to crop the point cloud using coded targets
-ignore_gps_exif = True #set to True if photos have bad GPS info, such as handheld camera with GPS at short range
-use_scalebars = True #set to True if you used coded-target scalebars and have provided scalebars.csv file 
-align_ground_with_targets = True #set to True if you want to use the scalebars to align the ground plane
-export_cloud = True #set to True if you want to export the point cloud to .PLY file
-build_dem = False #set to True if you want to build DEM (digital elevation model)
-build_ortho = False #set to True if you want to build orthomosaic (requires DEM)
+print ('x',os.getcwd())
 
+params_path = os.getcwd() + '\params.ini'
+print ('loaded parameters from:',params_path)
+
+config.read(params_path)
+
+path_folders = config['DEFAULT']['path_folders']
+project_filename = config['DEFAULT']['project_filename']
+select_nested = config['DEFAULT'].getboolean('select_nested')
+nested_folders = config['DEFAULT']['nested_folders']
+# nested_folders = json.loads(config.get('DEFAULT','nested_folders'))
+
+metashape_quality = config['DEFAULT'].getint('metashape_quality')
+disable_by_iq = config['DEFAULT'].getboolean('disable_by_iq')
+blur_threshold = config['DEFAULT'].getfloat('blur_threshold')
+align_times = config['DEFAULT'].getint('align_times')
+detect_coded_targets = config['DEFAULT'].getboolean('detect_coded_targets')
+target_tolerance = config['DEFAULT'].getint('target_tolerance')
+detect_noncoded_targets = config['DEFAULT'].getboolean('detect_noncoded_targets')
+noncoded_tolerance = config['DEFAULT'].getint('noncoded_tolerance')
+crop_by_targets = config['DEFAULT'].getboolean('crop_by_targets')
+ignore_gps_exif = config['DEFAULT'].getboolean('ignore_gps_exif')
+use_scalebars = config['DEFAULT'].getboolean('use_scalebars')
+align_ground_with_targets = config['DEFAULT'].getboolean('align_ground_with_targets')
+export_cloud = config['DEFAULT'].getboolean('export_cloud')
+build_dem = config['DEFAULT'].getboolean('build_dem')
+build_ortho = config['DEFAULT'].getboolean('build_ortho')
+
+del config
+
+ # = config['DEFAULT']['']
+print('p',path_folders,type(path_folders))
+print('n',nested_folders,type(nested_folders)) 
+print('a',align_times,type(align_times),'b',blur_threshold,type(blur_threshold),'d',detect_coded_targets,type(detect_coded_targets))
+
+""" FIX THIS, ASSIGN MATCH AND DEPTH DOWNSCALE DIRECTLY!
 ##These variables correspond to metashape_quality variable above
-#Custom: Set your desired parameters here and change metashape_quality to 0 to use
+#Custom: Set your desired parameters here and change metashape_quality to 0 to use"""
 if metashape_quality == 0: 
     match_downscale = 4 #Highest=0,High=1,Medium=2,Low=4,Lowest=8
     depth_downscale = 4 #Ultra=1,  High=2,Medium=4,Low=8,Lowest=16
@@ -72,9 +88,6 @@ elif metashape_quality == 5: #Lowest
     match_downscale = 8
     depth_downscale = 16
 
-#User does not need to change these variables
-doc = Metashape.app.document
-project_filename = project_filename + '_' + str(match_downscale) + '_' + str(depth_downscale)
 
 ##FUNCTIONS
 
@@ -211,6 +224,8 @@ def align_ground(path):
     vert0 = config['DEFAULT']['vert0']
     vert1 = config['DEFAULT']['vert1']
     
+    del config
+    
     print('x-axis:',horiz0,'to',horiz1)
     print('y-axis:',vert0,'to',vert1)
     
@@ -294,6 +309,8 @@ def update_boundbox_by_markers(path,section='DEFAULT'):
     config.read(path)
     p0 = config[section]['p0']
     p1 = config[section]['p1']
+    
+    del config
     
     print('p0:',p0,'p1:',p1)
     
@@ -402,6 +419,8 @@ def build_dem_and_orthomosaic(dem,ortho,export_dem=False,export_ortho=False):
         
 ### --- Begin EasyPCP_Creation ---
 
+doc = Metashape.app.document
+project_filename = project_filename + '_' + str(match_downscale) + '_' + str(depth_downscale)
 print('\n----',banner1,'\nStart\n')    
 
 #populate folder list
@@ -424,7 +443,7 @@ for i in range(folder_count):
         print("folder_list",i,folder_list[i])
     else: folder_count = folder_count - 1
     
-#! for j in range(2): #MAIN BODY. run the following code for each folder (image set)    
+# for j in range(2): #MAIN BODY. run the following code for each folder (image set)    
 for j in range(folder_count): #MAIN BODY. run the following code for each folder (image set)    
     
     #ensure photo list and Metashape document are empty
