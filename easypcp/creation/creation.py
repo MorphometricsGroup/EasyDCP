@@ -2,7 +2,7 @@
 # using scripts on Agisoft forums by Alexey Pasumansky
 # by Alex Feldman - UTokyo Field Phenomics Lab
 
-# updated 2020.12.3
+# updated 2020.12.4
 # compatibility Metashape Pro 1.6.5
 ## Incompatible Metashape Pro 1.5.x and below
 # compatible with one level of nested folders (see readme)
@@ -33,57 +33,66 @@ config.read(params_path)
 
 path_folders = config['DEFAULT']['path_folders']
 project_filename = config['DEFAULT']['project_filename']
-select_nested = config['DEFAULT'].getboolean('select_nested')
-nested_folders = config['DEFAULT']['nested_folders']
+select_nested = False #config['DEFAULT'].getboolean('select_nested') - hardcoded for now
+# nested_folders = config['DEFAULT']['nested_folders']
 # nested_folders = json.loads(config.get('DEFAULT','nested_folders'))
-
-metashape_quality           = config['DEFAULT'].getint('metashape_quality')
+ignore_gps_exif             = config['DEFAULT'].getboolean('ignore_gps_exif')
 disable_by_iq               = config['DEFAULT'].getboolean('disable_by_iq')
 blur_threshold              = config['DEFAULT'].getfloat('blur_threshold')
+
 align_times                 = config['DEFAULT'].getint('align_times')
+align_quality               = config['DEFAULT']['align_quality']
+align_preselection_mode     = config['DEFAULT']['align_preselection_mode']
+dense_quality               = config['DEFAULT']['dense_quality']
 detect_coded_targets        = config['DEFAULT'].getboolean('detect_coded_targets')
 target_tolerance            = config['DEFAULT'].getint('target_tolerance')
 detect_noncoded_targets     = config['DEFAULT'].getboolean('detect_noncoded_targets')
 noncoded_tolerance          = config['DEFAULT'].getint('noncoded_tolerance')
 crop_by_targets             = config['DEFAULT'].getboolean('crop_by_targets')
-ignore_gps_exif             = config['DEFAULT'].getboolean('ignore_gps_exif')
+
 use_scalebars               = config['DEFAULT'].getboolean('use_scalebars')
 align_ground_with_targets   = config['DEFAULT'].getboolean('align_ground_with_targets')
+
 export_cloud                = config['DEFAULT'].getboolean('export_cloud')
 build_dem                   = config['DEFAULT'].getboolean('build_dem')
 build_ortho                 = config['DEFAULT'].getboolean('build_ortho')
 
 del config
 
- # = config['DEFAULT']['']
-print('p',path_folders,type(path_folders))
-print('n',nested_folders,type(nested_folders)) 
-print('a',align_times,type(align_times),'b',blur_threshold,type(blur_threshold),'d',detect_coded_targets,type(detect_coded_targets))
+# print('p',path_folders,type(path_folders))
+# print('n',nested_folders,type(nested_folders)) 
+# print('a',align_times,type(align_times),'b',blur_threshold,type(blur_threshold),'d',detect_coded_targets,type(detect_coded_targets))
 
-""" FIX THIS, ASSIGN MATCH AND DEPTH DOWNSCALE DIRECTLY!
-##These variables correspond to metashape_quality variable above
-#Custom: Set your desired parameters here and change metashape_quality to 0 to use"""
-if metashape_quality == 0: 
-    match_downscale = 4 #Highest=0,High=1,Medium=2,Low=4,Lowest=8
-    depth_downscale = 4 #Ultra=1,  High=2,Medium=4,Low=8,Lowest=16
-    
-#Do not change these variables
-elif metashape_quality == 1: #Highest
+if align_quality == 'Highest':
     match_downscale = 0
-    depth_downscale = 1
-elif metashape_quality == 2: #High
+elif align_quality == 'High':
     match_downscale = 1
-    depth_downscale = 2
-elif metashape_quality == 3: #Medium
+elif align_quality == 'Medium':
     match_downscale = 2
-    depth_downscale = 4
-elif metashape_quality == 4: #Low
+elif align_quality == 'Low':
     match_downscale = 4
-    depth_downscale = 8
-elif metashape_quality == 5: #Lowest
+elif align_quality == 'Lowest':
     match_downscale = 8
+else:
+    print('align_quality variable in params.ini set incorrectly!\nchoices: Highest, High, Medium, Low, Lowest\nyou set:',align_quality)
+    print('defaulting to Medium')
+    match_downscale = 2
+    
+if dense_quality == 'Highest':
+    depth_downscale = 1
+elif dense_quality == 'High':
+    depth_downscale = 2
+elif dense_quality == 'Medium':
+    depth_downscale = 4
+elif dense_quality == 'Low':
+    depth_downscale = 8
+elif dense_quality == 'Lowest':
     depth_downscale = 16
-
+else:
+    print('depth_quality variable in params.ini set incorrectly!\nchoices: Highest, High, Medium, Low, Lowest\nyou set:',align_quality)
+    print('defaulting to Medium')
+    depth_downscale = 4
+    
 
 ##FUNCTIONS
 
@@ -123,7 +132,7 @@ def disable_below_threshold(threshold=0.4):
             print ('DISABLE %s' %(image))
 
 def detect_cross_target(tol):
-    chunk.detectMarkers(target_type=Metashape.CrossTarget,tolerance=tol) #todo: update to support cross and circle noncoded
+    chunk.detectMarkers(target_type=Metashape.CrossTarget,tolerance=tol, progress=progress_print) #todo: update to support cross and circle noncoded
 
 def scale_by_cameras(cam_1,cam_2,cam_dist):
     print("Create scalebars from cameras")
@@ -197,10 +206,10 @@ def align_cameras(reps=1, preselection_mode='generic'):
         # Change metashape_quality variable to set downscale parameter
         if preselection_mode == 'generic':
             print('generic')
-            chunk.matchPhotos(downscale=match_downscale, generic_preselection=True, reference_preselection=False)
+            chunk.matchPhotos(downscale=match_downscale, generic_preselection=True, reference_preselection=False, progress=progress_print)
         elif preselection_mode == 'reference':
             print('reference')
-            chunk.matchPhotos(downscale=match_downscale, generic_preselection=False, reference_preselection=True, reference_preselection_mode=Metashape.ReferencePreselectionSequential)
+            chunk.matchPhotos(downscale=match_downscale, generic_preselection=False, reference_preselection=True, reference_preselection_mode=Metashape.ReferencePreselectionSequential, progress=progress_print)
         chunk.alignCameras()   
  
 def align_ground(path):
@@ -382,12 +391,12 @@ def update_boundbox_by_markers(path,section='DEFAULT'):
 def build_dense_cloud(savepath,export_cloud=True):
     print(banner1,'Building depth maps and dense cloud...')
     # Change metashape_quality variable to set downscale parameter
-    chunk.buildDepthMaps(downscale=depth_downscale, filter_mode=Metashape.MildFiltering)#default: MildFiltering
-    chunk.buildDenseCloud(point_conﬁdence=True) 
+    chunk.buildDepthMaps(downscale=depth_downscale, filter_mode=Metashape.MildFiltering, progress=progress_print)#default: MildFiltering
+    chunk.buildDenseCloud(point_conﬁdence=True, progress=progress_print) 
     #export dense cloud
     if export_cloud: chunk.exportPoints(path = savepath+'.ply')  
     
-def build_dem_and_orthomosaic(dem,ortho,export_dem=False,export_ortho=False):
+def build_dem_and_orthomosaic(dem,ortho,export_dem=True,export_ortho=True):
     if dem or ortho:
         print(banner1,'Building DEM...')
         chunk.buildDem()
@@ -399,11 +408,13 @@ def build_dem_and_orthomosaic(dem,ortho,export_dem=False,export_ortho=False):
             print('todo: update script for 1.6 API [export disabled]')
             #if export_ortho: chunk.exportRaster(???) exportOrthomosaic(path=savepath+'-orthomosaic.tif',dx=0.001, dy=0.001) #!todo update for 1.6 API
         
+def progress_print(p):
+        print('Current task progress: {:.2f}%'.format(p))
         
 ### --- Begin EasyPCP_Creation ---
 
 doc = Metashape.app.document
-project_filename = project_filename + '_' + str(match_downscale) + '_' + str(depth_downscale)
+project_filename = project_filename + '_' + str(match_downscale) + '_' + align_preselection_mode[:3] + '_' + str(depth_downscale)
 print('\n----',banner1,'\nStart\n')    
 
 #populate folder list
@@ -526,14 +537,14 @@ for j in range(folder_count): #MAIN BODY. run the following code for each folder
     if disable_by_iq: disable_below_threshold(blur_threshold)
      
     #detect circular coded targets
-    if detect_coded_targets: chunk.detectMarkers(target_type=Metashape.CircularTarget12bit,tolerance=target_tolerance)
+    if detect_coded_targets: chunk.detectMarkers(target_type=Metashape.CircularTarget12bit,tolerance=target_tolerance, progress=progress_print)
 
     doc.save()  
 
     #continue #only use if you want the script to stop here for each folder
     
     #match, align cameras (images)
-    align_cameras(reps=align_times,preselection_mode='generic')
+    align_cameras(reps=align_times,preselection_mode=align_preselection_mode)
         
     #import scalebars from .csv
     if use_scalebars: import_scalebars(path=path_folders)
@@ -570,7 +581,7 @@ for j in range(folder_count): #MAIN BODY. run the following code for each folder
 
     # continue #only use if you want the script to stop here for each folder
     
-    #scale_by_cameras(40,140,1.1) #only use this if you want to scale the model based on known camera distance
+    #scale_by_cameras(40,140,1.1) #only use this if you want to scale the model based on known camera distance !delete
     
     #build DEM and orthomosaic and export to TIF at standard resolution 0.001 m/px
     if build_dem or build_ortho: build_dem_and_orthomosaic(dem=build_dem,ortho=build_ortho)
@@ -585,12 +596,8 @@ for j in range(folder_count): #MAIN BODY. run the following code for each folder
 
     #variables to pass to EasyPCP_Analysis
     cloud_path = savepath+'-MetashapeDenseCloud.ply'
-    dem_path = savepath+'-DEM.tif'
-    ortho_path = savepath+'-orthomosaic.tif'
-    #print variables
+    #print dense point cloud file path 
     print('path to point cloud: ',cloud_path)
-    if build_dem: print('path to DEM: ',dem_path)
-    if build_ortho: print('path to orthomosaic: ',ortho_path)
 
     #begin EasyPCP_Analysis
     print('\n-----')
