@@ -446,14 +446,14 @@ class Plot(object):
                     printYellow(f'{pcd_seg_num}')
                 else:
                     printYellow(f"[{str(pcd_seg_num[:10])[1:-1]}, ..., {str(pcd_seg_num[-10:])[1:-1]}]")
-                printYellow(f'Please consider use rm_noise_by_kmeans() to remove outlier noises.')
+                printYellow(f'Please consider use kmeans_split() to remove outlier noises.')
                 self.cov_warning = True
 
         self.segmented = True
         self.pcd_segmented = seg_out
         return seg_out
 
-    def rm_noise_by_kmeans(self, pcd_dict=None):
+    def kmeans_split(self, pcd_dict=None):
         if pcd_dict is None:
             split_in = self.pcd_segmented
             if not self.segmented:
@@ -489,7 +489,7 @@ class Plot(object):
         self.pcd_segmented = split_out
         return split_out
 
-    def rm_noise_by_rank(self, keep_num, pcd_dict=None):
+    def rank_split(self, keep_num, pcd_dict=None):
         if pcd_dict is None:
             split_in = self.pcd_segmented
             if not self.segmented:

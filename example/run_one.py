@@ -12,7 +12,7 @@ eps, min_points = plot1.auto_dbscan_args(eps_grids=13, divide=100)
 # the dbscan eps is the length of 10 grids, (10/100=10% of shortest axis in this case)
 # the min_points is the mean points of each grids (voxels)
 seg = plot1.dbscan_segment(eps=eps, min_points=min_points)
-split = plot1.rm_noise_by_kmeans()  # the algorithm to remove big noise that can not be removed in previous steps (limited by min_points)
+split = plot1.kmeans_split()  # the algorithm to remove big noise that can not be removed in previous steps (limited by min_points)
 reset_id = plot1.sort_order(name_by='x', ascending=True)
 plot1.save_segment_result(img_folder='plot_out')
 # -------------------------------------------

@@ -31,13 +31,13 @@ def test_plot_0_without_seg_traits(plot_init):
 
 def test_plot_0_without_seg_kmeans(plot_init):
     with pytest.raises(LookupError) as excinfo:
-        plot_init.rm_noise_by_kmeans()
+        plot_init.kmeans_split()
     print('\n', excinfo.value)
     assert "The plot has not been segmented yet, please do" in str(excinfo.value)
 
 def test_plot_0_without_seg_save(plot_init):
     with pytest.raises(LookupError) as excinfo:
-        plot_init.rm_noise_by_kmeans()
+        plot_init.kmeans_split()
     print('\n', excinfo.value)
     assert "The plot has not been segmented yet, please do" in str(excinfo.value)
 
@@ -45,7 +45,7 @@ def test_plot_1_auto_segment_flow(plot_init):
     plot_init.pcd_classified = plot_init.remove_noise()
     eps, min_points = plot_init.auto_dbscan_args(eps_grids=10)
     seg = plot_init.dbscan_segment(eps=eps, min_points=min_points)
-    split = plot_init.rm_noise_by_kmeans()
+    split = plot_init.kmeans_split()
     reset_id = plot_init.sort_order(name_by='x', ascending=True)
     plot_init.save_segment_result()
 
