@@ -9,7 +9,7 @@ plot = pcp.Plot('data/down_sample',
 plot.pcd_classified = plot.remove_noise()
 eps, min_points = plot.auto_dbscan_args(eps_grids=10)
 seg = plot.dbscan_segment(eps=eps, min_points=min_points)
-split = plot.kmeans_split()
+split = plot.rm_noise_by_kmeans()
 reset_id = plot.sort_order(name_by='x', ascending=True)
 plot.save_segment_result()
 # end auto_segmentation()

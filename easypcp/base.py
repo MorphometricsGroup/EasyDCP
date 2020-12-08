@@ -338,7 +338,7 @@ class Plot(object):
         else:
             return pcd
 
-    def xaxis_segment(self, num_segs=3, pcd_dict = None):
+    def xaxis_segment(self, num_segs=3, pcd_dict=None):
         if pcd_dict is None:
             seg_in = self.pcd_classified
         else:
@@ -446,14 +446,14 @@ class Plot(object):
                     printYellow(f'{pcd_seg_num}')
                 else:
                     printYellow(f"[{str(pcd_seg_num[:10])[1:-1]}, ..., {str(pcd_seg_num[-10:])[1:-1]}]")
-                printYellow(f'Please consider use kmeans_split() to remove outlier noises.')
+                printYellow(f'Please consider use rm_noise_by_kmeans() to remove outlier noises.')
                 self.cov_warning = True
 
         self.segmented = True
         self.pcd_segmented = seg_out
         return seg_out
 
-    def kmeans_split(self, pcd_dict=None):
+    def rm_noise_by_kmeans(self, pcd_dict=None):
         if pcd_dict is None:
             split_in = self.pcd_segmented
             if not self.segmented:
@@ -485,6 +485,32 @@ class Plot(object):
                 plant_id = np.where(km.labels_ == 1)[0].tolist()
 
             split_out[k] = [split_in[k][pid] for pid in plant_id]
+
+        self.pcd_segmented = split_out
+        return split_out
+
+    def rm_noise_by_rank(self, keep_num, pcd_dict=None):
+        if pcd_dict is None:
+            split_in = self.pcd_segmented
+            if not self.segmented:
+                raise LookupError(f"The plot has not been segmented yet, please do dbscan_segment() first")
+        else:
+            split_in = pcd_dict
+
+        split_out = {}
+        for k in split_in.keys():
+            if k == -1:
+                continue
+
+            points_num = np.asarray([len(pcd_seg.points) for pcd_seg in split_in[k]])
+            # sorting by list: https://blog.csdn.net/tszupup/article/details/107943860
+            # e.g. points_num = [1, 3, 4, 5, 2, 7, 9]
+            sorted_id = sorted(range(len(points_num)), key=lambda ke: points_num[ke], reverse=True)
+            # will get return of [6, 5, 3, 2, 1, 4, 0]
+            print(f'[Pnt][Plot][Rank] rank of index {sorted_id}, will keep '
+                  f'{[points_num[plant_id] for plant_id in sorted_id[0:keep_num]]}')
+
+            split_out[k] = [split_in[k][plant_id] for plant_id in sorted_id[0:keep_num]]
 
         self.pcd_segmented = split_out
         return split_out

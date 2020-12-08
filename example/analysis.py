@@ -18,7 +18,7 @@ for plot in plot_set:
     eps, min_points = plot_class.auto_dbscan_args(eps_grids=13, divide=100)
     seg = plot_class.dbscan_segment(eps=eps, min_points=min_points)
     if len(seg[0]) > 3:
-        split = plot_class.kmeans_split()
+        split = plot_class.rm_noise_by_kmeans()
     reset_id = plot_class.sort_order(name_by='x', ascending=True)
     plot_class.save_segment_result(img_folder='plot_out')
     # ----------------------------------------
