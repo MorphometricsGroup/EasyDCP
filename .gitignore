@@ -16,3 +16,4 @@ easypcp/example/csv*
 easypcp/example/out*
 *.png
 *.jpg
+easypcp/creation/dev
