@@ -779,7 +779,7 @@ class Plant(object):
         else:
             ele = ground_ht
 
-        print(f">>> HT.base->{round(ele, 2)}, HT.container->{round(container_ht, 2)}")
+        print(f">>> HT.base->{round(ele, 3)}, HT.container->{round(container_ht, 3)}")
         plant_base = ele + container_ht
 
         ele_z = z[z > plant_base]
