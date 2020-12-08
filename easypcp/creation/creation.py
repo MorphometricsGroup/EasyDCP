@@ -2,7 +2,7 @@
 # using scripts on Agisoft forums by Alexey Pasumansky
 # by Alex Feldman - UTokyo Field Phenomics Lab
 
-# updated 2020.12.4
+# updated 2020.12.7
 # compatibility Metashape Pro 1.6.5
 ## Incompatible Metashape Pro 1.5.x and below
 # compatible with one level of nested folders (see readme)
@@ -210,7 +210,7 @@ def align_cameras(reps=1, preselection_mode='generic'):
         elif preselection_mode == 'reference':
             print('reference')
             chunk.matchPhotos(downscale=match_downscale, generic_preselection=False, reference_preselection=True, reference_preselection_mode=Metashape.ReferencePreselectionSequential, progress=progress_print)
-        chunk.alignCameras()   
+        chunk.alignCameras(progress=progress_print)   
  
 def align_ground(path):
     print(banner1,'Aligning ground (XY) plane with coded targets...')
@@ -288,9 +288,7 @@ def align_ground(path):
 
     print("\nGround alignment finished\n")
     
-def update_boundbox_by_markers(path,section='DEFAULT'):
-    doc = Metashape.app.document
-    chunk = doc.chunk     # This points to the first chunk!
+def update_boundbox_by_markers(path,chunk,section='DEFAULT'):
 
     print(banner1,"Updating boundbox using markers...")
 
@@ -304,9 +302,7 @@ def update_boundbox_by_markers(path,section='DEFAULT'):
     
     del config
     
-    print('p0:',p0,'p1:',p1)
-    
-    """
+    """bypass .ini
     #normal for EasyPCP_Creation
     p0 = "target 1"  
     p1 = "target 8" 
@@ -315,6 +311,8 @@ def update_boundbox_by_markers(path,section='DEFAULT'):
     '''p0 = "target 1"  
     p1 = "target 19"  '''"""
 
+    print('p0:',p0,'p1:',p1)
+    
     fp0 = fp1 = 0 #initialize binary values for finding the markers to 0
 
     #setting for Y up, Z forward -> needed for mixamo/unity
@@ -366,23 +364,26 @@ def update_boundbox_by_markers(path,section='DEFAULT'):
     
     print('lengths:',box_X_length,box_Y_length)
     
+    #!disabled for strawberry
     if box_Y_length > box_X_length:
         swap_length = box_X_length
         box_X_length = box_Y_length
         box_Y_length = swap_length
-        del swap_length #!disabled for strawberry
+        del swap_length 
     
-    box_Z_length = box_Y_length #same as Y length #chunk.markers[c2].position[2] - chunk.markers[c1].position[2] #z-axis 
+    Z_ratio = 1 #my way. Change this to adjust box height (default=1)
+    box_Z_length = box_Y_length * Z_ratio #same as Y length #chunk.markers[c2].position[2] - chunk.markers[c1].position[2] #z-axis 
 
     print('lengths:',box_X_length,box_Y_length,box_Z_length)
 
-    Z_ratio = 4 #my way. Change this to adjust box height (default=1)
-
-    mx = Metashape.Vector([mx[0], mx[1], mx[2] + (0*Z_ratio*box_Z_length/2)]) #adjusting the zratio thing shifts the whole boundbox on a diagonal. not so easy. set to 0 for now.
+    mx = Metashape.Vector([mx[0], mx[1], mx[2]]) #adjusting the zratio thing shifts the whole boundbox on a diagonal. not so easy. set to 0 for now.
     newregion.center = mx
-
-    newregion.size = Metashape.Vector([box_X_length, box_Y_length, box_Z_length * Z_ratio]) #my way
-
+    print('cent1',newregion.center)
+    newregion.size = Metashape.Vector([box_X_length, box_Y_length, box_Z_length]) #my way
+    print('nrsize1',newregion.size)
+    print('cent[2]',newregion.center[2],'size[2]',newregion.size[2])
+    newregion.center = Metashape.Vector([newregion.center[0],newregion.center[1],newregion.center[2] + ( newregion.size[2] / 2 )])
+    print('cent2',newregion.center)
     chunk.region = newregion
     chunk.updateTransform() #disabled for strawberry
 
@@ -566,7 +567,7 @@ for j in range(folder_count): #MAIN BODY. run the following code for each folder
     chunk.optimizeCameras()
     
     #update bounding box 
-    if crop_by_targets: update_boundbox_by_markers(path=path_folders)
+    if crop_by_targets: update_boundbox_by_markers(path=path_folders,chunk=chunk)
     
     #save project
     doc.save()
