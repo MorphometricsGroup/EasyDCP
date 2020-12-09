@@ -34,23 +34,25 @@ Materials:
 
 Photos from image acquisition step, organized into folders by group as described above.
 
-Agisoft Metashape Professional 1.6.3
+Agisoft Metashape Professional 1.6.5
 
-CloudCompare
+CloudCompare (optional)
 
-1. Edit pipeline-all.py user-defined variables:
-   - Navigate to `easypcp/creation/`
-   - open creation.py in text editor 
-   - set `agisoft_quality` to 5 (lowest) for initial run. change later
-   - change`path_folders`to the path containing the folders of images
-   - change `blur_threshold` to desired value. Pipeline will disable all images with Agisoft image quality below the `blur_threshold`.
-   - set `ignore_gps`, `align_ground`, and `use_scalebars ` as needed
+1. Edit params.ini user-defined variables:
+   - Open `easypcp\creation\params.ini` in text editor 
+   - set all parameters as desired, defaults are set, and each parameter is explained in the comments, e.g.:
+     - set `align_quality` and `dense_quality`, default medium
+     - change`path_folders`to the path containing the folders of images
+     - change `blur_threshold` to desired value. Pipeline will disable all images with Agisoft image quality below the `blur_threshold`.
+     - set booleans e.g., `ignore_gps`, `align_ground`, and `use_scalebars ` as needed
 2. Ensure folder structure matches intended format
    - only folders in root folder (path_folders), no files in root
+     - e.g. (`path_folders\images_1\img_001.jpg...`)
    - 'skip' folder contains scalebars.csv if needed 
+     - located in `path_folders\skip`s
      - **Default scalebars.csv provided in 3dphenotyping\materials to match targets.pdf. Copy to [path_folders]\skip directory.**
-3. Open example\creation.bat in text editor, and change to the full path to your 'easypcp/creation' folder.
-4. Run example\creation.bat **[dev] update program to use agisoft package. update installation for .whl.**
+3. Open `easypcp\creation\creation.bat` in text editor, and confirm the path to your `easypcp\creation` folder.
+4. Run `creation.bat` ~~**[dev] update program to use agisoft package. update installation for .whl.**~~
    - Find output .psx and .ply files in each corresponding folder. **[dev] change output to single folder?** Verify successful 3D reconstruction with Agisoft and CloudCompare, respectively.
 
 # (c) Point cloud analysis
@@ -61,7 +63,7 @@ Point cloud files (.ply) from point cloud creation step
 
 GIMP, Photoshop or equivalent software
 
-Known height of container (mm)
+Known height of container (mm) 
 
 ## Setup for PCD analysis (manual init.)
 
