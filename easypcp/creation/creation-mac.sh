@@ -1,0 +1,1 @@
+/Applications/MetashapePro.app/Contents/MacOS/MetashapePro -r "creation.py"

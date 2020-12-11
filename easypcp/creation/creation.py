@@ -415,7 +415,8 @@ def progress_print(p):
 ### --- Begin EasyPCP_Creation ---
 
 doc = Metashape.app.document
-project_filename = project_filename + '_' + str(match_downscale) + '_' + align_preselection_mode[:3] + '_' + str(depth_downscale)
+print(type(align_quality),type(dense_quality))
+project_filename = project_filename + '_' + align_preselection_mode[:3] + '_' + align_quality + '_' + dense_quality
 print('\n----',banner1,'\nStart\n')    
 
 #populate folder list
