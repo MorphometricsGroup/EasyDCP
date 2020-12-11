@@ -1,0 +1,1 @@
+./metashape.sh -r "creation.py" -platform offscreen

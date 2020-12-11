@@ -38,7 +38,7 @@ select_nested = False #config['DEFAULT'].getboolean('select_nested') - hardcoded
 # nested_folders = json.loads(config.get('DEFAULT','nested_folders'))
 ignore_gps_exif             = config['DEFAULT'].getboolean('ignore_gps_exif')
 disable_by_iq               = config['DEFAULT'].getboolean('disable_by_iq')
-blur_threshold              = config['DEFAULT'].getfloat('blur_threshold')
+iq_threshold              = config['DEFAULT'].getfloat('iq_threshold')
 
 align_times                 = config['DEFAULT'].getint('align_times')
 align_quality               = config['DEFAULT']['align_quality']
@@ -61,7 +61,7 @@ del config
 
 # print('p',path_folders,type(path_folders))
 # print('n',nested_folders,type(nested_folders)) 
-# print('a',align_times,type(align_times),'b',blur_threshold,type(blur_threshold),'d',detect_coded_targets,type(detect_coded_targets))
+# print('a',align_times,type(align_times),'b',iq_threshold,type(iq_threshold),'d',detect_coded_targets,type(detect_coded_targets))
 
 if align_quality == 'Highest':
     match_downscale = 0
@@ -535,7 +535,7 @@ for j in range(folder_count): #MAIN BODY. run the following code for each folder
     if ignore_gps_exif: ignore_gps()
     
     #estimate image quality and disable below threshold
-    if disable_by_iq: disable_below_threshold(blur_threshold)
+    if disable_by_iq: disable_below_threshold(iq_threshold)
      
     #detect circular coded targets
     if detect_coded_targets: chunk.detectMarkers(target_type=Metashape.CircularTarget12bit,tolerance=target_tolerance, progress=progress_print)
