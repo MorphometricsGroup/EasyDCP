@@ -1,8 +1,8 @@
 import __init__
-import easypcp as pcp
+import easydcp as dcp
 
-cla = pcp.Classifier(path_list=['data/weed_fore.png', 'data/weed_back.png'], kind_list=[0, -1], core='dtc')
-plot = pcp.Plot('data/weed.ply', cla, output_path='output')
+cla = dcp.Classifier(path_list=['data/weed_fore.png', 'data/weed_back.png'], kind_list=[0, -1], core='dtc')
+plot = dcp.Plot('data/weed.ply', cla, output_path='output')
 # start auto_segmentation()
 plot.pcd_classified = plot.remove_noise()
 eps, min_points = plot.auto_dbscan_args(times=10)

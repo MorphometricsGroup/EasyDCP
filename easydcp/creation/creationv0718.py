@@ -71,7 +71,7 @@ elif agisoft_quality == 5: #Lowest
     depth_downscale = 16
 
 #User does not need to change these variables
-banner1 = '\n[EasyPCP_Creation]'
+banner1 = '\n[EasyDCP_Creation]'
 doc = Metashape.app.document
 project_filename = project_filename + '_' + str(match_downscale) + '_' + str(depth_downscale)
 
@@ -534,7 +534,7 @@ for j in range(folder_count): #run the following code for each folder
     '''
     '''
     #begin pcd_processing portion
-    print('\n-----------------------\n[Ready to start EasyPCP_Analysis!]\n') 
+    print('\n-----------------------\n[Ready to start EasyDCP_Analysis!]\n') 
    
 
 now = datetime.datetime.now()
@@ -547,7 +547,7 @@ create new line, append all vars and params
 '''
 '''the below code is not ready yet
 L=[]
-L.append("\n---------","\nEasyPCP creation log")
+L.append("\n---------","\nEasyDCP creation log")
 L.append("\nstart_time: ",start_time,"\n finish time: ",finish_time, "\noperation folder: ",path_folders)
 L.append("\nagisoft_quality: ",agisoft_quality, "\nblur_threshold: ",blur_threshold)
 file1 = open('example/images/skip/creation_log.txt',"a")

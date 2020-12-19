@@ -23,7 +23,7 @@ A wrapper for quick use
 
 
 
-# pcp.pcd_tools
+# dcp.pcd_tools
 
 **Functions**
 
@@ -40,7 +40,7 @@ A wrapper for quick use
 | `round2val`            |             |
 
 
-# pcp.io
+# dcp.io
 
 **functions**
 
@@ -53,7 +53,7 @@ A wrapper for quick use
 | `shp.read_shps` |             |
 | `shp.read_xyz`  |             |
 
-<h4 id="read_ply">pcp.io.pcd.read_ply(args)</h4>
+<h4 id="read_ply">dcp.io.pcd.read_ply(args)</h4>
 Function to read point cloud ply file
 
 > Parameters
@@ -66,9 +66,9 @@ Function to read point cloud ply file
 
 
 
-# pcp.plotting
+# dcp.plotting
 
 
 
-# pcp.geometry
+# dcp.geometry
 

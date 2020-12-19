@@ -1,6 +1,6 @@
 **See heading.md for installation instructions.**
 
-Overview of EasyPCP workflow:
+Overview of EasyDCP workflow:
 
 # <img src="flow.png" style="zoom:33%;" />
 
@@ -18,9 +18,9 @@ floor covering (black or other non-plant color) (optional)
 
 RGB camera
 
-Printed attached .pdf file `easypcp\materials\targets.pdf`, first 2 pages. [easypcp requires 4 targets per page. i used 6mm radius .] Attach to clipboard or other rigid backing.
+Printed attached .pdf file `easydcp\materials\targets.pdf`, first 2 pages. [easydcp requires 4 targets per page. i used 6mm radius .] Attach to clipboard or other rigid backing.
 
-1. The height of plant container is needed by EasyPCP, so be sure to measure and record the height of the container.
+1. The height of plant container is needed by EasyDCP, so be sure to measure and record the height of the container.
 2. If using floor covering, place on desired area to be used for image acquisition. If not using floor covering, ensure floor area is free of any materials that may be similar to plant color (e.g. weeds)
 3. Define measurement area by placing the two printed target sheets at opposite corners. [see figure]
 4. Arrange a group of container plants within the measurement area, by placing them in a single row, or 2 rows using triangular spacing [see image]. Ensure adequate gap between all plants. *Note: The number of plants per group is only limited by the size of the measurement area and the size of the plants.*
@@ -39,7 +39,7 @@ Agisoft Metashape Professional 1.6.5
 CloudCompare (optional)
 
 1. Edit params.ini user-defined variables:
-   - Open `easypcp\creation\params.ini` in text editor 
+   - Open `easydcp\creation\params.ini` in text editor 
    - set all parameters as desired, defaults are set, and each parameter is explained in the comments, e.g.:
      - set `align_quality` and `dense_quality`, default medium
      - change`path_folders`to the path containing the folders of images
@@ -51,7 +51,7 @@ CloudCompare (optional)
    - 'skip' folder contains scalebars.csv if needed 
      - located in `path_folders\skip`s
      - **Default scalebars.csv provided in 3dphenotyping\materials to match targets.pdf. Copy to [path_folders]\skip directory.**
-3. Open `easypcp\creation\creation.bat` in text editor, and confirm the path to your `easypcp\creation` folder.
+3. Open `easydcp\creation\creation.bat` in text editor, and confirm the path to your `easydcp\creation` folder.
 4. Run `creation.bat` ~~**[dev] update program to use agisoft package. update installation for .whl.**~~
    - Find output .psx and .ply files in each corresponding folder. **[dev] change output to single folder?** Verify successful 3D reconstruction with Agisoft and CloudCompare, respectively.
 
@@ -85,12 +85,12 @@ Materials: GIMP or equivalent software.
 
 Materials:
 
-- Folder containing .ply point cloud files output by previous step, (b) EasyPCP point cloud creation
+- Folder containing .ply point cloud files output by previous step, (b) EasyDCP point cloud creation
 - training data created in previous step "Setup for PCD analysis"
 
-Control EasyPCP via API using python script in your python 3.7 environment as described in Installation documentation (heading.md). Several .py files are provided in /example/ as examples of simple scripts to control EasyPCP. See documentation (api.md) for details on controlling EasyPCP via python.
+Control EasyDCP via API using python script in your python 3.7 environment as described in Installation documentation (heading.md). Several .py files are provided in /example/ as examples of simple scripts to control EasyDCP. See documentation (api.md) for details on controlling EasyDCP via python.
 
-Configure EasyPCP before launching:
+Configure EasyDCP before launching:
 
 - Ensure your .py script points to correct training data and point cloud folder. *Ensure `container_ht` is correctly set.* 
 
@@ -98,9 +98,9 @@ Configure EasyPCP before launching:
 
 **Execute your.py file using python , using 3Dphenotyping root folder as working directory:**
 
-`(easypcp37) C:\Users\Alex\Documents\GitHub\3Dphenotyping>python example\example.py`
+`(easydcp37) C:\Users\Alex\Documents\GitHub\3Dphenotyping>python example\example.py`
 
-Output will be created in working directory. A folder will be created for each .ply file processed by EasyPCP. It contains several .ply files for classification and segmentation steps. Also, a .png file is output per each 'plant' output by segmentation step. The .png file contains phenotypic traits:
+Output will be created in working directory. A folder will be created for each .ply file processed by EasyDCP. It contains several .ply files for classification and segmentation steps. Also, a .png file is output per each 'plant' output by segmentation step. The .png file contains phenotypic traits:
 
 - Ellipse long and short axis
 - Plant height, absolute or percentile (average of points above 90th percentile)

@@ -19,7 +19,7 @@ import Metashape
 import os, math, datetime 
 import configparser, json 
 
-banner1 = '\n[EasyPCP_Creation]'
+banner1 = '\n[EasyDCP_Creation]'
 now = datetime.datetime.now()
 start_time = now
 print(banner1,'Started at',start_time)
@@ -303,7 +303,7 @@ def update_boundbox_by_markers(path,chunk,section='DEFAULT'):
     del config
     
     """bypass .ini
-    #normal for EasyPCP_Creation
+    #normal for EasyDCP_Creation
     p0 = "target 1"  
     p1 = "target 8" 
     
@@ -412,7 +412,7 @@ def build_dem_and_orthomosaic(dem,ortho,export_dem=True,export_ortho=True):
 def progress_print(p):
         print('Current task progress: {:.2f}%'.format(p))
         
-### --- Begin EasyPCP_Creation ---
+### --- Begin EasyDCP_Creation ---
 
 doc = Metashape.app.document
 print(type(align_quality),type(dense_quality))
@@ -596,15 +596,15 @@ for j in range(folder_count): #MAIN BODY. run the following code for each folder
     #generate report to .pdf
     chunk.exportReport(path = savepath+'-report.pdf')
 
-    #variables to pass to EasyPCP_Analysis
+    #variables to pass to EasyDCP_Analysis
     cloud_path = savepath+'-MetashapeDenseCloud.ply'
     #print dense point cloud file path 
     print('path to point cloud: ',cloud_path)
 
-    #begin EasyPCP_Analysis
+    #begin EasyDCP_Analysis
     print('\n-----')
     print(banner1,'complete for',this_folder)
-    print('[Ready to start EasyPCP_Analysis!]') 
+    print('[Ready to start EasyDCP_Analysis!]') 
     
     # break #only use if you want the script to stop after running the first folder
    

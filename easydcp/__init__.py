@@ -1,21 +1,21 @@
-from easypcp.base import (
+from easydcp.base import (
     Classifier,
     Plot,
     Plant
 )
 
-from easypcp.pcd_tools import (
+from easydcp.pcd_tools import (
     merge_pcd,
     pcd2dxm,
     pcd2binary
 )
 
-from easypcp.io.pcd import (
+from easydcp.io.pcd import (
     read_ply,
     read_plys
 )
 
-from easypcp.io.shp import (
+from easydcp.io.shp import (
     read_shp,
     read_shps,
     read_xyz

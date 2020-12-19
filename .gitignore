@@ -1,8 +1,8 @@
 *_NERV*
 .idea/*
-easypcp/example/S*
-easypcp/tests/output/*
-easypcp/tests/easypcc/*
+easydcp/example/S*
+easydcp/tests/output/*
+easydcp/tests/easypcc/*
 *plot_out/*
 __pycache__
 *_agi.csv
@@ -10,10 +10,10 @@ __pycache__
 alex_*
 *.backup.py
 test_temp.py
-easypcp/wheels/*
-easypcp/docs/build/*
-easypcp/example/csv*
-easypcp/example/out*
+easydcp/wheels/*
+easydcp/docs/build/*
+easydcp/example/csv*
+easydcp/example/out*
 *.png
 *.jpg
-easypcp/creation/dev
+easydcp/creation/dev

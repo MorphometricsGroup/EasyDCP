@@ -6,7 +6,7 @@ from mpl_toolkits.mplot3d import Axes3D
 import mpl_toolkits.mplot3d.art3d as art3d
 from scipy.stats import gaussian_kde
 
-from easypcp.pcd_tools import get_convex_hull
+from easydcp.pcd_tools import get_convex_hull
 
 def draw_plot_seg_results(pcd_seg_list, selected_id_list, title, savepath, show_id=True, size=(9, 6), dpi=300):
     """

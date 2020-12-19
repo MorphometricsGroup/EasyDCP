@@ -1,26 +1,26 @@
 import __init__
 import pytest
-import easypcp as pcp
+import easydcp as dcp
 import pandas as pd
 
 @pytest.fixture(scope="session", autouse=True)
 def plot_init_brocoli():
-    cla = pcp.Classifier(path_list=['data/brocoli_train_plant1.ply',
+    cla = dcp.Classifier(path_list=['data/brocoli_train_plant1.ply',
                                     'data/brocoli_train_soil.ply',
                                     'data/brocoli_train_soil_gcp.ply'],
                          kind_list=[0, -1, -1], core='dtc')
-    plot = pcp.Plot('data/brocoli.ply', cla, output_path='output')
+    plot = dcp.Plot('data/brocoli.ply', cla, output_path='output')
     return plot
 
 # def test_classsifier_apply(plot_init_brocoli):
 
 @pytest.fixture(scope="session", autouse=True)
 def plot_init():
-    cla = pcp.Classifier(path_list=['data/weed_fore.png',
+    cla = dcp.Classifier(path_list=['data/weed_fore.png',
                                     'data/weed_back.png'],
                          kind_list=[0, -1], core='dtc')
 
-    plot = pcp.Plot('data/weed.ply', cla, output_path='output')
+    plot = dcp.Plot('data/weed.ply', cla, output_path='output')
     return plot
 
 def test_plot_0_without_seg_traits(plot_init):
@@ -57,10 +57,10 @@ def test_plot_2_output(plot_init):
 # shp segmentation test
 @pytest.fixture(scope="session", autouse=True)
 def plot_init_potato():
-    cla = pcp.Classifier(path_list=['data/potato_fore.png',
+    cla = dcp.Classifier(path_list=['data/potato_fore.png',
                                     'data/potato_back.png'],
                          kind_list=[0, -1], core='dtc')
-    plot = pcp.Plot('data/potato.ply', cla, output_path='output')
+    plot = dcp.Plot('data/potato.ply', cla, output_path='output')
     return plot
 
 def test_plot_3_shp_segment(plot_init_potato):

@@ -1,23 +1,23 @@
 import __init__
-import easypcp as pcp
+import easydcp as dcp
 #import open3d as o3d
 
 plant_merge_list = ['S04/class[0]-plant2.ply', 'S04/class[0]-plant3.ply']
 pcd_list = []
 for ply_path in plant_merge_list:
-    pcd = pcp.read_ply(ply_path)
+    pcd = dcp.read_ply(ply_path)
     pcd_list.append(pcd)
-m_pcd = pcp.merge_pcd(pcd_list)
+m_pcd = dcp.merge_pcd(pcd_list)
 
 #o3d.visualization.draw_geometries([m_pcd])
 
-cla = pcp.Classifier(path_list=['training_data/fore_rm_y.png',
+cla = dcp.Classifier(path_list=['training_data/fore_rm_y.png',
                             'training_data/back.png'],
                  kind_list=[0, -1], core='dtc')
 
-plot1 = pcp.Plot('S04.ply', cla, show_steps=True)
+plot1 = dcp.Plot('S04.ply', cla, show_steps=True)
 
-plant_m = pcp.Plant(plot1, m_pcd, 0, 0)
+plant_m = dcp.Plant(plot1, m_pcd, 0, 0)
 
 out_dict = {'x(m)': [], 'y(m)': [],
             'width(m)': [], 'length(m)': [], 'hover_area(m2)': [],

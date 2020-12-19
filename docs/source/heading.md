@@ -1,4 +1,4 @@
-# About EasyPCP
+# About EasyDCP
 A python package for agricultural phenotype traits extraction from 3D point clouds.
 
 ## Core features
@@ -11,14 +11,14 @@ This script handles multiple sets of images taken in same environment, e.g. time
 
 ## Functions
 
-**EasyPCP Point cloud creation**
+**EasyDCP Point cloud creation**
 
 * [ ] Auto match key points
 * [ ] Auto point cloud generation
 * [ ] Auto point cloud export to .ply
 * [ ] Batch processing
 
-**EasyPCP Point cloud analysis**
+**EasyDCP Point cloud analysis**
 
 * [ ] Decision tree classifier for plant pixel classification
 * [ ] Cluster algorithm for individual plant segmentation
@@ -50,7 +50,7 @@ CloudCompare (optional, recommended)
 ~~In a **future** release, we **may** add support of PyPI installation via `pip`.~~
 
 ```bash
-pip install easypcp
+pip install easydcp
 ```
 
 ## Installing from source code
@@ -75,25 +75,25 @@ pip install easypcp
 
 3. Ensure Agisoft Metashape Professional is installed and activated using 30-day trial or paid license. 
 
-   - Note: EasyPCP currently supports metashape.exe control via python script. In future, will update to use python Wheels package: https://pip.pypa.io/en/latest/user_guide/#installing-from-wheels
+   - Note: EasyDCP currently supports metashape.exe control via python script. In future, will update to use python Wheels package: https://pip.pypa.io/en/latest/user_guide/#installing-from-wheels
 
-4. Before the line containing `import easypcp` in your code, you need to write the following code in front: *(see `example/batch.py` for example)* 
+4. Before the line containing `import easydcp` in your code, you need to write the following code in front: *(see `example/batch.py` for example)* 
 
    ```python
    import __init__
-   import easypcp as pcp
+   import easydcp as dcp
    ```
 
    No longer needed: (replaced by `__init__`)
 
    ```python
    import sys
-   sys.path.insert(0, r'D:/Program/')  # not Program/easypcp full path
-   # then you can import easypcp for use
-   import easypcp as pcp
+   sys.path.insert(0, r'D:/Program/')  # not Program/easydcp full path
+   # then you can import easydcp for use
+   import easydcp as dcp
    ```
 
-5. See tutorial.md for how to use EasyPCP.
+5. See tutorial.md for how to use EasyDCP.
 
 ## Installation Errors
 
@@ -121,7 +121,7 @@ Command "python setup.py egg_info" failed with error code 1 in C:\Users\
 please download shapely wheel from [http://www.lfd.uci.edu/~gohlke/pythonlibs/#shapely](http://www.lfd.uci.edu/~gohlke/pythonlibs/#shapely) and then using command line to install (**or higher version**):
 
 ```bash
-pip install "easypcp/wheels/Shapely-1.6.4.post2-cp36-cp36m-win_amd64.whl"
+pip install "easydcp/wheels/Shapely-1.6.4.post2-cp36-cp36m-win_amd64.whl"
 ```
 
 ### Open3d import errors

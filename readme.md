@@ -1,4 +1,4 @@
-# EasyPCP
+# EasyDCP
 A  python package for agricultural phenotype traits extraction from 3D point clouds.
 
 ## Documentation

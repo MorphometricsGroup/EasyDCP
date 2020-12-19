@@ -1,10 +1,10 @@
 import __init__
 import pytest
-import easypcp as pcp
+import easydcp as dcp
 
 @pytest.fixture(scope="session", autouse=True)
 def plant_init():
-    plant = pcp.Plant('data/weed.plant0.ply', indices=0, ground_pcd='data/weed.cleanedbg.ply',
+    plant = dcp.Plant('data/weed.plant0.ply', indices=0, ground_pcd='data/weed.cleanedbg.ply',
                       cut_bg=True, container_ht=0.06)
     return plant
 

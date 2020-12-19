@@ -10,17 +10,17 @@ from skimage.measure import regionprops
 
 from scipy.stats import gaussian_kde
 
-from easypcp.pcd_tools import (pcd2binary,
+from easydcp.pcd_tools import (pcd2binary,
                                pcd2voxel,
                                calculate_xyz_volume,
                                get_convex_hull,
                                build_cut_boundary)
-from easypcp.geometry.min_bounding_rect import min_bounding_rect
-from easypcp.io.cprint import printYellow
-from easypcp.io.folder import make_dir
-from easypcp.io.pcd import read_ply, read_plys
-from easypcp.io.shp import read_shp, read_shps
-from easypcp.plotting.figure import draw_3d_results, draw_plot_seg_results
+from easydcp.geometry.min_bounding_rect import min_bounding_rect
+from easydcp.io.cprint import printYellow
+from easydcp.io.folder import make_dir
+from easydcp.io.pcd import read_ply, read_plys
+from easydcp.io.shp import read_shp, read_shps
+from easydcp.plotting.figure import draw_3d_results, draw_plot_seg_results
 
 
 class Classifier(object):

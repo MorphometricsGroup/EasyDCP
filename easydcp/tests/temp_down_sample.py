@@ -1,9 +1,9 @@
 import __init__
-import easypcp as pcp
+import easydcp as dcp
 
-cla = pcp.Classifier(path_list=['data/down_sample_train_fore.ply', 'data/down_sample_train_back.ply'],
+cla = dcp.Classifier(path_list=['data/down_sample_train_fore.ply', 'data/down_sample_train_back.ply'],
                      kind_list=[0, -1], core='dtc', unit='mm')
-plot = pcp.Plot('data/down_sample',
+plot = dcp.Plot('data/down_sample',
                 cla, output_path='output', write_ply=True, unit='mm')
 # start auto_segmentation()
 plot.pcd_classified = plot.remove_noise()

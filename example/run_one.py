@@ -1,10 +1,10 @@
 import __init__
-import easypcp as pcp
-cla = pcp.Classifier(path_list=['training_data/01/fore_rm_y.png',
+import easydcp as dcp
+cla = dcp.Classifier(path_list=['training_data/01/fore_rm_y.png',
                                 'training_data/01/back.png'],
                      kind_list=[0, -1], core='dtc', unit='m')
 
-plot1 = pcp.Plot(r'S03.ply', cla, unit='m', write_ply=False, down_sample=True)
+plot1 = dcp.Plot(r'S03.ply', cla, unit='m', write_ply=False, down_sample=True)
 # ----------- auto_segmentation() ----------
 plot1.pcd_classified = plot1.remove_noise()
 # split the shortest axis into 100 parts

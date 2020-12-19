@@ -1,8 +1,8 @@
 import __init__
 import pandas as pd
-import easypcp as pcp
+import easydcp as dcp
 
-cla = pcp.Classifier(path_list=['training_data/02/fore_rm_r.png',
+cla = dcp.Classifier(path_list=['training_data/02/fore_rm_r.png',
                             'training_data/02/back.png'],
                  kind_list=[0, -1], core='dtc', unit='m')
 
@@ -12,7 +12,7 @@ plot_set = ['SP1G2.ply','SP4G1.ply'] #ply files must be in working directory
 result_container = []
 
 for plot in plot_set:
-    plot_class = pcp.Plot(plot, cla, write_ply=True, unit='m', down_sample=True) # show_steps=True to display output among calculation to check correct or not
+    plot_class = dcp.Plot(plot, cla, write_ply=True, unit='m', down_sample=True) # show_steps=True to display output among calculation to check correct or not
     # ---------- auto_segment() --------------
     plot_class.pcd_classified = plot_class.remove_noise()
     eps, min_points = plot_class.auto_dbscan_args(eps_grids=13, divide=100)
