@@ -102,3 +102,12 @@ updated requirements.txt
 
 ---
 
+# Data analysis
+
+Opening output .csv in Excel:
+
+"[filename.csv] cannot be accessed. The file may be corrupted, located on a server that is not responding, or read-only"
+
+Cause: Filename is too long
+
+Solution: Rename the file to a shorter name.
