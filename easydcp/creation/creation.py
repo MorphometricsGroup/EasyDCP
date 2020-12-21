@@ -19,9 +19,14 @@ import Metashape
 import os, math, datetime 
 import configparser, json 
 
+<<<<<<< Updated upstream:easydcp/creation/creation.py
 banner1 = '\n[EasyDCP_Creation]'
 now = datetime.datetime.now()
 start_time = now
+=======
+banner1 = '\n[EasyPCP_Creation]'
+start_time = datetime.datetime.now()
+>>>>>>> Stashed changes:easypcp/creation/creation.py
 print(banner1,'Started at',start_time)
 
 ##USER DEFINED VARIABLES
@@ -608,7 +613,7 @@ for j in range(folder_count): #MAIN BODY. run the following code for each folder
     
     # break #only use if you want the script to stop after running the first folder
    
+finish_time = datetime.datetime.now()
 
-now = datetime.datetime.now()
-finish_time = now
-print (banner1,'finished at',finish_time)
+print(banner1,'Started at',start_time)
+print (banner1,'Finished at',finish_time)
