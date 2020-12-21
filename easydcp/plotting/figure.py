@@ -103,7 +103,7 @@ def draw_3d_results(plant, title, savepath, dpi=300):
     min_x = np.sin(np.deg2rad(phi)) * 0.5 * plant.minor_axis
     min_y = np.cos(np.deg2rad(phi)) * 0.5 * plant.minor_axis
     
-    plant_vs = plant.voxel_params['voxel_size']
+    plant_vs = plant.voxel_params['voxel_size'] 
 
     downpcd = plant.pcd.voxel_down_sample(voxel_size=plant_vs)
     downpcd_xyz = np.asarray(downpcd.points)
@@ -145,26 +145,26 @@ def draw_3d_results(plant, title, savepath, dpi=300):
     # | draw plots |
     # -=-=-=-=-=-=-=
     fig = plt.figure(figsize=(9, 6), dpi=dpi)
-    ax = Axes3D(fig, elev=25, azim=135, rect=(0, 0.07, 1, 0.95))
+    ax = Axes3D(fig, elev=25, azim=135, rect=(0, 0.07, 1, 0.95), box_aspect=(4,4,3)) #box_aspect long x-axis: 8,4,3 | long y-axis: 4,10,3
 
     # zorder 2,3
     # plot the ground on Y-Z
     ax.scatter(ground_y, ground_z, zs=x_axis_max, zdir='x',
-               color='C4', linewidth=0, marker='.', alpha=0.3, label='ground points')
+               color='C4', linewidth=0, marker='.', alpha=0.3, s=6, label='ground points')
     # plot the ground on X-Z
     ax.scatter(ground_x, ground_z, zs=y_axis_min, zdir='y',
-               color='C4', linewidth=0, marker='.', alpha=0.3)
+               color='C4', linewidth=0, marker='.', alpha=0.3, s=6)
 
     # zorder 4,5,6
     # plot the shade on X-Y
     ax.scatter(down_x, down_y, zs=z_axis_min, zdir='z',
-               color='C7', linewidth=0, marker='.', alpha=0.3)
+               color='C7', linewidth=0, marker='.', alpha=0.3, s=8)
     # plot the shade on Y-Z
     ax.scatter(down_y, down_z, zs=x_axis_max, zdir='x',
-               color='C7', linewidth=0, marker='.', alpha=0.3)
+               color='C7', linewidth=0, marker='.', alpha=0.3, s=8)
     # plot the shade on X-Z
     ax.scatter(down_x, down_z, zs=y_axis_min, zdir='y',
-               color='C7', linewidth=0, marker='.', alpha=0.3)
+               color='C7', linewidth=0, marker='.', alpha=0.3, s=8)
 
     # zorder 7
     # plot convex hull convert
@@ -174,7 +174,7 @@ def draw_3d_results(plant, title, savepath, dpi=300):
 
     # zorder 8
     # plot 3d point clouds
-    ax.scatter(down_x, down_y, down_z, marker='.', color=down_color, alpha=0.7, linewidth=0, zorder=25)
+    ax.scatter(down_x, down_y, down_z, marker='.', color=down_color, alpha=0.7, s=8, linewidth=0, zorder=25)
 
     # plot convex hull
     ax.plot(convex_hull[:, 0], convex_hull[:, 1], 'C0--', alpha=0.5,
