@@ -7,7 +7,7 @@ def make_dir(dir_path, clean=False):
         if clean:
             # shutil.rmtree(dir_path)
             send2trash(dir_path)
-            print(f'[pnt][I/O] has delete [{dir_path}] to recycle bin')
+            print(f'[I/O] has delete [{dir_path}] to recycle bin')
             time.sleep(1)  # ensure the folder is cleared
             os.mkdir(dir_path)
     else:

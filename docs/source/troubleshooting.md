@@ -58,7 +58,7 @@ Same as above. Issue is caused by running Metashape in DEMO mode. Get trial lice
 EasyDCP_Analysis
 
 `(easydcp) C:\Users\Alex\Documents\GitHub\3Dphenotyping\easydcp>python example/alex_batch3.py
-[Pnt][__init__]Append "C:\Users\Alex\Documents\GitHub\3Dphenotyping\easydcp" to system.path
+[__init__]Append "C:\Users\Alex\Documents\GitHub\3Dphenotyping\easydcp" to system.path
 Traceback (most recent call last):
   File "example/alex_batch3.py", line 3, in <module>
     import easydcp as dcp
@@ -80,7 +80,7 @@ caused by plot_out folder not existing in location where easydcp is being run
 
 EasyDCP_Analysis
 
-`[Pnt][Plant][Traits] No. 0 Calculating
+`[Plant][Traits] No. 0 Calculating
 Traceback (most recent call last):
   File "example\alex_batch3.py", line 53, in <module>
     if not planteye: traits = plot_class.get_traits(container_ht=0.06)#, ground_ht =g_ht)

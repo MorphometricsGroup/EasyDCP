@@ -59,12 +59,12 @@ class Classifier(object):
             dtc: Decision Tree Classifier
         """
         # Check whether correct input
-        print('[Pnt][Classifier] Start building classifier')
+        print('[Classifier] Start building classifier')
         path_n = len(path_list)
         kind_n = len(kind_list)
 
         if path_n != kind_n:
-            print('[Pnt][Classifier][Warning] the image number and kind number not matching!')
+            print('[Classifier][Warning] the image number and kind number not matching!')
 
         self.path_list = path_list[0:min(path_n, kind_n)]
         self.kind_list = kind_list[0:min(path_n, kind_n)]
@@ -74,7 +74,7 @@ class Classifier(object):
         self.train_kind = np.empty(0)
         self.unit = unit
         self.build_training_array()
-        print('[Pnt][Classifier] Training data prepared')
+        print('[Classifier] Training data prepared')
 
         self.kind_set = set(kind_list)
 
@@ -88,7 +88,7 @@ class Classifier(object):
             elif core == 'svm':
                 self.clf = SVC()
                 # todo: build SVC() classifier
-        print('[Pnt][Classifier] Classifying model built')
+        print('[Classifier] Classifying model built')
 
     @staticmethod
     def read_png(file_path):
@@ -226,7 +226,7 @@ class Plot(object):
         else:
             raise TypeError(f'[{ply_path}] is neither a ply file or folder')
 
-        print(f'[Pnt][Plot][__init__] Ply file "{self.ply_path}" loaded')
+        print(f'[Plot][__init__] Ply file "{self.ply_path}" loaded')
 
         # down sample check
         if down_sample:
@@ -236,11 +236,11 @@ class Plot(object):
             if self.ply_name == '':
                 raise IOError('Empty ply_name variable')
             self.out_folder = os.path.join(output_path, self.ply_name)
-            print(f'[Pnt][Plot][__init__] Setting output folder "{os.path.abspath(self.out_folder)}"')
+            print(f'[Plot][__init__] Setting output folder "{os.path.abspath(self.out_folder)}"')
             make_dir(self.out_folder, clean=True)
         else:
             self.out_folder = output_path
-            print(f'[Pnt][Plot][__init__] Mode "write_ply" == False, output folder creating ignored')
+            print(f'[Plot][__init__] Mode "write_ply" == False, output folder creating ignored')
 
         self.pcd_xyz = np.asarray(self.pcd.points)
         self.pcd_rgb = np.asarray(self.pcd.colors)
@@ -253,7 +253,7 @@ class Plot(object):
         self.cov_warning = {}
 
     def classifier_apply(self, clf):
-        print('[Pnt][Plot][Classifier_apply] Start Classifying')
+        print('[Plot][Classifier_apply] Start Classifying')
         pcd_z = self.pcd_xyz[:, 2].reshape(self.pcd_xyz.shape[0],1)
         pcd_tgi = clf.get_tgi(self.pcd_rgb)
         input_np = np.hstack([self.pcd_rgb, pcd_z, pcd_tgi])
@@ -262,16 +262,16 @@ class Plot(object):
         pcd_classified = {}
 
         for k in clf.kind_set:
-            print(f'[Pnt][Plot][Classifier_apply] |-- classify class {k}')
+            print(f'[Plot][Classifier_apply] |-- classify class {k}')
             indices = np.where(pred_result == k)[0].tolist()
             pcd_classified[k] = self.pcd.select_by_index(indices=indices)
             # save ply
             if self.write_ply:
                 o3d.io.write_point_cloud(os.path.join(self.out_folder, f'class[{k}].ply'),
                                          pcd_classified[k])
-                print(f'[Pnt][Plot][Classifier_apply] |   |-- save to {self.out_folder}/class[{k}].ply')
+                print(f'[Plot][Classifier_apply] |   |-- save to {self.out_folder}/class[{k}].ply')
             else:
-                print(f'[Pnt][Plot][Classifier_apply] |   |-- mode "write_ply" == False, ply file not saved.')
+                print(f'[Plot][Classifier_apply] |   |-- mode "write_ply" == False, ply file not saved.')
 
         return pcd_classified
 
@@ -285,7 +285,7 @@ class Plot(object):
 
         pcd_cleaned = {}
         pcd_cleaned_id = {}
-        print('[Pnt][Plot][remove_noise] Remove noises')
+        print('[Plot][remove_noise] Remove noises')
         for k in self.pcd_classified.keys():
             if k == -1:   # for background, need to apply statistical outlier removal
                 cleaned, indices = self.pcd_classified[-1].remove_statistical_outlier(
@@ -302,11 +302,11 @@ class Plot(object):
             if self.write_ply:
                 o3d.io.write_point_cloud(os.path.join(self.out_folder, f'class[{k}]-rm_noise.ply'),
                                          pcd_cleaned[k])
-                print(f'[Pnt][Plot][remove_noise] ply file class[{k}]-rm_noise.ply saved to {self.out_folder}')
+                print(f'[Plot][remove_noise] ply file class[{k}]-rm_noise.ply saved to {self.out_folder}')
             else:
-                print(f'[Pnt][Plot][remove_noise] Mode "write_ply" == False, ply file not saved.')
+                print(f'[Plot][remove_noise] Mode "write_ply" == False, ply file not saved.')
             # todo: add kde of ground points, and remove noises very close to ground points
-            print(f'[Pnt][Plot][remove_noise] Kind {k} noise removed')
+            print(f'[Plot][remove_noise] Kind {k} noise removed')
 
         self.pcd_classified = pcd_cleaned
         return pcd_cleaned   # , pcd_cleaned_id
@@ -319,7 +319,7 @@ class Plot(object):
         voxel_size, voxel_density = voxel_params['voxel_size'], voxel_params['voxel_density']
         eps = voxel_size * eps_grids
         min_points = round(voxel_density)
-        print(f'[Pnt][Plot][DBSCAN_Args] Recommend use eps={eps}, min_points={min_points} based on point density.')
+        print(f'[Plot][DBSCAN_Args] Recommend use eps={eps}, min_points={min_points} based on point density.')
         return eps, min_points
 
     def down_sample(self, pcd, part):
@@ -328,7 +328,7 @@ class Plot(object):
         voxel_size, voxel_density = voxel_params['voxel_size'], voxel_params['voxel_density']
         min_points = round(voxel_density)
         if min_points > 20:
-            print(f'[Pnt][Plot][Down_Sample] Point cloud {self.ply_name} has average point counts [{min_points}] '
+            print(f'[Plot][Down_Sample] Point cloud {self.ply_name} has average point counts [{min_points}] '
                   f'in the cube whose size={round(voxel_size*1000, 2)}mm.')
             pcd_down = pcd.voxel_down_sample(voxel_size=voxel_size/5)   # 2^3=8, 3^3=27, 2.7^3=19.68
             _, voxel_params_down = pcd2voxel(pcd_down, voxel_size=voxel_size)
@@ -349,7 +349,7 @@ class Plot(object):
             if k == -1:
                 continue   # skip the background
                 
-            print(f'[Pnt][Plot][Xaxis_Segment] Start segmenting class {k} Please wait...')
+            print(f'[Plot][Xaxis_Segment] Start segmenting class {k} Please wait...')
                    
             #show input point cloud
             #o3d.visualization.draw_geometries([seg_in[k]],width=1200, height=800)
@@ -418,12 +418,12 @@ class Plot(object):
             if k == -1:
                 continue   # skip the background
 
-            print(f'[Pnt][Plot][DBSCAN_Segment] Start segmenting class {k} Please wait...')
+            print(f'[Plot][DBSCAN_Segment] Start segmenting class {k} Please wait...')
             vect = seg_in[k].cluster_dbscan(eps=eps, min_points=min_points, print_progress=True)
             vect_np = np.asarray(vect)
             seg_id = np.unique(vect_np)
 
-            print(f'\n[Pnt][Plot][DBSCAN_Segment] Class {k} Segmented to {len(seg_id)} parts')
+            print(f'\n[Plot][DBSCAN_Segment] Class {k} Segmented to {len(seg_id)} parts')
             pcd_seg_list = []
             pcd_seg_num = []
             for i, seg in enumerate(seg_id):
@@ -469,7 +469,7 @@ class Plot(object):
             for pcd_seg in split_in[k]:
                 char = np.asarray([len(pcd_seg.points) ** 0.5, calculate_xyz_volume(pcd_seg)])
                 characters = np.vstack([characters, char])
-            print(f'[Pnt][Plot][KMeans] class {k} Cluster Data Prepared')
+            print(f'[Plot][KMeans] class {k} Cluster Data Prepared')
 
             # cluster by (points number, and volumn) to remove noise segmenation
             km = KMeans(n_clusters=2)
@@ -507,7 +507,7 @@ class Plot(object):
             # e.g. points_num = [1, 3, 4, 5, 2, 7, 9]
             sorted_id = sorted(range(len(points_num)), key=lambda ke: points_num[ke], reverse=True)
             # will get return of [6, 5, 3, 2, 1, 4, 0]
-            print(f'[Pnt][Plot][Rank] rank of index {sorted_id}, will keep '
+            print(f'[Plot][Rank] rank of index {sorted_id}, will keep '
                   f'{[points_num[plant_id] for plant_id in sorted_id[0:keep_num]]}')
 
             split_out[k] = [split_in[k][plant_id] for plant_id in sorted_id[0:keep_num]]
@@ -564,7 +564,7 @@ class Plot(object):
                 if self.write_ply:
                     o3d.io.write_point_cloud(file_path, pcd)
                     if i < 5 or i > len(save_in[k])-5:
-                        print(f'[Pnt][Plot][Save_Seg] writing file "{file_path}"')
+                        print(f'[Plot][Save_Seg] writing file "{file_path}"')
 
             # draw images
             if img_folder == '.':
@@ -575,7 +575,7 @@ class Plot(object):
             draw_plot_seg_results(save_in[k], pcd_id,
                                   title=f'{self.ply_name}-class[{k}] ({len(save_in[k])} segments)',
                                   savepath=savepath, size=(len_xyz[0], len_xyz[1]), show_id=show_id)
-            print(f'[Pnt][Plot][Save_Seg] writing image to "{savepath}"')
+            print(f'[Plot][Save_Seg] writing image to "{savepath}"')
 
     def shp_segment(self, shp_dir, correct_coord=None, rename=True):
         seg_out = {}
@@ -595,7 +595,7 @@ class Plot(object):
             seg_out[k] = []
             seg_out_name[k] = []
 
-            print(f'[Pnt][Plot][AutoSegment][Clustering] class {k} Cluster Data Prepared')
+            print(f'[Plot][AutoSegment][Clustering] class {k} Cluster Data Prepared')
             for plot_key in shp_seg.keys():
                 # can use pcd_tools.build_cut_boundary()
                 boundary = o3d.visualization.SelectionPolygonVolume()
@@ -613,7 +613,7 @@ class Plot(object):
                 seg_out_name[k].append(file_name)
 
                 if self.write_ply:
-                    print(f'[Pnt][Plot][AutoSegment][Output] writing file "{file_path}"')
+                    print(f'[Plot][AutoSegment][Output] writing file "{file_path}"')
                     o3d.io.write_point_cloud(file_path, roi)
 
         self.segmented = True
@@ -636,7 +636,7 @@ class Plot(object):
 
         for k in traits_in.keys():
             number = len(traits_in[k])
-            print(f'[Pnt][Plot][get_traits] total number of kind {k} is {number}')
+            print(f'[Plot][get_traits] total number of kind {k} is {number}')
             for i, seg in enumerate(traits_in[k]):
                 plant = Plant(pcd_input=seg, indices=i, ground_pcd=self.pcd_classified[-1],
                               container_ht=container_ht, ground_ht=ground_ht)
@@ -665,7 +665,7 @@ class Plot(object):
                 out_dict['hull3d_volume(m3)'].append(plant.hull3d_volume)
 
         out_pd = pd.DataFrame(out_dict)
-        print(f'[Pnt][Plot][get_traits] preview of traits of first 5 of {len(out_pd)} records:')
+        print(f'[Plot][get_traits] preview of traits of first 5 of {len(out_pd)} records:')
         print(out_pd.head())
 
         return out_pd
@@ -692,9 +692,9 @@ class Plant(object):
         # clip the background
         if cut_bg:
             self.clip_background()
-            # print(f'[Pnt][Plant][clip_background] finished for No. {indices}')
+            # print(f'[Plant][clip_background] finished for No. {indices}')
 
-        print(f'[Pnt][Plant][Traits] No. {indices} Calculating')
+        print(f'[Plant][Traits] No. {indices} Calculating')
         # calculate the convex hull 2d
         self.plane_hull, self.hull_area = get_convex_hull(self.pcd, dim='2d')  # vertex_set (2D ndarray), m^2
 
