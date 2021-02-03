@@ -15,5 +15,6 @@ easydcp/docs/build/*
 easydcp/example/csv*
 easydcp/example/out*
 *.png
+!docs/*.png
 *.jpg
 easydcp/creation/dev
