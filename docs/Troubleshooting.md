@@ -20,10 +20,10 @@ Details: No license for product (-1)`
 
 ---
 
-**TODO: wheels support. delete or implement?**
+**~~TODO: wheels support. delete or implement?**~~
 
-- https://www.agisoft.com/forum/index.php?topic=12092.0
-- https://www.agisoft.com/forum/index.php?topic=10647.0
+- ~~https://www.agisoft.com/forum/index.php?topic=12092.0~~
+- ~~https://www.agisoft.com/forum/index.php?topic=10647.0~~
 
 >>> `agisoft_LICENSE = agisoft_LICENSE = 'C:\Program Files\Agisoft\Metashape Pro'`
 >>> `agisoft_LICENSE`
@@ -34,23 +34,25 @@ Details: No license for product (-1)`
 >>
 >>
 
-copied metashape.lic to python directory 
+~~copied metashape.lic to python directory~~ 
 
-C:\Users\Alex\.conda\envs\easydcp37\Lib\site-packages\Metashape
+~~C:\Users\Alex\.conda\envs\easydcp37\Lib\site-packages\Metashape~~
 
-Metashape.app.activated still `False`.
+~~Metashape.app.activated still `False`.~~
 
-**This should also solve the issue with running from .whl!**
+~~**This should also solve the issue with running from .whl!**~~
 
-"You can try Agisoft Metashape software either in demo mode (export and save functions are blocked) or test it in full function mode with 30-day trial license for free."
+~~"You can try Agisoft Metashape software either in demo mode (export and save functions are blocked) or test it in full function mode with 30-day trial license for free."~~
 
-https://www.agisoft.com/downloads/request-trial/
+~~https://www.agisoft.com/downloads/request-trial/~~
 
 ---
 
 `OSError: Document.save(): saving is disabled`
 
-Same as above. Issue is caused by running Metashape in DEMO mode. Get trial Metashape Professional license and activate.
+**Cause:** running Metashape in demo mode. 
+
+**Solution:** Get trial Metashape Professional license and activate. (See above)
 
 ---
 
