@@ -1,19 +1,3 @@
-## ~~Functions~~
-
-~~**EasyDCP Point cloud creation**~~
-
-* [ ] ~~Auto match key points~~
-* [ ] ~~Auto point cloud generation~~
-* [ ] ~~Auto point cloud export to .ply~~
-* [ ] ~~Batch processing~~
-
-~~**EasyDCP Point cloud analysis**~~
-
-* [ ] ~~Decision tree classifier for plant pixel classification~~
-* [ ] ~~Cluster algorithm for individual plant segmentation~~
-* [ ] ~~Plant width, length, and height calculation~~
-* [ ] ~~Plant projected leaf area calculation~~
-
 # Installation
 
 ## Requirements
@@ -69,14 +53,8 @@ pip install easydcp
 
    - Note: EasyDCP currently supports metashape.exe control via python script. ~~In future, will update to use python Wheels package: https://pip.pypa.io/en/latest/user_guide/#installing-from-wheels~~
 
-4. **Move to Using EasyDCP_Analysis?** Before the line containing `import easydcp` in your code, you need to write the following code in front: *(see `example/analysis.py` for example)* **or batch.py?!**
+4. EasyDCP is now ready to use. See other docs: 0_Image_acquisition, 1_EasyDCP_Creation, and 2_EasyDCP_Analysis for how to use EasyDCP.
 
-   ```python
-   import __init__
-   import easydcp as dcp
-   ```
-
-5. See tutorial.md for how to use EasyDCP.
 
 ## Installation Errors
 

@@ -10,7 +10,7 @@ Photos from image acquisition step, organized into folders by group as described
 
 1. Edit params.ini user-defined variables:
    - Open `easydcp\creation\params.ini` in text editor 
-   - set all parameters as desired, defaults are set, and each parameter is explained in the comments, e.g.:
+   - set all parameters as desired, defaults are set, and each parameter is explained in the code comments, e.g.:
      - set `align_quality` and `dense_quality`, default medium
      - change`path_folders`to the path containing the folders of images
      - e.g. if `c:\images_root\imageset_1\img_001.jpg...`, `path_folders = c:\images_root`

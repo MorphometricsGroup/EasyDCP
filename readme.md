@@ -28,3 +28,18 @@ Example scripts are provided in the [example](https://github.com/oceam/EasyDCP/t
 
 **TODO: delete or finish/integrate** [API.md](https://github.com/oceam/EasyDCP/blob/master/docs/API.md)
 
+## ~~Functions~~
+
+~~**EasyDCP Point cloud creation**~~
+
+* [ ] ~~Auto match key points~~
+* [ ] ~~Auto point cloud generation~~
+* [ ] ~~Auto point cloud export to .ply~~
+* [ ] ~~Batch processing~~
+
+~~**EasyDCP Point cloud analysis**~~
+
+* [ ] ~~Decision tree classifier for plant pixel classification~~
+* [ ] ~~Cluster algorithm for individual plant segmentation~~
+* [ ] ~~Plant width, length, and height calculation~~
+* [ ] ~~Plant projected leaf area calculation~~

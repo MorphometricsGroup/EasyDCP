@@ -37,6 +37,13 @@ Configure EasyDCP before launching:
 
 - Ensure your .py script points to correct training data and point cloud folder. *Ensure `container_ht` is correctly set.* 
 
+- Before the line containing `import easydcp` in your code, you need to write the following code in front: *(see `example/analysis.py` for example)* **or batch.py?!**
+
+  ```python
+  import __init__
+  import easydcp as dcp
+  ```
+
 - Default `eps_points = 10`. Higher value may be used if segmentation fails, such as one plant being wrongly divided in two segments. Recommend trying 13. Higher `eps_points` value may dramatically increase CPU processing time. 
 
 **Execute your.py file using python , using 3Dphenotyping root folder as working directory:**
