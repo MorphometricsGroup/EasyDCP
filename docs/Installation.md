@@ -14,7 +14,7 @@
 * [ ] ~~Plant width, length, and height calculation~~
 * [ ] ~~Plant projected leaf area calculation~~
 
-# Getting Started
+# Installation
 
 ## Requirements
 

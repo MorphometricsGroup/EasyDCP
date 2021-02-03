@@ -1,5 +1,7 @@
 ## EasyDCP (Easy Dense Cloud Phenotyping)
 
+<img src="docs/flow.png" style="zoom:33%;" />
+
 A python package for agricultural phenotypic trait extraction from 2D image sets via 3D reconstruction and analysis of 3D point clouds.
 This script handles multiple sets of images taken in the same environment, such as timescale photos of a plot or several groups of plants photographed in the same place.
 EasyDCP consists of two components:

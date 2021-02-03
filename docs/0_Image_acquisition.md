@@ -1,10 +1,4 @@
-**See heading.md for installation instructions.**
-
-Overview of EasyDCP workflow:
-
-# <img src="flow.png" style="zoom:33%;" />
-
-## Image acquisition
+# Image acquisition
 
 Materials : 
 
