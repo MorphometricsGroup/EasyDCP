@@ -20,10 +20,11 @@ Details are provided in our paper:
 
 **Feldman, A., Wang, H., Fukano, Y., Kato, Y., Ninomiya, S., & Guo, W. (2021). EasyDCP: an affordable, high-throughput tool to measure plant phenotypic traits in 3D.** Manuscript submitted for publication.
 
-Please see the [docs](https://github.com/UTokyo-FieldPhenomics-Lab/EasyDCP/tree/master/docs) folder containing instructions for [installation](https://github.com/oceam/EasyDCP/blob/master/docs/Installation.md), [troubleshooting](https://github.com/oceam/EasyDCP/blob/master/docs/Troubleshooting.md), [image acquisition](https://github.com/oceam/EasyDCP/blob/master/docs/0_Image_acquisition.md), and operation of [EasyDCP_Creation](https://github.com/oceam/EasyDCP/blob/master/docs/1_EasyDCP_Creation.md) and [EasyDCP_Analysis](https://github.com/oceam/EasyDCP/blob/master/docs/2_EasyDCP_Analysis.md).
+Please see the [docs](https://github.com/oceam/EasyDCP/tree/master/docs) folder containing instructions for [installation](https://github.com/oceam/EasyDCP/blob/master/docs/Installation.md), [troubleshooting](https://github.com/oceam/EasyDCP/blob/master/docs/Troubleshooting.md), [image acquisition](https://github.com/oceam/EasyDCP/blob/master/docs/0_Image_acquisition.md), and operation of [EasyDCP_Creation](https://github.com/oceam/EasyDCP/blob/master/docs/1_EasyDCP_Creation.md) and [EasyDCP_Analysis](https://github.com/oceam/EasyDCP/blob/master/docs/2_EasyDCP_Analysis.md).
 
-Example scripts are provided in the [example](https://github.com/UTokyo-FieldPhenomics-Lab/EasyDCP/tree/master/example) folder. 
+Example scripts are provided in the [example](https://github.com/oceam/EasyDCP/tree/master/example) folder. 
 
-TODO: change 'oceam' to 'UTokyo-FieldPhenomics-Lab' in links.
+**TODO: change 'oceam' to 'UTokyo-FieldPhenomics-Lab' in links after finished and forked.**
 
-TODO: delete or finish/integrate [API.md](https://github.com/oceam/EasyDCP/blob/master/docs/API.md)
+**TODO: delete or finish/integrate** [API.md](https://github.com/oceam/EasyDCP/blob/master/docs/API.md)
+
