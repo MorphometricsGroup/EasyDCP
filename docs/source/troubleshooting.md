@@ -5,7 +5,9 @@
 ---
 
 `error - 'document saving disabled in read-only mode'`
-solution: delete 'lock' file in [project id].files folder, or delete project .psx and .files 
+
+**Cause:** Closing EasyDCP_Creation during execution. Metashape creates a 'lock' file within a project while it is open. The 'lock' file is automatically deleted by Metashape after saving and closing the project normally.
+**solution:** delete 'lock' file in [project id].files folder, or delete project .psx and .files. Re-run EasyDCP_Creation (creation.py) starting from the affected image set. **see Running EasyDCP on a subset of image sets TODO**
 
 ----
 
@@ -13,7 +15,12 @@ solution: delete 'lock' file in [project id].files folder, or delete project .ps
 No license found.
 Details: No license for product (-1)`
 
-**Solution:** Request 30-day trial code and activate. Demo mode will NOT work.
+**Cause:** cause: trying to use demo version of Metashape
+**Solution:** Request 30-day trial code for Metashape Professional at https://www.agisoft.com/downloads/request-trial/ and activate Metashape. 
+
+---
+
+**TODO: wheels support. delete or implement?**
 
 - https://www.agisoft.com/forum/index.php?topic=12092.0
 - https://www.agisoft.com/forum/index.php?topic=10647.0
@@ -39,13 +46,17 @@ Metashape.app.activated still `False`.
 
 https://www.agisoft.com/downloads/request-trial/
 
+---
+
 `OSError: Document.save(): saving is disabled`
 
-Same as above. Issue is caused by running Metashape in DEMO mode. Get trial license and activate.
+Same as above. Issue is caused by running Metashape in DEMO mode. Get trial Metashape Professional license and activate.
 
 ---
 
 ## EasyDCP_Analysis
+
+---
 
 `MemoryError: bad allocation`
 
@@ -54,8 +65,6 @@ Same as above. Issue is caused by running Metashape in DEMO mode. Get trial lice
 **Solution**: set `detect_noncoded_target = False
 
 ---
-
-EasyDCP_Analysis
 
 `(easydcp) C:\Users\Alex\Documents\GitHub\3Dphenotyping\easydcp>python example/alex_batch3.py
 [__init__]Append "C:\Users\Alex\Documents\GitHub\3Dphenotyping\easydcp" to system.path
@@ -77,8 +86,6 @@ caused by plot_out folder not existing in location where easydcp is being run
 **Todo**: Implement create folder if not exist functionality
 
 ---
-
-EasyDCP_Analysis
 
 `[Plant][Traits] No. 0 Calculating
 Traceback (most recent call last):
@@ -104,10 +111,12 @@ updated requirements.txt
 
 # Data analysis
 
+---
+
 Opening output .csv in Excel:
 
 "[filename.csv] cannot be accessed. The file may be corrupted, located on a server that is not responding, or read-only"
 
 Cause: Filename is too long
 
-Solution: Rename the file to a shorter name.
+Solution: Rename the .csv file to a shorter name.

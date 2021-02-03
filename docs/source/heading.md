@@ -1,37 +1,28 @@
-# About EasyDCP
-A python package for agricultural phenotype traits extraction from 3D point clouds.
+## ~~Functions~~
 
-## Core features
+~~**EasyDCP Point cloud creation**~~
 
-An auto python script for high throughput phenotype traits extraction of common container plants from 2D image sets via 3D reconstruction and measurement of 3D point clouds.
-This script handles multiple sets of images taken in same environment, e.g. timescale photos of a plot or many plants photographed in the same place in several groups.
+* [ ] ~~Auto match key points~~
+* [ ] ~~Auto point cloud generation~~
+* [ ] ~~Auto point cloud export to .ply~~
+* [ ] ~~Batch processing~~
 
-- Measure plant height, long and short axis, projected leaf area
-- Batch processing multiple image sets
+~~**EasyDCP Point cloud analysis**~~
 
-## Functions
-
-**EasyDCP Point cloud creation**
-
-* [ ] Auto match key points
-* [ ] Auto point cloud generation
-* [ ] Auto point cloud export to .ply
-* [ ] Batch processing
-
-**EasyDCP Point cloud analysis**
-
-* [ ] Decision tree classifier for plant pixel classification
-* [ ] Cluster algorithm for individual plant segmentation
-* [ ] Plant width, length, and height calculation
-* [ ] Plant projected leaf area calculation
+* [ ] ~~Decision tree classifier for plant pixel classification~~
+* [ ] ~~Cluster algorithm for individual plant segmentation~~
+* [ ] ~~Plant width, length, and height calculation~~
+* [ ] ~~Plant projected leaf area calculation~~
 
 # Getting Started
 
 ## Requirements
 
-16GB RAM minimum, 32+GB recommended. 8GB may be usable depending on the case.
+32+ GB RAM recommended. As low as 8 GB may be usable depending on the case.
 
-Agisoft Metashape Professional 1.6.5
+Agisoft Metashape Professional 1.6.~~5~~**6!** (30-day trial license available)
+
+​	https://www.agisoft.com/downloads/request-trial/
 
 ​	https://www.agisoft.com/downloads/installer/
 
@@ -41,9 +32,11 @@ Python 3.7 environment (Anaconda, etc)
 
 ​	https://www.anaconda.com/products/individual#Downloads
 
-CloudCompare (optional, recommended)
+## Recommendations
 
-​	http://www.danielgm.net/cc/release/
+One or more dedicated GPU (GeForce, Radeon, etc.)
+
+[CloudCompare](http://www.danielgm.net/cc/release/) for viewing .ply files
 
 ## ~~Installing from PyPI [currently not supported]~~
 
@@ -55,14 +48,13 @@ pip install easydcp
 
 ## Installing from source code
 
-1. Windows: Clone 3dphenotyping folder to `%USERPROFILE%\Documents\Github`~~to any path, e.g. `D:\Program\3dphenotyping`~~
-2. Mac/Linux: Currently not tested, clone to default Github folder similar to above.
+1. Clone or download the EasyDCP repository to any path on your PC.
 
-2. Open your python 3.7 environment (recommend creating new environment using Anaconda or similar) or python IDE, install the `requirements.txt` in **Administrator permission** by:
+2. Open your python 3.7 environment (we recommend creating new environment using Anaconda or similar) or python IDE, install the `requirements.txt` in **Administrator permission** by:
 
    `(YourEnv) D:\Program\3dphenotyping\> pip install -r requirements.txt`
 
-   **Note**: For **China Mainland** user, some packages via pip may be very slow, and may get HTTP network error:
+   **Note**: For **China Mainland** users, some packages via pip may be very slow, and may get HTTP network error:
 
    ```bash
        raise ReadTimeoutError(self._pool, None, "Read timed out.")
@@ -75,54 +67,18 @@ pip install easydcp
 
 3. Ensure Agisoft Metashape Professional is installed and activated using 30-day trial or paid license. 
 
-   - Note: EasyDCP currently supports metashape.exe control via python script. In future, will update to use python Wheels package: https://pip.pypa.io/en/latest/user_guide/#installing-from-wheels
+   - Note: EasyDCP currently supports metashape.exe control via python script. ~~In future, will update to use python Wheels package: https://pip.pypa.io/en/latest/user_guide/#installing-from-wheels~~
 
-4. Before the line containing `import easydcp` in your code, you need to write the following code in front: *(see `example/batch.py` for example)* 
+4. **Move to Using EasyDCP_Analysis?** Before the line containing `import easydcp` in your code, you need to write the following code in front: *(see `example/analysis.py` for example)* **or batch.py?!**
 
    ```python
    import __init__
    import easydcp as dcp
    ```
 
-   No longer needed: (replaced by `__init__`)
-
-   ```python
-   import sys
-   sys.path.insert(0, r'D:/Program/')  # not Program/easydcp full path
-   # then you can import easydcp for use
-   import easydcp as dcp
-   ```
-
 5. See tutorial.md for how to use EasyDCP.
 
 ## Installation Errors
-
-### Shapely
-
-Please note, if meet `shapely` errors on windows platform (**solved in shapely >= 1.7.0**):
-
-```bash
-Collecting Shapely
-  Using cached Shapely-1.5.17.tar.gz
-    Complete output from command python setup.py egg_info:
-    Traceback (most recent call last):
-      File "<string>", line 1, in <module>
-      File "C:\Users\AppData\Local\Temp\pip-build-mwuxcain\Shapely\setup.py", line 38, in <module>
-        from shapely._buildcfg import geos_version_string, geos_version, \
-      File "C:\Users\AppData\Local\Temp\pip-build-mwuxcain\Shapely\shapely\_buildcfg.py", line 200, in <module>
-        lgeos = CDLL("geos.dll")
-      File "C:\Users\Anaconda3\lib\ctypes\__init__.py", line 344, in __init__
-        self._handle = _dlopen(self._name, mode)
-    OSError: [WinError 126] The specified module could not be found
-    ----------------------------------------
-Command "python setup.py egg_info" failed with error code 1 in C:\Users\
-```
-
-please download shapely wheel from [http://www.lfd.uci.edu/~gohlke/pythonlibs/#shapely](http://www.lfd.uci.edu/~gohlke/pythonlibs/#shapely) and then using command line to install (**or higher version**):
-
-```bash
-pip install "easydcp/wheels/Shapely-1.6.4.post2-cp36-cp36m-win_amd64.whl"
-```
 
 ### Open3d import errors
 
