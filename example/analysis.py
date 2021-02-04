@@ -10,14 +10,15 @@ cla = dcp.Classifier(path_list=['training_data/02/fore_rm_r.png',
 plot_set = ['SP1G2.ply','SP4G1.ply'] #ply files must be in working directory
 # empty list for batch processing
 result_container = []
+num_plants = 0
 
 for plot in plot_set:
-    plot_class = dcp.Plot(plot, cla, write_ply=True, unit='m', down_sample=True) # show_steps=True to display output among calculation to check correct or not
+    plot_class = dcp.Plot(plot, cla, write_ply=True, unit='m', down_sample=False) # show_steps=True to display output among calculation to check correct or not
     # ---------- auto_segment() --------------
     plot_class.pcd_classified = plot_class.remove_noise()
-    eps, min_points = plot_class.auto_dbscan_args(eps_grids=13, divide=100)
+    eps, min_points = plot_class.auto_dbscan_args(eps_grids=10, divide=100)
     seg = plot_class.dbscan_segment(eps=eps, min_points=min_points)
-    if len(seg[0]) > 3:
+    if len(seg[0]) > num_plants:
         split = plot_class.kmeans_split()
     reset_id = plot_class.sort_order(name_by='x', ascending=True)
     plot_class.save_segment_result(img_folder='plot_out')
