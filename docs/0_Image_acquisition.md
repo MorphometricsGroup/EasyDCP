@@ -54,3 +54,5 @@ population001
     ├── orientation.ini
     └── [other files/folders to ignore]
 ```
+
+8. Proceed to [EasyDCP_Creation](1_EasyDCP_Creation.md).

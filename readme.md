@@ -24,7 +24,7 @@ Please see the [docs](https://github.com/oceam/EasyDCP/tree/master/docs) folder 
 
 Example scripts are provided in the [example](https://github.com/oceam/EasyDCP/tree/master/example) folder. 
 
-**TODO: change 'oceam' to 'UTokyo-FieldPhenomics-Lab' in links after finished and forked.**
+**TODO: change all links to local links**
 
 **TODO: delete or finish/integrate** [API.md](https://github.com/oceam/EasyDCP/blob/master/docs/API.md)
 

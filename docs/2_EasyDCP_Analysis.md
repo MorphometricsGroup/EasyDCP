@@ -48,26 +48,30 @@ Configure EasyDCP before launching:
 
   - `percentile` located in `base.py, def get_percentile_height():`
     - default `98`. This value may be adjusted depending on the quality of the point cloud.
+      - `98` should give a near-maximum plant height in most cases. For a measurement closer to the maximum plant height (heighest plant point), increase to `99`, `99.5`, etc. Note: A lower-quality point cloud (e.g., produced from an image set with low overlap or resolution, or low settings used by EasyDCP_Creation) may contain some noise points above the true plant top and could cause overestimation bias. Values such as `99.9` are only recommended when point cloud quality is high.
   - Default `eps_points = 10`. Higher value may be used if segmentation fails, such as one plant being wrongly divided in two segments. Recommend trying 13. Higher `eps_points` value may dramatically increase CPU processing time. 
 
-**Execute your.py file using python , using 3Dphenotyping root folder as working directory:**
+**Execute your.py file using python , using EasyDCP root folder as working directory:**
 
 `(easydcp37) C:\Users\Alex\Documents\GitHub\3Dphenotyping>python example\example.py`
 
-Output will be created in working directory. A folder will be created for each .ply file processed by EasyDCP. It contains several .ply files for classification and segmentation steps. Also, a .png file is output per each 'plant' output by segmentation step. The .png file contains phenotypic traits:
+**TODO: change `example` to `scripts`?**
 
-- Ellipse long and short axis
-- Plant height, absolute or percentile (average of points above 90th percentile)
+Output will be created in working directory. A folder will be created for each .ply file processed by EasyDCP. It contains several .ply files for classification and segmentation steps. Also, a .png file is output per each 'plant' output by segmentation step. The .png file contains individual phenotypic traits at a glance:
+
+- Plant height, percentile-based (average of points above `percentile` parameter, default 98)
 - Projected leaf area
+- Ellipse long and short axis
+- Convex hull volume
 - etc.
 
-Finally, a .csv file is created in /data_out/ containing per-plant traits and metadata. This file can be read as is, or imported into R for analysis. **Include sample R file?**
+Finally, a .csv file is created in **/data_out/ TODO - variable?** containing per-plant traits and metadata. This file can be read as is, or imported into R or other software for analysis.
 
 ## ~~Data visualization [not necessary?]~~
 
 ~~Materials:~~ 
 
-~~R~~
+~~R  **Include sample R file?**~~
 
 ~~RStudio~~
 
