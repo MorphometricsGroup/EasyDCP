@@ -12,7 +12,7 @@ Agisoft Metashape Professional 1.6.~~5~~**6!** (30-day trial license available)
 
 ​	https://www.agisoft.com/downloads/system-requirements/
 
-Python 3.7 environment (Anaconda, etc)
+Python 3.7+ environment (Anaconda, etc)
 
 ​	https://www.anaconda.com/products/individual#Downloads
 
@@ -34,7 +34,7 @@ pip install easydcp
 
 1. Clone or download the EasyDCP repository to any path on your PC.
 
-2. Open your python 3.7 environment (we recommend creating new environment using Anaconda or similar) or python IDE, install the `requirements.txt` in **Administrator permission** by:
+2. Open your python 3 environment (we recommend creating new environment using Anaconda or similar) or python IDE, install the `requirements.txt` in **Administrator permission** by:
 
    `(YourEnv) D:\Program\3dphenotyping\> pip install -r requirements.txt`
 

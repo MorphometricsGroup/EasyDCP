@@ -44,7 +44,11 @@ Configure EasyDCP before launching:
   import easydcp as dcp
   ```
 
-- Default `eps_points = 10`. Higher value may be used if segmentation fails, such as one plant being wrongly divided in two segments. Recommend trying 13. Higher `eps_points` value may dramatically increase CPU processing time. 
+- Parameters of note:
+
+  - `percentile` located in `base.py, def get_percentile_height():`
+    - default `98`. This value may be adjusted depending on the quality of the point cloud.
+  - Default `eps_points = 10`. Higher value may be used if segmentation fails, such as one plant being wrongly divided in two segments. Recommend trying 13. Higher `eps_points` value may dramatically increase CPU processing time. 
 
 **Execute your.py file using python , using 3Dphenotyping root folder as working directory:**
 

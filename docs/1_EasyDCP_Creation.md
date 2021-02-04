@@ -16,7 +16,7 @@ Photos from image acquisition step, organized into folders by group as described
      - e.g. if `c:\images_root\imageset_1\img_001.jpg...`, `path_folders = c:\images_root`
      - change `blur_threshold` to desired value. Pipeline will disable all images with Agisoft image quality below the `blur_threshold`.
      - set booleans e.g., `ignore_gps`, `align_ground`, and `use_scalebars ` as needed
-2. Ensure folder structure matches intended format
+2. Ensure folder structure matches intended format (see Image acquisition)
    - only folders in root folder (path_folders), no files in root
      - e.g. (`path_folders\images_1\img_001.jpg...`)
    - 'skip' folder contains scalebars.csv if needed 
