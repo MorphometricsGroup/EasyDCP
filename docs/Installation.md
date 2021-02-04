@@ -53,7 +53,7 @@ pip install easydcp
 
    - Note: EasyDCP currently supports metashape.exe control via python script. ~~In future, will update to use python Wheels package: https://pip.pypa.io/en/latest/user_guide/#installing-from-wheels~~
 
-4. EasyDCP is now ready to use. See other docs: 0_Image_acquisition, 1_EasyDCP_Creation, and 2_EasyDCP_Analysis for how to use EasyDCP.
+4. EasyDCP is now ready to use. See other docs: [Image acquisition](0_Image_acquisition.md), [EasyDCP Creation](1_EasyDCP_Creation.md), and [EasyDCP Analysis](2_EasyDCP_Analysis.md) for instructions.
 
 
 ## Installation Errors
@@ -70,5 +70,5 @@ ImportError: DLL load failed: The specified module could not be found.
 
 Please refer this link to solve this problem:https://github.com/intel-isl/Open3D/issues/979
 
-The author solve this by installing `Microsoft Visual C++ Redistributable for Visual Studio 2015, 2017 and 2019`  followed by previous link. Quick download links: https://support.microsoft.com/en-us/help/2977003/the-latest-supported-visual-c-downloads
+The author solved this by installing `Microsoft Visual C++ Redistributable for Visual Studio 2015, 2017 and 2019`  as suggested by previous link. Quick download link: https://support.microsoft.com/en-us/help/2977003/the-latest-supported-visual-c-downloads
 

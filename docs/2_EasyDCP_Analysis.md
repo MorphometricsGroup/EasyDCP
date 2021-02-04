@@ -31,9 +31,21 @@ Materials:
 - Folder containing .ply point cloud files output by previous step, EasyDCP_Creation
 - training data created in previous step "(a) Setup"
 
-Control EasyDCP via API using python script in your python 3.7 environment as described in Installation documentation (heading.md). Several .py files are provided in /example/ as examples of simple scripts to control EasyDCP. See documentation (api.md) for details on controlling EasyDCP via python.
+Control EasyDCP_Analysis via API using python script in your python 3.7 environment as described in Installation documentation (heading.md). Several .py files are provided in `/example/` as example scripts to control EasyDCP. ~~See documentation (api.md) for details on controlling EasyDCP via python.~~ Most users should be able to run `analysis.py` with very little modification.
 
-Configure EasyDCP before launching:
+Key EasyDCP functions:
+
+`easydcp.Classifier()` - Run classification function using training data
+`easydcp.Plot()` - Create a `Plot` object using input .ply file.
+`easydcp.Plot.remove_noise()` - Filter out noise points on `Plot` object.
+`easydcp.Plot.dbscan_segment()` - Run segmentation using `DBSCAN` algorithm.
+`easydcp.Plot.kmeans_split()` - Separate plant point clouds and noise point clouds by point number. 
+`easydcp.Plot.rank_split()` - Alternative to `kmeans_split`. Discard noise point clouds by passing known plant number as a parameter.
+`easydcp.Plot.sort_order()`- Sort Plant ID in order of increasing x-axis of plant center. Needed when using `dbscan_segment` or `kmeans_split`.
+`easydcp.Plot.xaxis_segment()` - Alternative to `dbscan_segment`. Segment the `Plot` object into plants by passing the number of segments (plants) as a parameter. This function assumes plants are of approximately equal size and evenly spaced.
+`easydcp.Plot.get_traits()` - Calculate traits for all segments (plants) within the `Plot` object.
+
+Configure EasyDCP_Analysis before launching:
 
 - Ensure your .py script points to correct training data and point cloud folder. *Ensure `container_ht` is correctly set.* 
 
@@ -46,20 +58,20 @@ Configure EasyDCP before launching:
 
 - Parameters of note:
 
-  - `percentile` located in `base.py, def get_percentile_height():`
+  - `percentile` located in `base.py, class Plant(object), def get_percentile_height():`
     - default `98`. This value may be adjusted depending on the quality of the point cloud.
-      - `98` should give a near-maximum plant height in most cases. For a measurement closer to the maximum plant height (heighest plant point), increase to `99`, `99.5`, etc. Note: A lower-quality point cloud (e.g., produced from an image set with low overlap or resolution, or low settings used by EasyDCP_Creation) may contain some noise points above the true plant top and could cause overestimation bias. Values such as `99.9` are only recommended when point cloud quality is high.
-  - Default `eps_points = 10`. Higher value may be used if segmentation fails, such as one plant being wrongly divided in two segments. Recommend trying 13. Higher `eps_points` value may dramatically increase CPU processing time. 
+      - `98` should give a near-maximum plant height in most cases. For a measurement closer to the maximum plant height (highest plant point), increase to `99`, `99.5`, etc. Note: A lower-quality point cloud (e.g., produced from an image set with low overlap or resolution, or low settings used by EasyDCP_Creation) may contain some noise points above the true plant top and could cause overestimation bias. Values such as `99.9` are only recommended when point cloud quality is high.
+  - Default `eps_points = 10`. Higher value may be used if segmentation fails, such as one plant being wrongly divided in two segments. In such case, we recommend trying `12`,`13`,`14`. Higher `eps_points` value will increase processing time significantly. 
 
 **Execute your.py file using python , using EasyDCP root folder as working directory:**
 
-`(easydcp37) C:\Users\Alex\Documents\GitHub\3Dphenotyping>python example\example.py`
+`(easydcp37) C:\Users\Alex\Documents\GitHub\EasyDCP>python example\example.py`
 
 **TODO: change `example` to `scripts`?**
 
 Output will be created in working directory. A folder will be created for each .ply file processed by EasyDCP. It contains several .ply files for classification and segmentation steps. Also, a .png file is output per each 'plant' output by segmentation step. The .png file contains individual phenotypic traits at a glance:
 
-- Plant height, percentile-based (average of points above `percentile` parameter, default 98)
+- Plant height, percentile-based (average height of points above `percentile` parameter, default 98)
 - Projected leaf area
 - Ellipse long and short axis
 - Convex hull volume

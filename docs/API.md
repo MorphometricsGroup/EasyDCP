@@ -1,5 +1,7 @@
 A wrapper for quick use
 
+**TODO: Complete or deprecate**. For now, most important functions and parameters are described in [EasyDCP_Analysis](2_EasyDCP_Analysis.md).
+
 **Classes**
 
 | name         | Description |
