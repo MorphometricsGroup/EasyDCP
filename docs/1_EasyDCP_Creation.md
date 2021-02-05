@@ -9,13 +9,13 @@ Agisoft Metashape Professional 1.6.6 with activated trial license, or paid licen
 CloudCompare (optional) for viewing output .ply files.
 
 1. Edit user-defined variables in `easydcp\creation\params.ini` using text editor
-   - Set `path_folders`to the path containing the folders of images
-     - e.g. if `c:\population001\group001\img_001.jpg...`, `path_folders = c:\population001`
+   - Set `root_folder`to the path containing the folders of images. Include a trailing `\`!
+     - e.g. if `c:\population001\group001\img_001.jpg...`, `root_folder = c:\population001\`
    - Set other parameters as needed. Defaults are set, and each parameter is explained with a code comment.
 - `params.ini` must be located in `easydcp\creation`!
-   
+  
 2. Ensure folder structure matches intended format (see step 4 of [Image acquisition](0_Image_acquisition.md))
-   - Ensure the only items in the `path_folders` folder are the image set folders and `\skip\`. Any other files or folders in the `path_folders` folder may cause an error.
+   - Ensure the only items in the `root_folder` folder are the image set folders and `\skip\`. Any other files or folders in the `root_folder` folder may cause an error.
    - `\skip\` must contain `scalebars.csv` and `orientation.ini`
 
 4. Run `creation-win.bat` or `creation-mac.sh`

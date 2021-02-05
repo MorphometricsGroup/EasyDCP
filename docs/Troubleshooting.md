@@ -39,15 +39,27 @@ Details: No license for product (-1)`
 
 ---
 
+```
+file_list = os.listdir(path_photos)
+
+FileNotFoundError: [WinError 3] The system cannot find the path specified:
+```
+
+Cause: `root_folder` variable in `params.ini` does not have a `\` at the end
+
+Solution: Add `\` to the end of the `root_folder` folder path
+
+---
+
 ## EasyDCP_Analysis
 
 ---
 
 `ModuleNotFoundError: No module named 'easydcp'`
 
-**Cause**: `import __init__.py` is missing. 
+**Cause**: `import __init__.py` is missing from python script. 
 
-**Solution**: Add `import __init__.py` before `import easydcp`.
+**Solution**: Add line: `import __init__.py` before `import easydcp`.
 
 ---
 
@@ -56,6 +68,14 @@ Details: No license for product (-1)`
 **Cause**: `eps_points` is too high
 
 **Solution**: Reduce `eps_points` value.
+
+---
+
+**Issue**: Plant segmentation incorrectly separates one plant into two segments
+
+**Cause**: Distance between points is high
+
+**Solution**: Increase `eps_points` parameter in `dbscan_segment()` function of `analysis.py`
 
 ---
 
@@ -70,3 +90,7 @@ Opening output .csv in Excel:
 **Cause**: Filename or path is too long
 
 **Solution**: Rename the .csv file to a shorter name, or move to a folder with a shorter path.
+
+```
+
+```
