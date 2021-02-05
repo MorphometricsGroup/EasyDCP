@@ -12,15 +12,16 @@ CloudCompare (optional) for viewing output .ply files.
    - Set `path_folders`to the path containing the folders of images
      - e.g. if `c:\population001\group001\img_001.jpg...`, `path_folders = c:\population001`
    - Set other parameters as needed. Defaults are set, and each parameter is explained with a code comment.
-
+- `params.ini` must be located in `easydcp\creation`!
+   
 2. Ensure folder structure matches intended format (see step 4 of [Image acquisition](0_Image_acquisition.md))
-   - Ensure the only items in the `path_folders` folder are the image set folders and `/skip/`. Any other files or folders in the `path_folders` folder may cause an error.
-   - `/skip/` must contain `scalebars.csv` and `orientation.ini`
+   - Ensure the only items in the `path_folders` folder are the image set folders and `\skip\`. Any other files or folders in the `path_folders` folder may cause an error.
+   - `\skip\` must contain `scalebars.csv` and `orientation.ini`
 
 4. Run `creation-win.bat` or `creation-mac.sh`
    - A terminal window will open showing output from EasyDCP_Creation and Metashape.
    - EasyDCP_Creation will work through each image set folder (imaged group of plants) and produce a 3D point cloud, outputted to .ply format.
-   - If you must close the terminal window (or an error occurs) while EasyDCP_Creation is running, there may be a `lock` file left in the last folder that was being processed. You must either delete the .lock file from within the `[groupID].files/` folder or delete the entire `[groupID].files` folder and `[groupID].psx` file.
+   - If you must close the terminal window (or an error occurs) while EasyDCP_Creation is running, there may be a `lock` file left in the last folder that was being processed. You must either delete the .lock file from within the `[groupID].files\` folder or delete the entire `[groupID].files\` folder and `[groupID].psx` file.
    
 5. Find output .psx and .ply files in each corresponding folder. Verify successful 3D reconstruction with Metashape and CloudCompare, respectively. 
    

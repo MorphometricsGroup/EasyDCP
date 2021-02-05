@@ -17,7 +17,7 @@ Known height of container (mm) or ground offset height.
 
 **Use GIMP to create training data:**
 
-See example fore.png and back.png in `/example/training_data/`.
+See example fore.png and back.png in `\example\training_data\`.
 
 1. Use Free Select Tool to select plant parts only - Use a representative sample. Maybe 3 different plants is enough to represent them all e.g. one light green, one dark green, different light conditions, etc.
 	* Deselect "Antialiasing" in Free Select settings pane
@@ -36,9 +36,9 @@ See example fore.png and back.png in `/example/training_data/`.
 - training data created in previous step: "(a) Setup"
 - Python script to control EasyDCP_Analysis package, `example/analysis.py` 
 
-Control EasyDCP_Analysis via API using python script in your python 3.7 environment as described in [Installation](Installation.md). 
+Control EasyDCP_Analysis via API using python script in your python 3 environment as described in [Installation](Installation.md). 
 
-We have provided `analysis.py` in `/example/` as a starter script to control EasyDCP_Analysis. **Most users should be able to run `analysis.py` with very little modification.** To do: Complete [API documentation](api.md) for details on controlling EasyDCP_Analysis via python.
+We have provided `analysis.py` in `\example\` as a starter script to control EasyDCP_Analysis. **Most users should be able to run `analysis.py` with very little modification.** To do: Complete [API documentation](api.md) for details on controlling EasyDCP_Analysis via python.
 
 ### Key functions:
 
@@ -78,11 +78,10 @@ We have provided `analysis.py` in `/example/` as a starter script to control Eas
 2. **Execute your .py script using python, with EasyDCP root folder as working directory:**
 	
 - Using Anaconda, open a terminal and navigate to your EasyDCP folder: `cd D:\Program\EasyDCP``
-   
+  
   `(easydcp37) D:\Program\EasyDCP>python example\analysis.py`
 	
 3. **Outputs will be saved in the EasyDCP directory.** 
-   
    - A folder will be created in the EasyDCP directory for each .ply file processed by EasyDCP. It  will contain several intermediary .ply files (output by the *classification*, *remove noise* and *segmentation* steps) and a .png file is for each `Plant` object measured by the *calculation* step. The .png file contains an image of the plant point cloud, and visualization of phenotypic traits.
    - A folder called `data_out` will be created in the EasyDCP directory. It will contain:
      - Segmentation results. Each input .ply file will have a corresponding .png image file, showing an overhead view of the plant points and their segmentation results. (See Figure 1)

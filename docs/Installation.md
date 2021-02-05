@@ -42,7 +42,7 @@ One or more dedicated GPU (GeForce, Radeon, etc.)
 
 3. Ensure Agisoft Metashape Professional is installed and activated using 30-day trial or paid license. 
 
-   - Note: EasyDCP currently supports metashape.exe control via python script. ~~In future, will update to use python Wheels package: https://pip.pypa.io/en/latest/user_guide/#installing-from-wheels~~
+   - Note: EasyDCP currently supports metashape.exe control via python script. In future, will update to use Metashape python wheels package for finer control.
 
 4. EasyDCP is now ready to use. See other docs: [Image acquisition](0_Image_acquisition.md), [EasyDCP Creation](1_EasyDCP_Creation.md), and [EasyDCP Analysis](2_EasyDCP_Analysis.md) for instructions.
 

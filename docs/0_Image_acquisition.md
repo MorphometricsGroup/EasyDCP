@@ -5,9 +5,9 @@
 - RGB camera, 8 MP resolution or higher
 - Container plants. Avoid using green-colored container.
   - Depending on user needs and python proficiency, it may be possible to measure objects other than container plants but that is not covered in the documentation.
-- Target pages: Print first 2 pages of `materials/targets.pdf`. Do not use two copies of page 1! Attach to clipboard or other rigid backing. Measure the distances between the center points of the coded targets and compare to `materials/scalebars.csv`. Correct the .csv file if needed.
+- Target pages: Print first 2 pages of `materials\targets.pdf`. Do not use two copies of page 1! Attach to clipboard or other rigid backing. Measure the distances between the center points of the coded targets and compare to `materials\scalebars.csv`. Correct the .csv file if needed.
 - Floor area minimum 1 m x 1 m, as level as possible.
-  - There is no maximum area, however if the area ie longer than 3 meters, consider using additional target pages.
+  - There is no maximum area, however if the area is longer than 3 meters, consider using additional target pages.
 - floor covering (black or other non-plant color) (optional)
 
 ### Considerations: 
@@ -39,7 +39,7 @@
 
 3. Repeat steps 4 and 5 for all remaining plants. We recommend to keep the number of plants per group constant if possible, and keep plant spacing uniform across groups. See figure 1a and 1b.
 
-4. Organize photos into folders by group. The root folder can be located anywhere on any drive. One folder per one group of plants. Even if there is only one group, follow this folder structure. Create a `/skip/` folder and copy `/materials/scalebars.csv` and `/materials/orientation.ini` to `/skip/`. One level of nested folders is also supported, which may be useful for separating images taken from different angles. 
+4. Organize photos into folders by group. The root folder can be located anywhere on any drive. One folder per one group of plants. Even if there is only one group, follow this folder structure. Create a `\skip\` folder and copy `\materials\scalebars.csv` and `\materials\orientation.ini` to `\skip\`. One level of nested folders is also supported, which may be useful for separating images taken from different angles. 
    
    Example: for a given population, assume 9 plants divided into 3 groups of 3 plants each:
 
