@@ -2,67 +2,62 @@
 # using scripts on Agisoft forums by Alexey Pasumansky
 # by Alex Feldman - UTokyo Field Phenomics Lab
 
-# updated 2020.12.7
+# updated 2021.02.04
 # compatibility Metashape Pro 1.6.5
 ## Incompatible Metashape Pro 1.5.x and below
-# compatible with one level of nested folders (see readme)
-'''#! files in folders root will break the script
+# compatible with one level of nested folders
+#! files in folders root will break the script
 #! Non-agisoft nested folder in photos folder will break script
- - Actually, it means any nested folder without '.' in the name will break the script'''
+#! - Actually, it means any nested folder without '.' in the name will break the script
 #! Metashape errors will break the script. 
-#>>TODO: Jump to next folder on error (catch exception)
-#>>TODO: write report to log file (failed folders, successful, etc)
-#>>todo: update export DEM/orthomosaic for 1.6 API [export disabled now]
+#>>!TODO: Jump to next folder on error (catch exception)
+#>>!TODO: write report to log file (failed folders, successful, etc)
+#>>!todo: update export DEM/orthomosaic for 1.6 API [export disabled now]
 
 # agisoft_LICENSE = 'C:\Program Files\Agisoft\Metashape Pro'
 import Metashape 
 import os, math, datetime 
 import configparser, json 
 
-<<<<<<< Updated upstream:easydcp/creation/creation.py
 banner1 = '\n[EasyDCP_Creation]'
-now = datetime.datetime.now()
-start_time = now
-=======
-banner1 = '\n[EasyPCP_Creation]'
 start_time = datetime.datetime.now()
->>>>>>> Stashed changes:easypcp/creation/creation.py
 print(banner1,'Started at',start_time)
 
 ##USER DEFINED VARIABLES
 
 config = configparser.ConfigParser()
-params_path = os.getcwd() + '/params.ini'
+params_path = os.getcwd() + '/alex_params-0618_v0825.ini'
 print ('loading parameters from:',params_path)
 config.read(params_path)
 
 path_folders = config['DEFAULT']['path_folders']
 project_filename = config['DEFAULT']['project_filename']
-select_nested = False #config['DEFAULT'].getboolean('select_nested') - hardcoded for now
-# nested_folders = config['DEFAULT']['nested_folders']
-# nested_folders = json.loads(config.get('DEFAULT','nested_folders'))
-ignore_gps_exif             = config['DEFAULT'].getboolean('ignore_gps_exif')
-disable_by_iq               = config['DEFAULT'].getboolean('disable_by_iq')
-iq_threshold              = config['DEFAULT'].getfloat('iq_threshold')
+config_section = 'DEFAULT'
+select_nested = False #config[config_section].getboolean('select_nested') - hardcoded for now
+# nested_folders = config[config_section]['nested_folders']
+# nested_folders = json.loads(config.get(config_section,'nested_folders'))
+ignore_gps_exif             = config[config_section].getboolean('ignore_gps_exif')
+disable_by_iq               = config[config_section].getboolean('disable_by_iq')
+iq_threshold                = config[config_section].getfloat('iq_threshold')
 
-align_times                 = config['DEFAULT'].getint('align_times')
-align_quality               = config['DEFAULT']['align_quality']
-align_preselection_mode     = config['DEFAULT']['align_preselection_mode']
-dense_quality               = config['DEFAULT']['dense_quality']
-detect_coded_targets        = config['DEFAULT'].getboolean('detect_coded_targets')
-target_tolerance            = config['DEFAULT'].getint('target_tolerance')
-detect_noncoded_targets     = config['DEFAULT'].getboolean('detect_noncoded_targets')
-noncoded_tolerance          = config['DEFAULT'].getint('noncoded_tolerance')
-crop_by_targets             = config['DEFAULT'].getboolean('crop_by_targets')
+align_times                 = config[config_section].getint('align_times')
+align_quality               = config[config_section]['align_quality']
+align_preselection_mode     = config[config_section]['align_preselection_mode']
+dense_quality               = config[config_section]['dense_quality']
+detect_coded_targets        = config[config_section].getboolean('detect_coded_targets')
+target_tolerance            = config[config_section].getint('target_tolerance')
+detect_noncoded_targets     = config[config_section].getboolean('detect_noncoded_targets')
+noncoded_tolerance          = config[config_section].getint('noncoded_tolerance')
+crop_by_targets             = config[config_section].getboolean('crop_by_targets')
 
-use_scalebars               = config['DEFAULT'].getboolean('use_scalebars')
-align_ground_with_targets   = config['DEFAULT'].getboolean('align_ground_with_targets')
+use_scalebars               = config[config_section].getboolean('use_scalebars')
+align_ground_with_targets   = config[config_section].getboolean('align_ground_with_targets')
 
-export_cloud                = config['DEFAULT'].getboolean('export_cloud')
-build_dem                   = config['DEFAULT'].getboolean('build_dem')
-build_ortho                 = config['DEFAULT'].getboolean('build_ortho')
+export_cloud                = config[config_section].getboolean('export_cloud')
+build_dem                   = config[config_section].getboolean('build_dem')
+build_ortho                 = config[config_section].getboolean('build_ortho')
 
-del config
+#del config
 
 # print('p',path_folders,type(path_folders))
 # print('n',nested_folders,type(nested_folders)) 
@@ -123,7 +118,7 @@ def get_marker(label, chunk):
 def append_by_type(filename, filepath):
     #print('~~~',filename)
     type = filename.rsplit(".",1)[-1].lower()
-    if type in  ["jpg", "jpeg", "png"]:#, "tif", "tiff"]: #! change 1 to -1 and test with folder in photos folder
+    if type in  ["jpg", "jpeg", "png"]:#, "tif", "tiff"]: 
         photo_list.append("/".join([filepath, filename]))
         
 def disable_below_threshold(threshold=0.4):
@@ -217,7 +212,7 @@ def align_cameras(reps=1, preselection_mode='generic'):
             chunk.matchPhotos(downscale=match_downscale, generic_preselection=False, reference_preselection=True, reference_preselection_mode=Metashape.ReferencePreselectionSequential, progress=progress_print)
         chunk.alignCameras(progress=progress_print)   
  
-def align_ground(path):
+def align_ground(path, section='DEFAULT'):
     print(banner1,'Aligning ground (XY) plane with coded targets...')
 
     region = chunk.region
@@ -229,10 +224,10 @@ def align_ground(path):
     config.read(path)
     # print(config.sections())
         
-    horiz0 = config['DEFAULT']['horiz0']
-    horiz1 = config['DEFAULT']['horiz1']
-    vert0 = config['DEFAULT']['vert0']
-    vert1 = config['DEFAULT']['vert1']
+    horiz0 = config[section]['horiz0']
+    horiz1 = config[section]['horiz1']
+    vert0 = config[section]['vert0']
+    vert1 = config[section]['vert1']
     
     del config
     
@@ -304,6 +299,8 @@ def update_boundbox_by_markers(path,chunk,section='DEFAULT'):
     config.read(path)
     p0 = config[section]['p0']
     p1 = config[section]['p1']
+    buffer = config[section].getint('buffer')
+    print(p0,p1,buffer)
     
     del config
     
@@ -364,8 +361,8 @@ def update_boundbox_by_markers(path,chunk,section='DEFAULT'):
 
     print('x',chunk.markers[c2].position[0],chunk.markers[c1].position[0])
     print('y',chunk.markers[c2].position[1],chunk.markers[c1].position[1])
-    box_X_length = math.fabs(chunk.markers[c2].position[0] - chunk.markers[c1].position[0]) #x-axis. may return negative number, so absoluted
-    box_Y_length = math.fabs(chunk.markers[c2].position[1] - chunk.markers[c1].position[1]) #y-axis. may return negative number, so absoluted
+    box_X_length = math.fabs(chunk.markers[c2].position[0] - chunk.markers[c1].position[0]) * (100+buffer) / 100 #x-axis. may return negative number, so absoluted
+    box_Y_length = math.fabs(chunk.markers[c2].position[1] - chunk.markers[c1].position[1]) * (100+buffer) / 100 #y-axis. may return negative number, so absoluted
     
     print('lengths:',box_X_length,box_Y_length)
     
@@ -558,7 +555,7 @@ for j in range(folder_count): #MAIN BODY. run the following code for each folder
     doc.save()
     
     #align ground plane with markers
-    if align_ground_with_targets: align_ground(path=path_folders)
+    if align_ground_with_targets: align_ground(path=path_folders, section='0618-0')
 
     chunk.resetRegion()
     
@@ -573,7 +570,7 @@ for j in range(folder_count): #MAIN BODY. run the following code for each folder
     chunk.optimizeCameras()
     
     #update bounding box 
-    if crop_by_targets: update_boundbox_by_markers(path=path_folders,chunk=chunk)
+    if crop_by_targets: update_boundbox_by_markers(path=path_folders,chunk=chunk, section='0618-0')
     
     #save project
     doc.save()
@@ -596,10 +593,10 @@ for j in range(folder_count): #MAIN BODY. run the following code for each folder
     #save project
     doc.save()
     
-    #continue #only use if you want the script to stop here for each folder
-    
     #generate report to .pdf
     chunk.exportReport(path = savepath+'-report.pdf')
+    
+    # continue #only use if you want the script to stop here for each folder    
 
     #variables to pass to EasyDCP_Analysis
     cloud_path = savepath+'-MetashapeDenseCloud.ply'
