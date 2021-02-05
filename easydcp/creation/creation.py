@@ -8,7 +8,7 @@
 # compatible with one level of nested folders
 #! files in folders root will break the script
 #! Non-agisoft nested folder in photos folder will break script
-#! - Actually, it means any nested folder without '.' in the name will break the script
+#! - Actually, any nested folder without '.' in the name will break the script
 #! Metashape errors will break the script. 
 #>>!TODO: Jump to next folder on error (catch exception)
 #>>!TODO: write report to log file (failed folders, successful, etc)
@@ -32,6 +32,7 @@ config.read(params_path)
 
 config_section = 'DEFAULT'
 
+path_folders                = config[config_section]['root_folder']
 project_filename            = config[config_section]['project_filename']
 
 select_nested               = False #config[config_section].getboolean('select_nested') - hardcoded for now
@@ -554,9 +555,7 @@ for j in range(folder_count):
     doc.save()    #save project
 
     # continue #only use if you want the script to stop here for each folder
-    
-    #scale_by_cameras(40,140,1.1) #only use this if you want to scale the model based on known camera distance !delete
-    
+        
     #build DEM and orthomosaic and export to TIF at standard resolution 0.001 m/px
     if build_dem or build_ortho: build_dem_and_orthomosaic(dem=build_dem,ortho=build_ortho)
    
