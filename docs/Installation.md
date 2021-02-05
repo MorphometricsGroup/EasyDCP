@@ -2,52 +2,43 @@
 
 ## Requirements
 
-32+ GB RAM recommended. As low as 8 GB may be usable depending on the case.
+Any PC with Windows, Linux, or Mac OS.
 
-Agisoft Metashape Professional 1.6.~~5~~**6!** (30-day trial license available)
+32 GB RAM recommended. As little as 8 GB may be usable depending on the case.
 
-​	https://www.agisoft.com/downloads/request-trial/
+[Agisoft Metashape Professional 1.6.~~5~~**6!**](https://www.agisoft.com/downloads/installer/) 
 
-​	https://www.agisoft.com/downloads/installer/
+​	[30-day trial license](https://www.agisoft.com/downloads/request-trial/)
 
-​	https://www.agisoft.com/downloads/system-requirements/
+​	[Educational license](https://www.agisoft.com/buy/online-store/educational-license/)
 
-Python 3.7+ environment (Anaconda, etc)
+​	[System requirements](https://www.agisoft.com/downloads/system-requirements/)
 
-​	https://www.anaconda.com/products/individual#Downloads
+Python 3.7+ environment
+
+​	We recommend [Anaconda](https://www.anaconda.com/products/individual#Downloads).
 
 ## Recommendations
 
 One or more dedicated GPU (GeForce, Radeon, etc.)
 
-[CloudCompare](http://www.danielgm.net/cc/release/) for viewing .ply files
+[CloudCompare](http://www.danielgm.net/cc/release/) - for viewing .ply files
 
-## ~~Installing from PyPI [currently not supported]~~
-
-~~In a **future** release, we **may** add support of PyPI installation via `pip`.~~
-
-```bash
-pip install easydcp
-```
+[GIMP](https://www.gimp.org/downloads/) or other image manipulation software - for creating .png training data images for EasyDCP_Analysis
 
 ## Installing from source code
 
 1. Clone or download the EasyDCP repository to any path on your PC.
 
-2. Open your python 3 environment (we recommend creating new environment using Anaconda or similar) or python IDE, install the `requirements.txt` in **Administrator permission** by:
+2. Open your python 3 environment (we recommend creating a new environment using Anaconda or similar) or python IDE, install the `requirements.txt` in **Administrator permission**.
 
-   `(YourEnv) D:\Program\3dphenotyping\> pip install -r requirements.txt`
+   - Using Anaconda, Select your EasyDCP environment, and 'Open Terminal'. 
 
-   **Note**: For **China Mainland** users, some packages via pip may be very slow, and may get HTTP network error:
+   - Navigate to the EasyDCP directory: `cd D:\Program\EasyDCP`
 
-   ```bash
-       raise ReadTimeoutError(self._pool, None, "Read timed out.")
-   pip._vendor.urllib3.exceptions.ReadTimeoutError: HTTPSConnectionPool(port=443): Read timed out.
-   ```
+   - Install requirements using `pip`:
 
-   Please keep trying to reinstall **or use Tsinghua pip mirror** to accelerate the installation:
-
-   `(YourEnv) D:\Program\3dphenotyping\> pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple`  
+     `(YourEnv) D:\Program\EasyDCP`\> pip install -r requirements.txt`
 
 3. Ensure Agisoft Metashape Professional is installed and activated using 30-day trial or paid license. 
 
@@ -55,8 +46,22 @@ pip install easydcp
 
 4. EasyDCP is now ready to use. See other docs: [Image acquisition](0_Image_acquisition.md), [EasyDCP Creation](1_EasyDCP_Creation.md), and [EasyDCP Analysis](2_EasyDCP_Analysis.md) for instructions.
 
-
 ## Installation Errors
+
+---
+
+For **China Mainland** users, some packages via pip may be very slow, and may get HTTP network error:
+
+```bash
+    raise ReadTimeoutError(self._pool, None, "Read timed out.")
+pip._vendor.urllib3.exceptions.ReadTimeoutError: HTTPSConnectionPool(port=443): Read timed out.
+```
+
+Please keep trying to reinstall **or use Tsinghua pip mirror** to accelerate the installation:
+
+`(YourEnv) D:\Program\EasyDCP`\> pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple`
+
+---
 
 ### Open3d import errors
 

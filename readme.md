@@ -20,26 +20,8 @@ Details are provided in our paper:
 
 **Feldman, A., Wang, H., Fukano, Y., Kato, Y., Ninomiya, S., & Guo, W. (2021). EasyDCP: an affordable, high-throughput tool to measure plant phenotypic traits in 3D.** Manuscript submitted for publication.
 
-Please see the [docs](https://github.com/oceam/EasyDCP/tree/master/docs) folder containing instructions for [installation](https://github.com/oceam/EasyDCP/blob/master/docs/Installation.md), [troubleshooting](https://github.com/oceam/EasyDCP/blob/master/docs/Troubleshooting.md), [image acquisition](https://github.com/oceam/EasyDCP/blob/master/docs/0_Image_acquisition.md), and operation of [EasyDCP_Creation](https://github.com/oceam/EasyDCP/blob/master/docs/1_EasyDCP_Creation.md) and [EasyDCP_Analysis](https://github.com/oceam/EasyDCP/blob/master/docs/2_EasyDCP_Analysis.md).
+Please see the [docs](docs) folder containing instructions for [installation](docs/Installation.md), [troubleshooting](docs/Troubleshooting.md), [image acquisition](docs/0_Image_acquisition.md), and operation of [EasyDCP_Creation](docs/1_EasyDCP_Creation.md) and [EasyDCP_Analysis](docs/2_EasyDCP_Analysis.md).
 
-Example scripts are provided in the [example](https://github.com/oceam/EasyDCP/tree/master/example) folder. 
+Example scripts are provided in the [example](example) folder. 
 
-**TODO: change all links to local links**
-
-**TODO: delete or finish/integrate** [API.md](https://github.com/oceam/EasyDCP/blob/master/docs/API.md)
-
-## ~~Functions~~
-
-~~**EasyDCP Point cloud creation**~~
-
-* [ ] ~~Auto match key points~~
-* [ ] ~~Auto point cloud generation~~
-* [ ] ~~Auto point cloud export to .ply~~
-* [ ] ~~Batch processing~~
-
-~~**EasyDCP Point cloud analysis**~~
-
-* [ ] ~~Decision tree classifier for plant pixel classification~~
-* [ ] ~~Cluster algorithm for individual plant segmentation~~
-* [ ] ~~Plant width, length, and height calculation~~
-* [ ] ~~Plant projected leaf area calculation~~
+**TODO: delete or finish/integrate** [API.md](docs/API.md)
