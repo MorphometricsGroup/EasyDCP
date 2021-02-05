@@ -63,6 +63,14 @@ Solution: Add `\` to the end of the `root_folder` folder path
 
 ---
 
+`SyntaxError: EOL while scanning string literal`
+
+**Cause**: String is a file or folder path, containing `\` character.
+
+**Solution**: Replace `\` characters with `/`.
+
+---
+
 **Issue**: EasyDCP hangs on `Clustering`
 
 **Cause**: `eps_points` is too high

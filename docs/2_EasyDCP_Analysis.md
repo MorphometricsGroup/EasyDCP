@@ -68,6 +68,7 @@ We have provided `analysis.py` in `\example\` as a starter script to control Eas
 	  - Training data is called as `list` in `Classifier()` function, `path_list` parameter. Vegetation file must be listed before background file.
 	  - Point clouds are loaded by `plot_path` and `plot_set` variables
 	    - Set `plot_path` to the folder containing .ply files from EasyDCP_Creation step 5.
+	      - Important! Use `/` in your file path, not `\`
 	  - `container_ht` parameter is passed within `get_traits()` function. Default: `0.12` (meters, 12 cm)
 	- Ensure to `import __init__` before `import easydcp`. This is already done in `analysis.py`.
   ```python

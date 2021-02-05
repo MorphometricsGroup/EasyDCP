@@ -32,7 +32,6 @@ config.read(params_path)
 
 config_section = 'DEFAULT'
 
-path_folders                = config[config_section]['path_folders']
 project_filename            = config[config_section]['project_filename']
 
 select_nested               = False #config[config_section].getboolean('select_nested') - hardcoded for now
