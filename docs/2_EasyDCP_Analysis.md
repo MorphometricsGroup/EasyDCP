@@ -24,8 +24,8 @@ See example fore.png and back.png in `/example/training_data/`.
 	* Select "'1. Pixel (3 x 3)" in Brushes tab
 2. Copy the selection and create a new file, PNG *with transparency*
 	* Under Advanced Options in "Create a New Image" dialog, select Fill with: Transparency
-3. Save as fore.png
-4. Repeat steps 1-3 with background samples and save as back.png
+3. Save as "fore.png"
+4. Repeat steps 1-3 with background samples and save as "back.png"
 
 ## (b) Running EasyDCP_Analysis
 
@@ -37,7 +37,7 @@ See example fore.png and back.png in `/example/training_data/`.
 
 Control EasyDCP_Analysis via API using python script in your python 3.7 environment as described in [Installation](Installation.md). 
 
-We have provided `analysis.py` in `/example/` as a starter script to control EasyDCP. **Most users should be able to run `analysis.py` with very little modification.** To do: Complete [API documentation](api.md) for details on controlling EasyDCP via python.
+We have provided `analysis.py` in `/example/` as a starter script to control EasyDCP_Analysis. **Most users should be able to run `analysis.py` with very little modification.** To do: Complete [API documentation](api.md) for details on controlling EasyDCP_Analysis via python.
 
 ### Key functions:
 

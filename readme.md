@@ -2,8 +2,6 @@
 
 <p align="center"><img src="docs/flow.png" width=600></p>
 
-**TODO: Update text in image**
-
 A python package for agricultural phenotypic trait extraction from 2D image sets via 3D reconstruction and analysis of 3D point clouds.
 This script handles multiple sets of images taken in the same environment, such as timescale photos of a plot or several groups of plants photographed in the same place.
 EasyDCP consists of two components:
@@ -14,7 +12,7 @@ EasyDCP consists of two components:
 Key features:
 
 - Measure plant height, long and short axis, projected leaf area, convex hull volume, and more
-- Batch processing multiple image sets
+- Batch processing of multiple image sets and point clouds
 
 Details are provided in our paper: 
 
@@ -23,5 +21,3 @@ Details are provided in our paper:
 Please see the [docs](docs) folder containing instructions for [installation](docs/Installation.md), [troubleshooting](docs/Troubleshooting.md), [image acquisition](docs/0_Image_acquisition.md), and operation of [EasyDCP_Creation](docs/1_EasyDCP_Creation.md) and [EasyDCP_Analysis](docs/2_EasyDCP_Analysis.md).
 
 Example scripts are provided in the [example](example) folder. 
-
-**TODO: delete or finish/integrate** [API.md](docs/API.md)
