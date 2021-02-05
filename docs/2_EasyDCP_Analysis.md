@@ -37,7 +37,7 @@ See example fore.png and back.png in `/example/training_data/`.
 
 Control EasyDCP_Analysis via API using python script in your python 3.7 environment as described in [Installation](Installation.md). 
 
-<u>We have provided `analysis.py` in `/example/` as a starter script to control EasyDCP. Most users should be able to run `analysis.py` with very little modification.</u> To do: Complete [API documentation](api.md) for details on controlling EasyDCP via python.
+We have provided `analysis.py` in `/example/` as a starter script to control EasyDCP. **Most users should be able to run `analysis.py` with very little modification.** To do: Complete [API documentation](api.md) for details on controlling EasyDCP via python.
 
 ### Key functions:
 
@@ -53,56 +53,34 @@ Control EasyDCP_Analysis via API using python script in your python 3.7 environm
 | `easydcp.Plot.xaxis_segment()`  | Alternative to `dbscan_segment`. Segment the `Plot` object into plants by passing the number of segments (plants) as a parameter. This function assumes plants are of approximately equal size and evenly spaced. |
 | `easydcp.Plot.get_traits()`     | Calculate traits for all segments (plants) within the `Plot` object. |
 
+**Key Parameters:**
+
+| name         | default | affects      | notes                                                        |      |
+| ------------ | ------- | ------------ | ------------------------------------------------------------ | ---- |
+| `percentile` | 98      | plant height | adjust parameter in line 718 of `base.py`, `__init__()` :`self.get_percentile_height(container_ht, ground_ht, percentile=95)`<br /> `98` should give a near-maximum plant height in most cases.  For a measurement closer to the true maximum plant height (highest plant point), increase to `99`, `99.5`, etc. A lower-quality point cloud (e.g., produced from an image set with low overlap or resolution, or low settings used by EasyDCP_Creation) may contain some noise points above the true plant top and could cause overestimation bias. In this case, consider decreasing to `95` or `90`. |      |
+| `eps_points` | 10      | segmentation | Set parameter when calling `dbscan_segment` <br />Higher value may be used if segmentation fails, such as one plant being wrongly divided into two segments. In such case, we recommend trying `12`,`13`,`14`. Higher `eps_points` value will increase processing time significantly. |      |
+
+
+
 1. **Configure EasyDCP_Analysis before launching:**
 
-- Ensure your .py script points to correct training data and point clouds. *Ensure `container_ht` is correctly set.* 
-
-  - Training data is called as `list` in `Classifier()` function, `path_list` parameter. Vegetation file must be listed before background file.
-  - Point clouds are loaded by `plot_set` variable
-  - `container_ht` parameter is passed within `get_traits()` function. Default: `0.06` (meters, 6 cm container)
-
-- Ensure to `import __init__` before `import easydcp`. This is already done in `analysis.py`.
-
+	- Ensure your .py script points to correct training data and point clouds. *Ensure `container_ht` is correctly set.* 
+	  - Training data is called as `list` in `Classifier()` function, `path_list` parameter. Vegetation file must be listed before background file.
+	  - Point clouds are loaded by `plot_set` variable
+	  - `container_ht` parameter is passed within `get_traits()` function. Default: `0.06` (meters, 6 cm container)
+	- Ensure to `import __init__` before `import easydcp`. This is already done in `analysis.py`.
   ```python
   import __init__
   import easydcp as dcp
   ```
 
-- [Key] Parameters [of note]:
-
-  | name         | default |affects |notes                                                        |      |
-  | ------------ | ------- | ------------------------------------------------------------ | ---- | ---- |
-  | `percentile` | 98      |plant height| adjust parameter in line 718 of `base.py`, `__init__()` :`self.get_percentile_height(container_ht, ground_ht, percentile=95)`<br /> `98` should give a near-maximum plant height in most cases.  For a measurement closer to the true maximum plant height (highest plant point), increase to `99`, `99.5`, etc. A lower-quality point cloud (e.g., produced from an image set with low overlap or resolution, or low settings used by EasyDCP_Creation) may contain some noise points above the true plant top and could cause overestimation bias. In this case, consider decreasing to `95` or `90`. |      |
-  | `eps_points` | 10     | segmentation | Set parameter when calling `dbscan_segment` <br />Higher value may be used if segmentation fails, such as one plant being wrongly divided into two segments. In such case, we recommend trying `12`,`13`,`14`. Higher `eps_points` value will increase processing time significantly. |    |
-  
-  
-  
-  - ~~`percentile` - in `base.py, class Plant(object), get_percentile_height():`~~
-    
-    - ~~Affects *plant height* measurement. Default: `98`~~
-      
-      - ~~adjust parameter in line 718 of `base.py`, `__init__()` :~~
-      
-        ~~`self.get_percentile_height(container_ht, ground_ht, percentile=95)`~~
-      
-      - ~~`98` should give a near-maximum plant height in most cases.~~ 
-      
-      - ~~For a measurement closer to the true maximum plant height (highest plant point), increase to `99`, `99.5`, etc.~~
-      
-      - ~~A lower-quality point cloud (e.g., produced from an image set with low overlap or resolution, or low settings used by EasyDCP_Creation) may contain some noise points above the true plant top and could cause overestimation bias. In this case, consider decreasing to `95` or `90`.~~
-    
-  -  ~~`eps_points` - in `dbscan_segment()` function~~
-  
-    -  ~~Affects plant *segmentation*. Default: `10`~~
-      - ~~Higher value may be used if segmentation fails, such as one plant being wrongly divided into two segments. In such case, we recommend trying `12`,`13`,`14`. Higher `eps_points` value will increase processing time significantly.~~ 
-
 2. **Execute your.py file using python , using EasyDCP root folder as working directory:**
-
-   - Using Anaconda, open a terminal and navigate to your EasyDCP folder: `cd D:\Program\EasyDCP``
+	- Using Anaconda, open a terminal and navigate to your EasyDCP folder: `cd D:\Program\EasyDCP``
 
      `(easydcp37) D:\Program\EasyDCP>python example\analysis.py`
 
 3. **Outputs will be saved in the EasyDCP directory.** 
+   
    - A folder will be created in the EasyDCP directory for each .ply file processed by EasyDCP. It  will contain several intermediary .ply files (output by the *classification*, *remove noise* and *segmentation* steps) and a .png file is for each `Plant` object measured by the *calculation* step. The .png file contains an image of the plant point cloud, and visualization of phenotypic traits.
    - A folder called `data_out` will be created in the EasyDCP directory. It will contain:
      - Segmentation results. Each input .ply file will have a corresponding .png image file, showing an overhead view of the plant points and their segmentation results. (See Figure 1)
