@@ -2,7 +2,7 @@
 # using scripts on Agisoft forums by Alexey Pasumansky
 # by Alex Feldman - UTokyo Field Phenomics Lab
 
-# updated 2021.02.04
+# updated 2021.02.05
 # compatibility Metashape Pro 1.6.5
 ## Incompatible Metashape Pro 1.5.x and below
 # compatible with one level of nested folders
@@ -26,14 +26,16 @@ print(banner1,'Started at',start_time)
 ##USER DEFINED VARIABLES
 
 config = configparser.ConfigParser()
-params_path = os.getcwd() + '/alex_params-0618_v0825.ini'
+params_path = os.getcwd() + '/params.ini'
 print ('loading parameters from:',params_path)
 config.read(params_path)
 
-path_folders = config['DEFAULT']['path_folders']
-project_filename = config['DEFAULT']['project_filename']
 config_section = 'DEFAULT'
-select_nested = False #config[config_section].getboolean('select_nested') - hardcoded for now
+
+path_folders                = config[config_section]['path_folders']
+project_filename            = config[config_section]['project_filename']
+
+select_nested               = False #config[config_section].getboolean('select_nested') - hardcoded for now
 # nested_folders = config[config_section]['nested_folders']
 # nested_folders = json.loads(config.get(config_section,'nested_folders'))
 ignore_gps_exif             = config[config_section].getboolean('ignore_gps_exif')
@@ -75,8 +77,8 @@ elif align_quality == 'Lowest':
     match_downscale = 8
 else:
     print('align_quality variable in params.ini set incorrectly!\nchoices: Highest, High, Medium, Low, Lowest\nyou set:',align_quality)
-    print('defaulting to Medium')
-    match_downscale = 2
+    print('defaulting to High')
+    match_downscale = 1
     
 if dense_quality == 'Highest':
     depth_downscale = 1
@@ -242,32 +244,15 @@ def align_ground(path, section='DEFAULT'):
     print('H0: ',H0_pos)
     print('H1: ',H1_pos)
     
-    #!disabled for strawberry 
     print('V0: ',V0_pos)
     print('V1: ',V1_pos)
-           
     
     horizontal = H1_pos - H0_pos
-    #!disabled for strawberry 
     vertical = V1_pos - V0_pos
     
-    '''#!special for strawberry
-    normal = get_marker(horiz[0], chunk).position
-    normal[2] = normal[2] + 1'''
-
-    ''' old version (!Delete?)
-    normal = vect(horizontal, vertical)
-    vertical = vertical.normalized()
-    horizontal = vect(vertical, normal)'''
-    #!disabled for strawberry 
     normal = vect(horizontal, vertical)
     vertical = - vect(horizontal, normal)
     horizontal = horizontal.normalized()
-    '''#!disabled for strawberry 
-    vertical = - vect(horizontal, normal)'''
-    
-    '''#!special for strawberry
-    normal = - vect(horizontal, vertical)'''
 
     R = Metashape.Matrix ([horizontal, vertical, normal]) #horizontal = X, vertical = Y, normal = Z
 
@@ -303,29 +288,16 @@ def update_boundbox_by_markers(path,chunk,section='DEFAULT'):
     print(p0,p1,buffer)
     
     del config
-    
-    """bypass .ini
-    #normal for EasyDCP_Creation
-    p0 = "target 1"  
-    p1 = "target 8" 
-    
-    #below: special case for strawberry
-    '''p0 = "target 1"  
-    p1 = "target 19"  '''"""
 
     print('p0:',p0,'p1:',p1)
     
     fp0 = fp1 = 0 #initialize binary values for finding the markers to 0
 
-    #setting for Y up, Z forward -> needed for mixamo/unity
-
     c = 0
 
-    #find center points (my way)
+    #find center points
     c1=0
     c2=0
-
-    # print (p0,p1)
     for m in chunk.markers:
         if m.label == p0:
             c1=c
@@ -335,7 +307,7 @@ def update_boundbox_by_markers(path,chunk,section='DEFAULT'):
             fp1=1
         c=c+1
 
-    #check markers found (my way)
+    #check markers found 
     if fp0 and fp1:
       print ("Found all markers")
       print (c1,c2)
@@ -357,7 +329,7 @@ def update_boundbox_by_markers(path,chunk,section='DEFAULT'):
     newregion.rot = R.t()
 
     # Calculate center point of the bounding box, by taking the average of 2 left and 2 right markers 
-    mx = (chunk.markers[c1].position + chunk.markers[c2].position) / 2 #my way 
+    mx = (chunk.markers[c1].position + chunk.markers[c2].position) / 2 
 
     print('x',chunk.markers[c2].position[0],chunk.markers[c1].position[0])
     print('y',chunk.markers[c2].position[1],chunk.markers[c1].position[1])
@@ -366,7 +338,6 @@ def update_boundbox_by_markers(path,chunk,section='DEFAULT'):
     
     print('lengths:',box_X_length,box_Y_length)
     
-    #!disabled for strawberry
     if box_Y_length > box_X_length:
         swap_length = box_X_length
         box_X_length = box_Y_length
@@ -381,13 +352,13 @@ def update_boundbox_by_markers(path,chunk,section='DEFAULT'):
     mx = Metashape.Vector([mx[0], mx[1], mx[2]]) #adjusting the zratio thing shifts the whole boundbox on a diagonal. not so easy. set to 0 for now.
     newregion.center = mx
     print('cent1',newregion.center)
-    newregion.size = Metashape.Vector([box_X_length, box_Y_length, box_Z_length]) #my way
+    newregion.size = Metashape.Vector([box_X_length, box_Y_length, box_Z_length]) 
     print('nrsize1',newregion.size)
     print('cent[2]',newregion.center[2],'size[2]',newregion.size[2])
     newregion.center = Metashape.Vector([newregion.center[0],newregion.center[1],newregion.center[2] + ( newregion.size[2] / 2 )])
     print('cent2',newregion.center)
     chunk.region = newregion
-    chunk.updateTransform() #disabled for strawberry
+    chunk.updateTransform() 
 
     print ("Bounding box should be aligned now")
 
@@ -441,8 +412,8 @@ for i in range(folder_count):
         print("folder_list",i,folder_list[i])
     else: folder_count = folder_count - 1
     
-# for j in range(2): #MAIN BODY. run the following code for each folder (image set)    
-for j in range(folder_count): #MAIN BODY. run the following code for each folder (image set)    
+#MAIN BODY. run the following code for each folder (image set)    
+for j in range(folder_count): 
     
     #ensure photo list and Metashape document are empty
     photo_list.clear()
@@ -526,7 +497,7 @@ for j in range(folder_count): #MAIN BODY. run the following code for each folder
         chunk.addPhotos(photo_list)
     else:
         print('no photos found! moving to next folder...')
-        continue #skip the rest of the for loop contents (for the current folder) because no photos were found.
+        continue #skip the rest of the EasyDCP_Creation process (for the current folder) because no photos were found.
     print(j,'save path:',filename_list[j])
     
     #save project - first save
@@ -555,7 +526,7 @@ for j in range(folder_count): #MAIN BODY. run the following code for each folder
     doc.save()
     
     #align ground plane with markers
-    if align_ground_with_targets: align_ground(path=path_folders, section='0618-0')
+    if align_ground_with_targets: align_ground(path=path_folders)
 
     chunk.resetRegion()
     
@@ -570,7 +541,7 @@ for j in range(folder_count): #MAIN BODY. run the following code for each folder
     chunk.optimizeCameras()
     
     #update bounding box 
-    if crop_by_targets: update_boundbox_by_markers(path=path_folders,chunk=chunk, section='0618-0')
+    if crop_by_targets: update_boundbox_by_markers(path=path_folders,chunk=chunk)
     
     #save project
     doc.save()
