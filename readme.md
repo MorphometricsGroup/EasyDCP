@@ -20,4 +20,4 @@ Details are provided in our paper:
 
 Please see the [docs](docs) folder containing instructions for [installation](docs/Installation.md), [troubleshooting](docs/Troubleshooting.md), [image acquisition](docs/0_Image_acquisition.md), and operation of [EasyDCP_Creation](docs/1_EasyDCP_Creation.md) and [EasyDCP_Analysis](docs/2_EasyDCP_Analysis.md).
 
-Example scripts are provided in the [example](example) folder. 
+Example scripts and training data are provided in the [example](example) folder. 
