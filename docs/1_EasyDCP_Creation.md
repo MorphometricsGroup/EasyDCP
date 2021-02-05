@@ -1,32 +1,39 @@
 # EasyDCP_Creation
 
-Materials: 
+### Materials: 
 
-Photos from image acquisition step, organized into folders by group as described in `image acquisition.md`.
+Photos from image acquisition step, organized into folders by group as described in [Image acquisition](0_Image_acquisition.md).
 
-~~Agisoft Metashape Professional 1.6.5~~
+Agisoft Metashape Professional 1.6.6 with activated trial license, or paid license.
 
-~~CloudCompare (optional)~~
+CloudCompare (optional) for viewing output .ply files.
 
-1. Edit params.ini user-defined variables:
-   - Open `easydcp\creation\params.ini` in text editor 
-   - set all parameters as desired, defaults are set, and each parameter is explained in the code comments, e.g.:
-     - set `align_quality` and `dense_quality`, default medium
-     - change`path_folders`to the path containing the folders of images
-     - e.g. if `c:\images_root\imageset_1\img_001.jpg...`, `path_folders = c:\images_root`
-     - change `blur_threshold` to desired value. Pipeline will disable all images with Agisoft image quality below the `blur_threshold`.
-     - set booleans e.g., `ignore_gps`, `align_ground`, and `use_scalebars ` as needed
-2. Ensure folder structure matches intended format (see Image acquisition)
-   - ~~only folders in root folder (path_folders), no files in root~~
-     - ~~e.g. (`path_folders\images_1\img_001.jpg...`)~~
-   - ~~'skip' folder contains scalebars.csv if needed~~ 
-     - ~~located in `path_folders\skip`~~
-     - ~~**Default scalebars.csv provided in 3dphenotyping\materials to match targets.pdf. Copy to [path_folders]\skip directory.**~~
-3. Open `easydcp\creation\creation.bat` **TODO params.ini** in text editor, and confirm the path to your `easydcp\creation` folder.
-4. Run `creation.bat` ~~**[todo] update program to use agisoft package. update installation for .whl.**~~
+1. Edit user-defined variables in `easydcp\creation\params.ini` using text editor
+   - Change`path_folders`to the path containing the folders of images
+     - e.g. if `c:\population001\group001\img_001.jpg...`, `path_folders = c:\population001`
+   - Set other parameters as needed. Defaults are set, and each parameter is explained with a code comment.
+
+2. Ensure folder structure matches intended format (see step 4 of [Image acquisition](0_Image_acquisition.md))
+   - Ensure the only items in the `path_folders` folder are the image set folders and `/skip/`. Any other files or folders in the `path_folders` folder may cause an error.
+   - `/skip/` must contain `scalebars.csv` and `orientation.ini`
+
+4. Run `creation-win.bat` or `creation-mac.sh`
    - A terminal window will open showing output from EasyDCP_Creation and Metashape.
-   - If you must close the terminal window while EasyDCP_Creation is running, there will be a `lock` file left in the last folder that was being processed. You can either delete the .lock file from within the `[groupID].files/` folder or delete the entire `[groupID].files` folder and `[groupID].psx` file.
-5. Find output .psx and .ply files in each corresponding folder. We recommend copying the .ply files to a new folder for use with EasyDCP_Analysis, if storage space is available. Verify successful 3D reconstruction with Agisoft and CloudCompare, respectively. 
-   A .pdf report is also created where you can quickly view an overhead image of the point cloud check details such as the number of camera images used by Metashape, the parameters passed by EasyDCP_Creation, image resolution, processing time, etc.
+   - If you must close the terminal window while EasyDCP_Creation is running, there will be a `lock` file left in the last folder that was being processed. You must either delete the .lock file from within the `[groupID].files/` folder or delete the entire `[groupID].files` folder and `[groupID].psx` file.
+   
+5. Find output .psx and .ply files in each corresponding folder. Verify successful 3D reconstruction with Metashape and CloudCompare, respectively. 
+   
+   - A .pdf report is also created where you can quickly view an overhead image of the point cloud check details such as the number of camera images used by Metashape, the parameters passed by EasyDCP_Creation, image resolution, processing time, etc.
+   
+5. We recommend copying the .ply files to a new folder for use with EasyDCP_Analysis, if storage space is available.
 
-Proceed to [EasyDCP_Analysis](2_EasyDCP_Analysis.md).
+   ```population001
+   ply_out
+   ├── group001.ply
+   ├── ...
+   └── group009.ply
+   ```
+
+6. Save a copy of `params.ini` for reproducibility.
+
+7. Proceed to [EasyDCP_Analysis](2_EasyDCP_Analysis.md).

@@ -32,6 +32,7 @@ See example fore.png and back.png in `/example/training_data/`.
 ### Materials:
 
 - Folder containing .ply point cloud files output by previous step, EasyDCP_Creation
+  - See example `ply` folder in step 5 of EasyDCP_Creation
 - training data created in previous step: "(a) Setup"
 - Python script to control EasyDCP_Analysis package, `example/analysis.py` 
 
@@ -74,11 +75,12 @@ We have provided `analysis.py` in `/example/` as a starter script to control Eas
   import easydcp as dcp
   ```
 
-2. **Execute your.py file using python , using EasyDCP root folder as working directory:**
-	- Using Anaconda, open a terminal and navigate to your EasyDCP folder: `cd D:\Program\EasyDCP``
-
-     `(easydcp37) D:\Program\EasyDCP>python example\analysis.py`
-
+2. **Execute your .py script using python, with EasyDCP root folder as working directory:**
+	
+- Using Anaconda, open a terminal and navigate to your EasyDCP folder: `cd D:\Program\EasyDCP``
+   
+  `(easydcp37) D:\Program\EasyDCP>python example\analysis.py`
+	
 3. **Outputs will be saved in the EasyDCP directory.** 
    
    - A folder will be created in the EasyDCP directory for each .ply file processed by EasyDCP. It  will contain several intermediary .ply files (output by the *classification*, *remove noise* and *segmentation* steps) and a .png file is for each `Plant` object measured by the *calculation* step. The .png file contains an image of the plant point cloud, and visualization of phenotypic traits.
