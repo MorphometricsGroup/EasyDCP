@@ -6,7 +6,7 @@ Any PC with Windows, Linux, or Mac OS.
 
 32 GB RAM recommended. As little as 8 GB may be usable depending on the case.
 
-[Agisoft Metashape Professional 1.6.~~5~~**6!**](https://www.agisoft.com/downloads/installer/) 
+[Agisoft Metashape Professional 1.6.6](https://www.agisoft.com/downloads/installer/) 
 
 ​	[30-day trial license](https://www.agisoft.com/downloads/request-trial/)
 
