@@ -714,7 +714,7 @@ class Plant(object):
         self.pla_img = binary
         self.pla = self.get_projected_leaf_area(binary, px_num_per_cm) #unit is cm^2
 
-        # calcuate percentile height
+        # calcuate percentile height. add percentile parameter to adjust percentile
         self.pctl_ht, self.pctl_ht_plot = self.get_percentile_height(container_ht, ground_ht)
 
         # voxel (todo)
@@ -779,7 +779,7 @@ class Plant(object):
     # -=-=-=-=-=-=-=-=-=-=-=-=-
     # | traits from 3D points |
     # -=-=-=-=-=-=-=-=-=-=-=-=-
-    def get_percentile_height(self, container_ht=0, ground_ht='mean',percentile=90):
+    def get_percentile_height(self, container_ht=0, ground_ht='mean',percentile=98):
         z = self.pcd_xyz[:, 2]
         if ground_ht == 'mean':
             ground_z = np.asarray(self.ground_pcd.points)[:, 2]

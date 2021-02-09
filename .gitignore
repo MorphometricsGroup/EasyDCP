@@ -4,6 +4,7 @@ easydcp/example/S*
 easydcp/tests/output/*
 easydcp/tests/easypcc/*
 *plot_out/*
+*data_out*
 __pycache__
 *_agi.csv
 *.ply
@@ -15,5 +16,6 @@ easydcp/docs/build/*
 easydcp/example/csv*
 easydcp/example/out*
 *.png
+!docs/*.png
 *.jpg
 easydcp/creation/dev
