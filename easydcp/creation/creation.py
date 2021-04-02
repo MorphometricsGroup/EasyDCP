@@ -13,15 +13,11 @@
 #>>!TODO: Jump to next folder on error (catch exception)
 #>>!TODO: write report to log file (failed folders, successful, etc)
 #>>!todo: update export DEM/orthomosaic for 1.6 API [export disabled now]
-#>>!todo: split params.ini into two files: [root_folder and project_filename] and [everything else]
 
 # agisoft_LICENSE = 'C:\Program Files\Agisoft\Metashape Pro'
-import Metashape
-import os
-import math
-import datetime
-import configparser
-import json
+import Metashape 
+import os, math, datetime 
+import configparser, json 
 
 banner1 = '\n[EasyDCP_Creation]'
 start_time = datetime.datetime.now()
@@ -36,32 +32,32 @@ config.read(params_path)
 
 config_section = 'DEFAULT'
 
-path_folders  = config[config_section]['root_folder']
-project_filename = config[config_section]['project_filename']
+path_folders                = config[config_section]['root_folder']
+project_filename            = config[config_section]['project_filename']
 
-select_nested = False #config[config_section].getboolean('select_nested') - hardcoded for now
+select_nested               = False #config[config_section].getboolean('select_nested') - hardcoded for now
 # nested_folders = config[config_section]['nested_folders']
 # nested_folders = json.loads(config.get(config_section,'nested_folders'))
-ignore_gps_exif = config[config_section].getboolean('ignore_gps_exif')
-disable_by_iq = config[config_section].getboolean('disable_by_iq')
-iq_threshold  = config[config_section].getfloat('iq_threshold')
+ignore_gps_exif             = config[config_section].getboolean('ignore_gps_exif')
+disable_by_iq               = config[config_section].getboolean('disable_by_iq')
+iq_threshold                = config[config_section].getfloat('iq_threshold')
 
-align_times = config[config_section].getint('align_times')
-align_quality = config[config_section]['align_quality']
-align_preselection_mode = config[config_section]['align_preselection_mode']
-dense_quality = config[config_section]['dense_quality']
-detect_coded_targets = config[config_section].getboolean('detect_coded_targets')
-target_tolerance = config[config_section].getint('target_tolerance')
-detect_noncoded_targets = config[config_section].getboolean('detect_noncoded_targets')
-noncoded_tolerance = config[config_section].getint('noncoded_tolerance')
-crop_by_targets = config[config_section].getboolean('crop_by_targets')
+align_times                 = config[config_section].getint('align_times')
+align_quality               = config[config_section]['align_quality']
+align_preselection_mode     = config[config_section]['align_preselection_mode']
+dense_quality               = config[config_section]['dense_quality']
+detect_coded_targets        = config[config_section].getboolean('detect_coded_targets')
+target_tolerance            = config[config_section].getint('target_tolerance')
+detect_noncoded_targets     = config[config_section].getboolean('detect_noncoded_targets')
+noncoded_tolerance          = config[config_section].getint('noncoded_tolerance')
+crop_by_targets             = config[config_section].getboolean('crop_by_targets')
 
-use_scalebars = config[config_section].getboolean('use_scalebars')
-align_ground_with_targets = config[config_section].getboolean('align_ground_with_targets')
+use_scalebars               = config[config_section].getboolean('use_scalebars')
+align_ground_with_targets   = config[config_section].getboolean('align_ground_with_targets')
 
-export_cloud = config[config_section].getboolean('export_cloud')
-build_dem = config[config_section].getboolean('build_dem')
-build_ortho = config[config_section].getboolean('build_ortho')
+export_cloud                = config[config_section].getboolean('export_cloud')
+build_dem                   = config[config_section].getboolean('build_dem')
+build_ortho                 = config[config_section].getboolean('build_ortho')
 
 #del config
 
@@ -80,8 +76,7 @@ elif align_quality == 'Low':
 elif align_quality == 'Lowest':
     match_downscale = 8
 else:
-    print('align_quality variable in params.ini set incorrectly!\nchoices: Highest, High, Medium, Low, Lowest\nyou set:'
-          ,align_quality)
+    print('align_quality variable in params.ini set incorrectly!\nchoices: Highest, High, Medium, Low, Lowest\nyou set:',align_quality)
     print('defaulting to High')
     match_downscale = 1
     
@@ -96,8 +91,7 @@ elif dense_quality == 'Low':
 elif dense_quality == 'Lowest':
     depth_downscale = 16
 else:
-    print('depth_quality variable in params.ini set incorrectly!\nchoices: Highest, High, Medium, Low, Lowest\nyou set:'
-          ,align_quality)
+    print('depth_quality variable in params.ini set incorrectly!\nchoices: Highest, High, Medium, Low, Lowest\nyou set:',align_quality)
     print('defaulting to Medium')
     depth_downscale = 4
     
@@ -109,9 +103,7 @@ def vect(a, b):
     Normalized vector product for two vectors
     """
 
-    result = Metashape.Vector([a.y*b.z - a.z*b.y,
-                               a.z*b.x - a.x*b.z,
-                               a.x*b.y - a.y *b.x])
+    result = Metashape.Vector([a.y*b.z - a.z*b.y, a.z*b.x - a.x*b.z, a.x*b.y - a.y *b.x])
     return result.normalized()
 
 def get_marker(label, chunk):
@@ -128,7 +120,7 @@ def get_marker(label, chunk):
 def append_by_type(filename, filepath):
     #print('~~~',filename)
     type = filename.rsplit(".",1)[-1].lower()
-    if type in ["jpg", "jpeg", "png"]:#, "tif", "tiff"]: 
+    if type in  ["jpg", "jpeg", "png"]:#, "tif", "tiff"]: 
         photo_list.append("/".join([filepath, filename]))
         
 def disable_below_threshold(threshold=0.4):
@@ -142,8 +134,7 @@ def disable_below_threshold(threshold=0.4):
             print ('DISABLE %s' %(image))
 
 def detect_cross_target(tol):
-    chunk.detectMarkers(target_type=Metashape.CrossTarget,tolerance=tol,
-                        progress=progress_print) #todo: update to support circle noncoded
+    chunk.detectMarkers(target_type=Metashape.CrossTarget,tolerance=tol, progress=progress_print) #todo: update to support cross and circle noncoded
 
 def scale_by_cameras(cam_1,cam_2,cam_dist):
     print("Create scalebars from cameras")
@@ -217,17 +208,10 @@ def align_cameras(reps=1, preselection_mode='generic'):
         # Change metashape_quality variable to set downscale parameter
         if preselection_mode == 'generic':
             print('generic')
-            chunk.matchPhotos(downscale=match_downscale,
-            generic_preselection=True,
-            reference_preselection=False,
-            progress=progress_print)
+            chunk.matchPhotos(downscale=match_downscale, generic_preselection=True, reference_preselection=False, progress=progress_print)
         elif preselection_mode == 'reference':
             print('reference')
-            chunk.matchPhotos(downscale=match_downscale,
-            generic_preselection=False,
-            reference_preselection=True,
-            reference_preselection_mode=Metashape.ReferencePreselectionSequential,
-            progress=progress_print)
+            chunk.matchPhotos(downscale=match_downscale, generic_preselection=False, reference_preselection=True, reference_preselection_mode=Metashape.ReferencePreselectionSequential, progress=progress_print)
         chunk.alignCameras(progress=progress_print)   
  
 def align_ground(path, section='DEFAULT'):
@@ -284,10 +268,7 @@ def align_ground(path, section='DEFAULT'):
         S = Metashape.Matrix().Diag([s, s, s, 1]) #scale matrix
     else:
         S = Metashape.Matrix().Diag([1, 1, 1, 1])
-    T = Metashape.Matrix([[R[0,0], R[0,1], R[0,2], C[0]],
-                          [R[1,0], R[1,1], R[1,2], C[1]],
-                          [R[2,0], R[2,1], R[2,2], C[2]],
-                          [0, 0, 0, 1]])
+    T = Metashape.Matrix( [[R[0,0], R[0,1], R[0,2], C[0]], [R[1,0], R[1,1], R[1,2], C[1]], [R[2,0], R[2,1], R[2,2], C[2]], [0, 0, 0, 1]])
     chunk.transform.matrix = S * T.inv()        #resulting chunk transformation matrix        
 
     print("\nGround alignment finished\n")
@@ -338,14 +319,12 @@ def update_boundbox_by_markers(path,chunk,section='DEFAULT'):
     newregion = chunk.region
 
     T = chunk.transform.matrix
-    #v_t = T * Metashape.Vector([0,0,0,1])
+    #v_t = T * Metashape.Vector( [0,0,0,1] )
     m = Metashape.Matrix().Diag([1,1,1,1])	
 
     m = m * T
     s = math.sqrt(m[0,0] ** 2 + m[0,1] ** 2 + m[0,2] ** 2) #scale factor
-    R = Metashape.Matrix([[m[0,0],m[0,1],m[0,2]],
-                          [m[1,0],m[1,1],m[1,2]],
-                          [m[2,0],m[2,1],m[2,2]]])
+    R = Metashape.Matrix( [[m[0,0],m[0,1],m[0,2]], [m[1,0],m[1,1],m[1,2]], [m[2,0],m[2,1],m[2,2]]])
     R = R * (1. / s)
     newregion.rot = R.t()
 
@@ -354,12 +333,8 @@ def update_boundbox_by_markers(path,chunk,section='DEFAULT'):
 
     print('x',chunk.markers[c2].position[0],chunk.markers[c1].position[0])
     print('y',chunk.markers[c2].position[1],chunk.markers[c1].position[1])
-    box_X_length = math.fabs(chunk.markers[c2].position[0]
-                             - chunk.markers[c1].position[0])
-                             * (100+buffer) / 100 #x-axis. may return negative number, so absoluted
-    box_Y_length = math.fabs(chunk.markers[c2].position[1]
-                             - chunk.markers[c1].position[1])
-                             * (100+buffer) / 100 #y-axis. may return negative number, so absoluted
+    box_X_length = math.fabs(chunk.markers[c2].position[0] - chunk.markers[c1].position[0]) * (100+buffer) / 100 #x-axis. may return negative number, so absoluted
+    box_Y_length = math.fabs(chunk.markers[c2].position[1] - chunk.markers[c1].position[1]) * (100+buffer) / 100 #y-axis. may return negative number, so absoluted
     
     print('lengths:',box_X_length,box_Y_length)
     
@@ -379,11 +354,8 @@ def update_boundbox_by_markers(path,chunk,section='DEFAULT'):
     print('cent1',newregion.center)
     newregion.size = Metashape.Vector([box_X_length, box_Y_length, box_Z_length]) 
     print('nrsize1',newregion.size)
-    print('cent[2]',newregion.center[2],
-          'size[2]',newregion.size[2])
-    newregion.center = Metashape.Vector([newregion.center[0],
-                                         newregion.center[1],
-                                         newregion.center[2] + (newregion.size[2] / 2)]) #move region up by half of its size to align the bottom of the region with the gorund plane
+    print('cent[2]',newregion.center[2],'size[2]',newregion.size[2])
+    newregion.center = Metashape.Vector([newregion.center[0],newregion.center[1],newregion.center[2] + ( newregion.size[2] / 2 )])
     print('cent2',newregion.center)
     chunk.region = newregion
     chunk.updateTransform() 
@@ -393,9 +365,7 @@ def update_boundbox_by_markers(path,chunk,section='DEFAULT'):
 def build_dense_cloud(savepath,export_cloud=True):
     print(banner1,'Building depth maps and dense cloud...')
     # Change metashape_quality variable to set downscale parameter
-    chunk.buildDepthMaps(downscale=depth_downscale,
-                         filter_mode=Metashape.MildFiltering,
-                         progress=progress_print)#default: MildFiltering
+    chunk.buildDepthMaps(downscale=depth_downscale, filter_mode=Metashape.MildFiltering, progress=progress_print)#default: MildFiltering
     chunk.buildDenseCloud(point_conﬁdence=True, progress=progress_print) 
     #export dense cloud
     if export_cloud: chunk.exportPoints(path = savepath+'.ply')  
@@ -419,8 +389,7 @@ def progress_print(p):
 
 doc = Metashape.app.document
 print(type(align_quality),type(dense_quality))
-project_filename = (project_filename + '_' + align_preselection_mode[:3] + '_'
-                    + align_quality + '_' + dense_quality)
+project_filename = project_filename + '_' + align_preselection_mode[:3] + '_' + align_quality + '_' + dense_quality
 print('\n----',banner1,'\nStart\n')    
 
 #populate folder list
@@ -543,9 +512,7 @@ for j in range(folder_count):
     if disable_by_iq: disable_below_threshold(iq_threshold)
      
     #detect circular coded targets
-    if detect_coded_targets:
-        chunk.detectMarkers(target_type=Metashape.CircularTarget12bit, 
-                            tolerance=target_tolerance, progress=progress_print)
+    if detect_coded_targets: chunk.detectMarkers(target_type=Metashape.CircularTarget12bit,tolerance=target_tolerance, progress=progress_print)
 
     doc.save()  
 
@@ -555,8 +522,7 @@ for j in range(folder_count):
     align_cameras(reps=align_times,preselection_mode=align_preselection_mode)
         
     #import scalebars from .csv
-    if use_scalebars:
-        import_scalebars(path=path_folders)
+    if use_scalebars: import_scalebars(path=path_folders)
     doc.save()
     
     #align ground plane with markers
@@ -564,20 +530,18 @@ for j in range(folder_count):
 
     chunk.resetRegion()
     
-    doc.save() #save project
+    doc.save()    #save project
     
     #continue #only use if you want the script to stop here for each folder 
     
     #detect non-coded targets
-    if detect_noncoded_targets:
-        detect_cross_target(noncoded_tolerance)
+    if detect_noncoded_targets: detect_cross_target(noncoded_tolerance)
 
     #optimize cameras
     chunk.optimizeCameras()
     
     #update bounding box 
-    if crop_by_targets: 
-        update_boundbox_by_markers(path=path_folders,chunk=chunk)
+    if crop_by_targets: update_boundbox_by_markers(path=path_folders,chunk=chunk)
     
     #save project
     doc.save()
@@ -588,15 +552,15 @@ for j in range(folder_count):
     #build depth map, dense cloud
     build_dense_cloud(export_cloud = export_cloud, savepath = savepath)
     
-    doc.save() #save project
+    doc.save()    #save project
 
     # continue #only use if you want the script to stop here for each folder
         
     #build DEM and orthomosaic and export to TIF at standard resolution 0.001 m/px
-    if build_dem or build_ortho:
-        build_dem_and_orthomosaic(dem=build_dem,ortho=build_ortho)
+    if build_dem or build_ortho: build_dem_and_orthomosaic(dem=build_dem,ortho=build_ortho)
    
-    doc.save() #save project
+    #save project
+    doc.save()
     
     #generate report to .pdf
     chunk.exportReport(path = savepath+'-report.pdf')
