@@ -2,18 +2,18 @@
 # using scripts on Agisoft forums by Alexey Pasumansky
 # by Alex Feldman - UTokyo Field Phenomics Lab
 
-# updated 2021.02.05
-# compatibility Metashape Pro 1.6.5
+# updated 2021.04.14
+# compatibility Metashape Pro 1.6.6
 ## Incompatible Metashape Pro 1.5.x and below
 # compatible with one level of nested folders
-#! files in folders root will break the script
-#! Non-agisoft nested folder in photos folder will break script
-#! - Actually, any nested folder without '.' in the name will break the script
-#! Metashape errors will break the script. 
-#>>!TODO: Jump to next folder on error (catch exception)
-#>>!TODO: write report to log file (failed folders, successful, etc)
-#>>!todo: update export DEM/orthomosaic for 1.6 API [export disabled now]
-#>>!todo: split params.ini into two files: [root_folder and project_filename] and [everything else]
+#!! files in folders root will break the script
+#!! Non-agisoft nested folder in photos folder will break script
+#!! - Actually, any nested folder without '.' in the name will break the script
+#!! Metashape errors will break the script. 
+#!!TODO: Jump to next folder on error (catch exception)
+#!!TODO: write report to log file (failed folders, successful, etc)
+#!!todo: update export DEM/orthomosaic for 1.6 API [export disabled now]
+#!!todo: split params.ini into two files: [root_folder and project_filename] and [everything else]
 
 # agisoft_LICENSE = 'C:\Program Files\Agisoft\Metashape Pro'
 import Metashape
@@ -143,7 +143,7 @@ def disable_below_threshold(threshold=0.4):
 
 def detect_cross_target(tol):
     chunk.detectMarkers(target_type=Metashape.CrossTarget,tolerance=tol,
-                        progress=progress_print) #todo: update to support circle noncoded
+                        progress=progress_print) 
 
 def scale_by_cameras(cam_1,cam_2,cam_dist):
     print("Create scalebars from cameras")
@@ -404,13 +404,13 @@ def build_dem_and_orthomosaic(dem,ortho,export_dem=True,export_ortho=True):
     if dem or ortho:
         print(banner1,'Building DEM...')
         chunk.buildDem()
-        print('todo: update script for 1.6 API [export disabled]')
-        #if export_dem: chunk.exportRaster(???) exportDem(path=savepath+'-DEM.tif',dx=0.001, dy=0.001)
+        print('[export DEM currently disabled]')
+        #if export_dem: chunk.exportRaster(???) exportDem(path=savepath+'-DEM.tif',dx=0.001, dy=0.001) #needs update for 1.6 API
         if ortho:
             print(banner1,'Building orthomosaic...')
             chunk.buildOrthomosaic(fill_holes=False) 
-            print('todo: update script for 1.6 API [export disabled]')
-            #if export_ortho: chunk.exportRaster(???) exportOrthomosaic(path=savepath+'-orthomosaic.tif',dx=0.001, dy=0.001) #!todo update for 1.6 API
+            print('[export orthomosaic currently disabled]')
+            #if export_ortho: chunk.exportRaster(???) exportOrthomosaic(path=savepath+'-orthomosaic.tif',dx=0.001, dy=0.001) #needs update for 1.6 API
         
 def progress_print(p):
         print('Current task progress: {:.2f}%'.format(p))
@@ -500,7 +500,7 @@ for j in range(folder_count):
                         # print ('\nFile list:',file_list)
                         for file in file_list:
                             if "." not in file:
-                                print(file,"is a nested folder! Ignoring!!")
+                                print(file,"is a nested folder! Ignoring!")
                             else: 
                                 append_by_type(file, item)
             else: 
@@ -510,14 +510,14 @@ for j in range(folder_count):
                 #print ('\nFile list:',file_list)
                 for file in file_list:
                     if "." not in file:
-                        print(file,"is a nested folder! Ignoring!!")
+                        print(file,"is a nested folder! Ignoring!")
                     else: 
                         append_by_type(file, item)
         photo_count = len(photo_list)
         print('\nphoto count:',photo_count) 
         #print('photo list:',photo_list)
     
-    #!debug only
+    #!!debug only
     # break 
     # continue 
     
