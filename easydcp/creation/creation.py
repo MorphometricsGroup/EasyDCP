@@ -10,10 +10,6 @@
 #!! Non-agisoft nested folder in photos folder will break script
 #!! - Actually, any nested folder without '.' in the name will break the script
 #!! Metashape errors will break the script. 
-#!!TODO: Jump to next folder on error (catch exception)
-#!!TODO: write report to log file (failed folders, successful, etc)
-#!!todo: update export DEM/orthomosaic for 1.6 API [export disabled now]
-#!!todo: split params.ini into two files: [root_folder and project_filename] and [everything else]
 
 # agisoft_LICENSE = 'C:\Program Files\Agisoft\Metashape Pro'
 import Metashape
@@ -80,7 +76,7 @@ elif align_quality == 'Low':
 elif align_quality == 'Lowest':
     match_downscale = 8
 else:
-    print('align_quality variable in params.ini set incorrectly!\nchoices: Highest, High, Medium, Low, Lowest\nyou set:'
+    print('align_quality variable in params.ini set incorrectly.\nchoices: Highest, High, Medium, Low, Lowest\nyou set:'
           ,align_quality)
     print('defaulting to High')
     match_downscale = 1
@@ -96,7 +92,7 @@ elif dense_quality == 'Low':
 elif dense_quality == 'Lowest':
     depth_downscale = 16
 else:
-    print('depth_quality variable in params.ini set incorrectly!\nchoices: Highest, High, Medium, Low, Lowest\nyou set:'
+    print('depth_quality variable in params.ini set incorrectly.\nchoices: Highest, High, Medium, Low, Lowest\nyou set:'
           ,align_quality)
     print('defaulting to Medium')
     depth_downscale = 4
@@ -122,7 +118,7 @@ def get_marker(label, chunk):
     for marker in chunk.markers:
         if label == marker.label:
             return marker
-    print("Marker not found! " + label)
+    print("Marker not found. " + label)
     return False
 
 def append_by_type(filename, filepath):
@@ -193,9 +189,9 @@ def import_scalebars(path):
                  nopair = 0
              
          if nopair:
-             print(banner1,"Missing one or other end of point!")
+             print(banner1,"Missing one or other end of point.")
      else:
-         print(banner1,"no markers!")
+         print(banner1,"no markers.")
 
      print (len(line), line)
      #reading the next line in input file
@@ -470,7 +466,7 @@ for j in range(folder_count):
     #look for nested folders
     for item in file_list: 
         if "." not in item: #check if folder
-            print(item,"is a nested folder!")
+            print(item,"is a nested folder.")
             has_nested = True
             nestpath = "/".join([path_photos,item])
             # print('nestpath:',nestpath)
@@ -494,13 +490,13 @@ for j in range(folder_count):
                 #print('folder name:',folder_name,'char0:',char0)#
                 for m in range(len(nested_folders)):
                     if nested_folders[m] == char0:
-                        print('selected nested folder found!')
+                        print('selected nested folder found.')
                         file_list = os.listdir(item)
                         print(len(file_list),'files')
                         # print ('\nFile list:',file_list)
                         for file in file_list:
                             if "." not in file:
-                                print(file,"is a nested folder! Ignoring!")
+                                print(file,"is a nested folder. Ignoring.")
                             else: 
                                 append_by_type(file, item)
             else: 
@@ -510,7 +506,7 @@ for j in range(folder_count):
                 #print ('\nFile list:',file_list)
                 for file in file_list:
                     if "." not in file:
-                        print(file,"is a nested folder! Ignoring!")
+                        print(file,"is a nested folder. Ignoring.")
                     else: 
                         append_by_type(file, item)
         photo_count = len(photo_list)
@@ -527,7 +523,7 @@ for j in range(folder_count):
         chunk = doc.addChunk()
         chunk.addPhotos(photo_list)
     else:
-        print('no photos found! moving to next folder...')
+        print('no photos found. moving to next folder...')
         continue #skip the rest of the EasyDCP_Creation process (for the current folder) because no photos were found.
     print(j,'save path:',filename_list[j])
     
@@ -611,7 +607,7 @@ for j in range(folder_count):
     #begin EasyDCP_Analysis
     print('\n-----')
     print(banner1,'complete for',this_folder)
-    print('[Ready to start EasyDCP_Analysis!]') 
+    print('[Ready to start EasyDCP_Analysis.]') 
     
     # break #only use if you want the script to stop after running the first folder
    
