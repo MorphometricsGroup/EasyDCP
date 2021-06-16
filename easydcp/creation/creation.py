@@ -350,12 +350,12 @@ def update_boundbox_by_markers(path,chunk,section='DEFAULT'):
 
     print('x',chunk.markers[c2].position[0],chunk.markers[c1].position[0])
     print('y',chunk.markers[c2].position[1],chunk.markers[c1].position[1])
-    box_X_length = math.fabs(chunk.markers[c2].position[0]
+    box_X_length = (math.fabs(chunk.markers[c2].position[0]
                              - chunk.markers[c1].position[0])
-                             * (100+buffer) / 100 #x-axis. may return negative number, so absoluted
-    box_Y_length = math.fabs(chunk.markers[c2].position[1]
+                             * (100+buffer) / 100) #x-axis. may return negative number, so absoluted
+    box_Y_length = (math.fabs(chunk.markers[c2].position[1]
                              - chunk.markers[c1].position[1])
-                             * (100+buffer) / 100 #y-axis. may return negative number, so absoluted
+                             * (100+buffer) / 100) #y-axis. may return negative number, so absoluted
     
     print('lengths:',box_X_length,box_Y_length)
     
